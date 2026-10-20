@@ -90,6 +90,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 }
 .gear svg { width: 22px; height: 22px; }
 .gear:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.gear.music { background: var(--leaf); }
+.gear.music[aria-pressed="false"] { background: var(--stone); color: var(--ink-soft); }
 
 /* Table */
 .table { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
@@ -280,6 +282,7 @@ select {
     <div class="turn" id="turn" data-side="w" aria-live="polite">
       <span class="orb" id="turnIcon"></span><span id="turnText">White to move</span>
     </div>
+    <button class="gear music" id="musicBtn" aria-label="Music on" aria-pressed="true" title="Music"></button>
     <button class="gear" id="openSettings" aria-label="Settings" title="Settings"></button>
   </header>
 
@@ -368,6 +371,10 @@ select {
 <div class="scrim" id="settings" hidden>
   <div class="card" role="dialog" aria-labelledby="setTitle">
     <h2 id="setTitle">Settings panel</h2>
+    <div class="field">
+      <label class="lbl" for="volMusic">Music</label>
+      <div class="slider"><span id="icNote"></span><input type="range" id="volMusic" min="0" max="100" value="40"><output id="volMusicOut" for="volMusic">40</output></div>
+    </div>
     <div class="field">
       <label class="lbl" for="volMove">Move sounds</label>
       <div class="slider"><span id="icVol"></span><input type="range" id="volMove" min="0" max="100" value="60"><output id="volMoveOut" for="volMove">60</output></div>
@@ -678,6 +685,8 @@ const ICON = {
   hint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21.5h4"/><path d="M12 2.5a6.5 6.5 0 0 0-4 11.6c.7.6 1 1.4 1 2.4h6c0-1 .3-1.8 1-2.4A6.5 6.5 0 0 0 12 2.5z" fill="#FFF7D6"/></svg>',
   gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
   vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+  note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6" fill="currentColor"/><circle cx="17.5" cy="16" r="2.6" fill="currentColor"/></svg>',
+  noteOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6" fill="currentColor"/><circle cx="17.5" cy="16" r="2.6" fill="currentColor"/><path d="M3 3l18 18"/></svg>',
   bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></svg>',
 };
 const AVATAR = {
@@ -695,7 +704,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, theme: "walnut", nameW: "", nameB: "" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, theme: "walnut", nameW: "", nameB: "" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -706,28 +715,137 @@ const G = {
 };
 
 /* ---------- Sound ---------- */
-let audio = null;
-function tone(freq, dur, vol, type = "triangle", when = 0) {
+// Everything is synthesised with Web Audio, so the page ships no audio files.
+let audio = null, sfxBus = null, musicBus = null, noiseBuf = null;
+function ctx() {
+  if (!audio) {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    sfxBus = audio.createGain(); sfxBus.connect(audio.destination);
+    musicBus = audio.createGain(); musicBus.gain.value = 0; musicBus.connect(audio.destination);
+    noiseBuf = audio.createBuffer(1, audio.sampleRate * 0.5, audio.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (audio.state === "suspended") audio.resume();
+  return audio;
+}
+function env(g, t, peak, attack, dur) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+}
+function tone(freq, dur, vol, type = "triangle", when = 0, out) {
   if (vol <= 0) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === "suspended") audio.resume();
-    const t = audio.currentTime + when;
-    const o = audio.createOscillator(), g = audio.createGain();
+    const a = ctx(), t = a.currentTime + when;
+    const o = a.createOscillator(), g = a.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.35 * vol, t + 0.008);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur + 0.02);
+    env(g, t, 0.35 * vol, 0.008, dur);
+    o.connect(g).connect(out || sfxBus); o.start(t); o.stop(t + dur + 0.05);
   } catch (e) {}
 }
+// A wooden "clack": a filtered noise burst over a short low thump.
+function clack(vol, when = 0, pitch = 1) {
+  if (vol <= 0) return;
+  try {
+    const a = ctx(), t = a.currentTime + when;
+    const n = a.createBufferSource(); n.buffer = noiseBuf;
+    const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200 * pitch; bp.Q.value = 3;
+    const ng = a.createGain(); env(ng, t, 0.9 * vol, 0.002, 0.05);
+    n.connect(bp).connect(ng).connect(sfxBus); n.start(t); n.stop(t + 0.08);
+    const o = a.createOscillator(), og = a.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(230 * pitch, t); o.frequency.exponentialRampToValueAtTime(110 * pitch, t + 0.08);
+    env(og, t, 0.6 * vol, 0.003, 0.1);
+    o.connect(og).connect(sfxBus); o.start(t); o.stop(t + 0.12);
+  } catch (e) {}
+}
+const mv = () => prefs.volMove / 100, al = () => prefs.volAlert / 100;
 const sfx = {
-  move: () => { tone(420, 0.08, prefs.volMove / 100, "square"); tone(210, 0.1, prefs.volMove / 140, "triangle"); },
-  capture: () => { tone(160, 0.16, prefs.volMove / 100, "triangle"); tone(330, 0.07, prefs.volMove / 120, "square"); },
-  check: () => { tone(660, 0.12, prefs.volAlert / 100, "sine"); tone(880, 0.16, prefs.volAlert / 100, "sine", 0.1); },
-  end: () => { [523, 659, 784].forEach((f, i) => tone(f, 0.4, prefs.volAlert / 110, "sine", i * 0.09)); },
-  tick: () => tone(1200, 0.03, prefs.volAlert / 160, "square"),
+  select: () => tone(880, 0.06, mv() * 0.35, "sine"),
+  move: () => clack(mv()),
+  capture: () => { clack(mv(), 0, 0.8); clack(mv() * 0.8, 0.07, 1.15); tone(98, 0.22, mv() * 0.6, "sine"); },
+  castle: () => { clack(mv()); clack(mv(), 0.11, 1.1); },
+  promote: () => { clack(mv()); [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.25, mv() * 0.4, "sine", 0.05 + i * 0.06)); },
+  check: () => { tone(988, 0.5, al() * 0.7, "sine"); tone(1482, 0.35, al() * 0.25, "sine"); tone(740, 0.5, al() * 0.4, "triangle", 0.12); },
+  tick: () => tone(1500, 0.03, al() * 0.4, "square"),
+  click: () => tone(520, 0.04, mv() * 0.3, "triangle"),
+  end: () => {
+    const o = G.over; if (!o) return;
+    const lost = G.mode === "cpu" && o.winner === "b";
+    if (o.type === "draw") [523, 659, 587].forEach((f, i) => tone(f, 0.45, al() * 0.6, "triangle", i * 0.18));
+    else if (lost) [523, 466, 392, 311].forEach((f, i) => tone(f, 0.5, al() * 0.6, "triangle", i * 0.2));
+    else [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i === 4 ? 0.9 : 0.35, al() * 0.6, "triangle", i * 0.1));
+  },
 };
+
+/* Background music: a slow lo-fi loop (Am7 - Fmaj7 - Cmaj7 - G6) with a soft pad, bass and sparse plucks. */
+const MUSIC = {
+  bpm: 70,
+  chords: [[57, 60, 64, 67], [53, 57, 60, 64], [48, 55, 59, 64], [55, 59, 62, 64]],
+  scale: [72, 74, 76, 79, 81, 84],
+  timer: null, next: 0, bar: 0,
+};
+const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 0.22 : 0; }
+function scheduleBar(t) {
+  const a = audio, beat = 60 / MUSIC.bpm, barLen = beat * 4;
+  const chord = MUSIC.chords[MUSIC.bar % 4];
+  const lp = a.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100; lp.connect(musicBus);
+  for (const n of chord) {
+    for (const det of [-6, 6]) {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = "triangle"; o.frequency.value = midi(n); o.detune.value = det;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.09, t + 0.8);
+      g.gain.setValueAtTime(0.09, t + barLen - 0.6);
+      g.gain.linearRampToValueAtTime(0.0001, t + barLen + 0.4);
+      o.connect(g).connect(lp); o.start(t); o.stop(t + barLen + 0.5);
+    }
+  }
+  for (const b of [0, 2, 3.5]) {
+    const o = a.createOscillator(), g = a.createGain(), at = t + b * beat;
+    o.type = "sine"; o.frequency.value = midi(chord[0] - 12);
+    env(g, at, b === 3.5 ? 0.18 : 0.3, 0.02, beat * 1.4);
+    o.connect(g).connect(musicBus); o.start(at); o.stop(at + beat * 1.5);
+  }
+  for (let e = 0; e < 8; e++) {
+    if (Math.random() > (e % 2 ? 0.22 : 0.4)) continue;
+    const pool = MUSIC.scale.filter(n => chord.some(c => (n - c) % 12 === 0)).concat(MUSIC.scale);
+    const n = pool[Math.floor(Math.random() * pool.length)];
+    const o = a.createOscillator(), g = a.createGain(), at = t + e * beat / 2 + (e % 2 ? 0.04 : 0);
+    o.type = "sine"; o.frequency.value = midi(n);
+    env(g, at, 0.12, 0.01, beat * 1.2);
+    o.connect(g).connect(lp); o.start(at); o.stop(at + beat * 1.3);
+  }
+  MUSIC.bar++;
+}
+function startMusic() {
+  try {
+    const a = ctx();
+    musicBus.gain.cancelScheduledValues(a.currentTime);
+    musicBus.gain.setTargetAtTime(musicLevel(), a.currentTime, 0.4);
+    if (MUSIC.timer || !prefs.music) return;
+    MUSIC.next = a.currentTime + 0.1;
+    MUSIC.timer = setInterval(() => {
+      while (MUSIC.next < audio.currentTime + 1.5) { scheduleBar(MUSIC.next); MUSIC.next += (60 / MUSIC.bpm) * 4; }
+    }, 300);
+  } catch (e) {}
+}
+function stopMusic() {
+  if (!audio) return;
+  musicBus.gain.setTargetAtTime(0, audio.currentTime, 0.3);
+  clearInterval(MUSIC.timer); MUSIC.timer = null;
+}
+function syncMusicButton() {
+  const b = $("musicBtn");
+  b.innerHTML = prefs.music ? ICON.note : ICON.noteOff;
+  b.setAttribute("aria-pressed", String(prefs.music));
+  b.setAttribute("aria-label", prefs.music ? "Turn music off" : "Turn music on");
+}
+document.addEventListener("visibilitychange", () => {
+  if (!audio) return;
+  if (document.hidden) audio.suspend(); else if (MUSIC.timer || prefs.music) audio.resume();
+});
 
 /* ---------- Board build ---------- */
 const boardEl = $("board");
@@ -884,6 +1002,7 @@ function onSquare(i) {
     }
   }
   G.selected = p && p[0] === G.st.turn && G.selected !== i ? i : null;
+  if (G.selected !== null) sfx.select();
   render();
 }
 
@@ -907,7 +1026,7 @@ function doMove(m) {
   else if (G.keys.filter(k => k === key).length >= 3) G.over = { type: "draw", text: "Draw by threefold repetition." };
   else if (insufficient(next.board)) G.over = { type: "draw", text: "Draw. Neither side can force mate." };
 
-  if (G.over) sfx.end(); else if (check) sfx.check(); else if (next.captured) sfx.capture(); else sfx.move();
+  if (G.over) sfx.end(); else if (check) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (next.captured) sfx.capture(); else sfx.move();
   render();
   if (G.over) showResult();
   else maybeComputer();
@@ -1035,6 +1154,7 @@ function applyTheme() {
   $("swatches").innerHTML = THEMES[prefs.theme].map(c => `<i style="background:${c}"></i>`).join("");
   $("volMove").value = prefs.volMove; $("volMoveOut").textContent = prefs.volMove;
   $("volAlert").value = prefs.volAlert; $("volAlertOut").textContent = prefs.volAlert;
+  $("volMusic").value = prefs.volMusic; $("volMusicOut").textContent = prefs.volMusic;
 }
 
 /* ---------- Wiring ---------- */
@@ -1044,9 +1164,20 @@ document.querySelector("#reset .ic").innerHTML = ICON.reset;
 document.querySelector("#resign .ic").innerHTML = ICON.resign;
 document.querySelector("#hint .ic").innerHTML = ICON.hint;
 $("openSettings").innerHTML = ICON.gear;
-$("icVol").innerHTML = ICON.vol; $("icVol2").innerHTML = ICON.bell;
+$("icVol").innerHTML = ICON.vol; $("icVol2").innerHTML = ICON.bell; $("icNote").innerHTML = ICON.note;
+syncMusicButton();
 
-$("newGame").addEventListener("click", () => { hide("menu"); newGame(); sfx.move(); });
+$("newGame").addEventListener("click", () => { hide("menu"); newGame(); sfx.move(); startMusic(); });
+$("musicBtn").addEventListener("click", () => {
+  prefs.music = !prefs.music; savePrefs(); syncMusicButton();
+  if (prefs.music) startMusic(); else stopMusic();
+});
+$("volMusic").addEventListener("input", e => {
+  prefs.volMusic = +e.target.value; $("volMusicOut").textContent = e.target.value; savePrefs();
+  if (prefs.volMusic > 0 && !prefs.music) { prefs.music = true; syncMusicButton(); }
+  startMusic();
+});
+document.addEventListener("click", e => { if (e.target.closest(".btn, .seg button, .tool")) sfx.click(); });
 $("closeMenu").addEventListener("click", () => hide("menu"));
 $("menuSettings").addEventListener("click", () => { hide("menu"); show("settings"); G.backToMenu = true; });
 $("openCredits").addEventListener("click", () => { hide("menu"); show("credits"); });
