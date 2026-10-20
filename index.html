@@ -112,7 +112,29 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .table { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 22px; align-items: start; }
 @media (max-width: 820px) { .table { grid-template-columns: minmax(0, 1fr); } }
 
-.board-col { display: grid; gap: 10px; justify-items: center; min-width: 0; }
+.board-col { display: grid; gap: 10px; justify-items: center; min-width: 0; position: relative; overflow: hidden; padding-right: 8px; padding-bottom: 8px; }
+.taunt {
+  position: absolute; left: 0; top: 14%; z-index: 5; max-width: min(92%, 440px);
+  display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: end; gap: 0;
+  transform: translateX(-115%); transition: transform 380ms cubic-bezier(.2, 1.3, .4, 1);
+  pointer-events: none;
+}
+.taunt.show { transform: none; pointer-events: auto; cursor: pointer; }
+.taunt .soldier { width: 92px; height: 112px; filter: drop-shadow(3px 4px 0 rgba(47, 38, 32, 0.6)); }
+.taunt.show .soldier { animation: rant 0.32s ease-in-out 0.4s 4 alternate; }
+@keyframes rant { from { transform: rotate(-3deg); } to { transform: rotate(4deg) translateY(-3px); } }
+.taunt .bubble {
+  position: relative; margin-bottom: 46px; margin-left: 6px; padding: 10px 14px;
+  background: var(--card); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink);
+}
+.taunt .bubble::before {
+  content: ""; position: absolute; left: -13px; bottom: 14px; border: 10px solid transparent; border-right-color: var(--ink); border-left-width: 0;
+}
+.taunt .bubble b { display: block; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--flag); }
+.taunt .bubble p { margin: 2px 0 0; font-weight: 800; font-size: 16px; line-height: 1.35; }
+.taunt.warn .bubble b { color: var(--ember); }
+@media (max-width: 460px) { .taunt { grid-template-columns: 70px minmax(0, 1fr); } .taunt .soldier { width: 70px; height: 86px; } .taunt .bubble p { font-size: 14px; } }
+@media (prefers-reduced-motion: reduce) { .taunt { transition: none; } .taunt.show .soldier { animation: none; } }
 .frame {
   width: min(100%, 620px);
   display: grid;
@@ -320,6 +342,23 @@ select {
           <button class="chip" id="resetView">Reset view</button>
         </div>
       </div>
+      <div class="taunt" id="taunt" role="status" aria-live="assertive">
+        <svg class="soldier" viewBox="0 0 92 112" aria-hidden="true">
+          <path d="M14 112c2-20 14-30 32-30s30 10 32 30z" fill="#5E6B3A" stroke="#2F2620" stroke-width="3"/>
+          <path d="M38 84l8 10 8-10" fill="#C9A227" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
+          <rect x="34" y="70" width="24" height="16" rx="5" fill="#E8B48C" stroke="#2F2620" stroke-width="3"/>
+          <ellipse cx="46" cy="52" rx="24" ry="25" fill="#F0C29B" stroke="#2F2620" stroke-width="3"/>
+          <path d="M16 46c0-20 13-31 30-31s30 11 30 31c0 3-2 4-5 4H21c-3 0-5-1-5-4z" fill="#6B7A3E" stroke="#2F2620" stroke-width="3"/>
+          <path d="M12 48h68" stroke="#2F2620" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="46" cy="30" r="5" fill="#C9A227" stroke="#2F2620" stroke-width="2"/>
+          <path d="M28 56l11 4M64 56l-11 4" stroke="#2F2620" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="36" cy="63" r="2.8" fill="#2F2620"/><circle cx="56" cy="63" r="2.8" fill="#2F2620"/>
+          <path d="M33 72c4-4 9-5 13-2 4-3 9-2 13 2-5 2-9 2-13 0-4 2-8 2-13 0z" fill="#3A2A1E"/>
+          <path d="M38 74q8 10 16 0z" fill="#8E2A22" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M70 54q8-4 6 6" fill="none" stroke="#7FB3E0" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="bubble"><b id="tauntWho">Sergeant Somchai</b><p id="tauntText"></p></div>
+      </div>
       <p class="status" id="status" aria-live="polite"></p>
       <div class="overbar" id="overBar" hidden>
         <button class="btn" id="showResult">Show result</button>
@@ -411,6 +450,13 @@ select {
     <div class="field">
       <label class="lbl" for="volAlert">Check and clock alerts</label>
       <div class="slider"><span id="icVol2"></span><input type="range" id="volAlert" min="0" max="100" value="60"><output id="volAlertOut" for="volAlert">60</output></div>
+    </div>
+    <div class="field">
+      <span class="lbl">Sergeant comments</span>
+      <div class="seg" id="segTaunts">
+        <button data-v="on" aria-pressed="true">On</button>
+        <button data-v="off" aria-pressed="false">Off</button>
+      </div>
     </div>
     <div class="field">
       <label class="lbl" for="theme">Theme select</label>
@@ -733,7 +779,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, theme: "walnut", nameW: "", nameB: "" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", theme: "walnut", nameW: "", nameB: "" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -797,6 +843,7 @@ const sfx = {
   promote: () => { clack(mv()); [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.25, mv() * 0.4, "sine", 0.05 + i * 0.06)); },
   check: () => { tone(988, 0.5, al() * 0.7, "sine"); tone(1482, 0.35, al() * 0.25, "sine"); tone(740, 0.5, al() * 0.4, "triangle", 0.12); },
   tick: () => tone(1500, 0.03, al() * 0.4, "square"),
+  grumble: () => { tone(150, 0.18, al() * 0.5, "sawtooth"); tone(120, 0.25, al() * 0.45, "sawtooth", 0.16); },
   click: () => tone(520, 0.04, mv() * 0.3, "triangle"),
   end: () => {
     const o = G.over; if (!o) return;
@@ -1093,7 +1140,66 @@ function doMove(m) {
   if (G.over) sfx.end(); else if (check) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (next.captured) sfx.capture(); else sfx.move();
   render();
   if (G.over) showResult();
-  else maybeComputer();
+  else { sergeant(m, prevSt, next, mover); maybeComputer(); }
+}
+
+/* ---------- Sergeant Somchai: complains about risky moves and lost pieces ---------- */
+const THAI_PIECE = { P: "เบี้ย", N: "ม้า", B: "บิชอป", R: "เรือ", Q: "ควีน", K: "คิง" };
+const RANT = {
+  risky: [
+    "ผู้บัญชาการ! จะส่ง{p}ไปตายเปล่าๆ แบบนี้เหรอครับ!",
+    "เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!",
+    "ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!",
+    "แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!",
+    "ท่านครับ ผมว่า{p}มันกลัวแล้วนะ ถอยก่อนดีไหม!",
+  ],
+  lost: [
+    "เสีย{p}ไปอีกตัวแล้วครับท่าน! ตั้งสติหน่อย!",
+    "โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!",
+    "ท่านครับ เสีย{p}แบบนี้ เราไม่ได้กลับบ้านแน่!",
+    "{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!",
+    "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!",
+  ],
+};
+let tauntTimer = 0, lastRant = {};
+function material(board, color) { return board.reduce((s, p) => s + (p ? (p[0] === color ? 1 : -1) * VAL[p[1]] : 0), 0); }
+function humanSide(c) { return G.mode !== "cpu" || c === "w"; }
+function pickLine(kind) {
+  const list = RANT[kind];
+  let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === lastRant[kind]);
+  lastRant[kind] = k; return list[k];
+}
+function showTaunt(kind, pieceType, side) {
+  if (prefs.taunts === "off") return;
+  const el = $("taunt");
+  $("tauntText").textContent = pickLine(kind).replace("{p}", THAI_PIECE[pieceType]);
+  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือนแล้วนะ" : "จ่าสมชาย โมโหแล้ว") + (G.mode === "cpu" ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
+  el.classList.toggle("warn", kind === "risky");
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+  sfx.grumble();
+  clearTimeout(tauntTimer);
+  tauntTimer = setTimeout(() => el.classList.remove("show"), 3600);
+}
+function sergeant(m, prev, next, mover) {
+  const victim = next.turn;
+  // 1) The opponent just won material from a human side.
+  if (next.captured && humanSide(victim) && VAL[next.captured[1]] >= 300) {
+    const before = G.history.length >= 2 ? material(G.history[G.history.length - 2].st.board, victim) : material(prev.board, victim);
+    if (before - material(next.board, victim) >= 250) { showTaunt("lost", next.captured[1], victim); return; }
+  }
+  // 2) A human move that leaves material hanging: compare the position as it
+  //    stands with what is left after the opponent's best run of captures.
+  if (!humanSide(mover)) return;
+  const stand = evaluate(next.board) * (mover === "w" ? 1 : -1);
+  const after = -quiesce(next, -Infinity, Infinity, 0);
+  if (stand - after < 220) return;
+  // Name the most valuable piece of ours the opponent can take.
+  let worst = null;
+  for (const mv of pseudoMoves(next, victim)) {
+    const t = next.board[mv.to];
+    if (t && t[0] === mover && t[1] !== "K" && (!worst || VAL[t[1]] > VAL[worst])) worst = t[1];
+  }
+  if (worst) showTaunt("risky", worst, mover);
 }
 
 function maybeComputer() {
@@ -1289,6 +1395,14 @@ document.addEventListener("keydown", e => {
   else if (!$("menu").hidden && !$("closeMenu").hidden) hide("menu");
 });
 
+$("taunt").addEventListener("click", () => $("taunt").classList.remove("show"));
+$("segTaunts").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  prefs.taunts = b.dataset.v; savePrefs(); syncTaunts();
+  if (prefs.taunts === "on") showTaunt("risky", "Q", "w");
+});
+function syncTaunts() { $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
+syncTaunts();
 for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
   $(id).value = prefs[key];
   $(id).addEventListener("input", e => { prefs[key] = e.target.value; savePrefs(); });
