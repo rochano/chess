@@ -481,6 +481,13 @@ select {
       </div>
     </div>
     <div class="field">
+      <span class="lbl">Sergeant voice</span>
+      <div class="seg" id="segVoice">
+        <button data-v="speech" aria-pressed="true">Thai speech</button>
+        <button data-v="mumble" aria-pressed="false">Mumble</button>
+      </div>
+    </div>
+    <div class="field">
       <label class="lbl" for="theme">Theme select</label>
       <select id="theme">
         <option value="walnut">Walnut</option>
@@ -801,7 +808,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", theme: "walnut", nameW: "", nameB: "" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", theme: "walnut", nameW: "", nameB: "" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -968,6 +975,7 @@ function unlockAudio() {
     const el = new Audio(silentWavUrl());
     el.loop = true; el.setAttribute("playsinline", "");
     const p = el.play(); if (p && p.catch) p.catch(() => {});
+    if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
     unlocked = true;
   } catch (e) {}
 }
@@ -1200,51 +1208,111 @@ function raiseStress(side, pieceType, kind) {
   if (pieceType === "Q") level = Math.max(level, 2);
   return level;
 }
-/* Sergeant voice: cartoon gibberish built from vowel formants. The words are not
-   real, but pitch, speed and roughness follow how angry he is. */
-const VOWELS = [[730, 1090], [530, 1840], [570, 840], [300, 2200], [440, 1020], [660, 1700]];
-let voiceNodes = [];
-function voice(text, level) {
+/* Sergeant voice. When the device has a Thai voice, he actually says the line,
+   with pitch and speed set by his anger. Otherwise he mumbles: a human-like
+   formant voice (glottal source, three moving formants, breath and consonant
+   noise) that carries the tone of speech without real words. */
+const THAI_VOWELS = [[700, 1220, 2600], [280, 2250, 2900], [310, 870, 2250], [400, 2000, 2550], [450, 800, 2830], [580, 1800, 2500], [600, 900, 2500], [320, 1400, 2400]];
+let voiceNodes = [], thaiVoice = null, glottal = null;
+function findThaiVoice() {
   try {
-    const a = ctx(), v = al();
-    voiceNodes.forEach(n => { try { n.stop(); } catch (e) {} });
-    voiceNodes = [];
-    if (v <= 0) return;
-    const base = [0, 125, 165, 215][level], step = [0, 0.11, 0.092, 0.074][level];
-    const chars = text.replace(/\s+/g, "").length;
-    const count = Math.min(34, Math.max(6, Math.round(chars / 2.6)));
-    const shout = /!/.test(text);
-    let shaper = null;
+    const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    thaiVoice = vs.find(v => /^th/i.test(v.lang)) || null;
+  } catch (e) { thaiVoice = null; }
+}
+if (window.speechSynthesis) { findThaiVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", findThaiVoice); }
+function stopVoice() {
+  voiceNodes.forEach(n => { try { n.stop(); } catch (e) {} });
+  voiceNodes = [];
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+}
+function voice(text, level) {
+  stopVoice();
+  const v = al();
+  if (v <= 0) return;
+  if (prefs.voice !== "mumble" && thaiVoice) {
+    try {
+      const u = new SpeechSynthesisUtterance(text.replace(/!+/g, "!"));
+      u.voice = thaiVoice; u.lang = thaiVoice.lang;
+      u.pitch = [1, 0.75, 1.05, 1.4][level];
+      u.rate = [1, 0.95, 1.15, 1.4][level];
+      u.volume = Math.min(1, v * 1.2);
+      speechSynthesis.speak(u);
+      return;
+    } catch (e) {}
+  }
+  mumble(text, level, v);
+}
+function mumble(text, level, v) {
+  try {
+    const a = ctx();
+    if (!glottal) {
+      const n = 40, re = new Float32Array(n), im = new Float32Array(n);
+      for (let h = 1; h < n; h++) im[h] = 1 / Math.pow(h, 1.25);
+      glottal = a.createPeriodicWave(re, im);
+    }
+    const base = [0, 118, 150, 192][level];
+    const syl = [0, 0.17, 0.135, 0.11][level];
+    const count = Math.min(30, Math.max(6, Math.round(text.replace(/\s+/g, "").length / 2.8)));
+    const t0 = a.currentTime + 0.06;
+    const total = count * syl + 0.3;
+
+    const out = a.createGain(); out.gain.value = v * [0, 2.4, 2.8, 3.0][level];
+    let dest = sfxBus;
     if (level === 3) {
-      shaper = a.createWaveShaper();
-      const curve = new Float32Array(256);
-      for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(x * 3); }
-      shaper.curve = curve; shaper.connect(sfxBus);
+      const ws = a.createWaveShaper(), c = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(x * 1.6); }
+      ws.curve = c; ws.connect(sfxBus); dest = ws;
     }
-    let t = a.currentTime + 0.08;
+    out.connect(dest);
+
+    // Formant filters shared by voice and breath, so both glide together.
+    const fs = [0, 1, 2].map(k => {
+      const f = a.createBiquadFilter(); f.type = "bandpass"; f.Q.value = [5, 9, 11][k];
+      const g = a.createGain(); g.gain.value = [1, 0.6, 0.25][k];
+      f.connect(g).connect(out); return f;
+    });
+    const amp = a.createGain(); amp.gain.value = 0.0001;
+    fs.forEach(f => amp.connect(f));
+
+    const o = a.createOscillator(); o.setPeriodicWave(glottal);
+    const vib = a.createOscillator(), vibG = a.createGain();
+    vib.frequency.value = 5 + level * 0.6; vibG.gain.value = base * 0.018;
+    vib.connect(vibG).connect(o.frequency);
+    o.connect(amp);
+    const breath = a.createBufferSource(); breath.buffer = noiseBuf; breath.loop = true;
+    const bg = a.createGain(); bg.gain.value = [0, 0.08, 0.14, 0.22][level];
+    breath.connect(bg).connect(amp);
+
+    const shout = /!/.test(text);
+    let t = t0;
     for (let k = 0; k < count; k++) {
-      const [f1, f2] = VOWELS[Math.floor(Math.random() * VOWELS.length)];
-      const progress = k / count;
-      // Calm: falls gently. Angry: wobbles. Furious: jumps around and rises at the end.
-      let pitch = base * (1 + (Math.random() - 0.5) * (0.12 + level * 0.1));
-      if (level === 1) pitch *= 1.08 - progress * 0.18;
-      if (level >= 2 && shout && progress > 0.75) pitch *= 1.25 + (level - 2) * 0.2;
-      if (level === 3 && Math.random() < 0.25) pitch *= 1.35;
-      const dur = step * (0.75 + Math.random() * 0.5);
-      const o = a.createOscillator(); o.type = "sawtooth";
-      o.frequency.setValueAtTime(pitch, t);
-      o.frequency.linearRampToValueAtTime(pitch * (level === 1 ? 0.94 : 1.06), t + dur);
-      const g = a.createGain();
-      env(g, t, v * (0.55 + level * 0.12) * (level === 3 ? 1 : 3.2), 0.012, dur);
-      for (const [f, q] of [[f1, 7], [f2, 9]]) {
-        const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q;
-        o.connect(bp).connect(g);
+      const p = k / count;
+      const [f1, f2, f3] = THAI_VOWELS[Math.floor(Math.random() * THAI_VOWELS.length)];
+      // Intonation: calm falls, angry rises and jumps, furious stays high and shouts.
+      let pitch = base * (1 + (Math.random() - 0.5) * (0.08 + level * 0.07));
+      pitch *= level === 1 ? 1.06 - p * 0.2 : 1 + Math.sin(p * Math.PI * (1 + level)) * 0.06 * level;
+      if (shout && p > 0.7) pitch *= 1.15 + (level - 1) * 0.12;
+      const d = syl * (0.8 + Math.random() * 0.45);
+      o.frequency.setTargetAtTime(pitch, t, 0.025);
+      fs[0].frequency.setTargetAtTime(f1, t, 0.03);
+      fs[1].frequency.setTargetAtTime(f2, t, 0.03);
+      fs[2].frequency.setTargetAtTime(f3, t, 0.03);
+      // Syllable shape: a quick consonant dip, then the vowel.
+      const peak = 0.5 + Math.random() * 0.3 + (k % 4 === 0 ? 0.15 : 0);
+      amp.gain.setTargetAtTime(0.02, t, 0.012);
+      amp.gain.setTargetAtTime(peak, t + d * 0.18, 0.025);
+      if (Math.random() < 0.35) {
+        const ns = a.createBufferSource(); ns.buffer = noiseBuf;
+        const hp = a.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2800 + Math.random() * 2000;
+        const ng = a.createGain(); env(ng, t, v * 0.35, 0.005, 0.07);
+        ns.connect(hp).connect(ng).connect(dest); ns.start(t); ns.stop(t + 0.09); voiceNodes.push(ns);
       }
-      g.connect(shaper || sfxBus);
-      o.start(t); o.stop(t + dur + 0.03);
-      voiceNodes.push(o);
-      t += dur + (Math.random() < 0.18 ? step * 0.9 : step * 0.15);
+      t += d;
+      if (Math.random() < 0.15 && k < count - 1) { amp.gain.setTargetAtTime(0.0001, t, 0.03); t += syl * 0.7; }
     }
+    amp.gain.setTargetAtTime(0.0001, t, 0.05);
+    for (const n of [o, vib, breath]) { n.start(t0); n.stop(t + 0.4); voiceNodes.push(n); }
   } catch (e) {}
 }
 
@@ -1485,7 +1553,7 @@ document.addEventListener("keydown", e => {
   else if (!$("menu").hidden && !$("closeMenu").hidden) hide("menu");
 });
 
-$("taunt").addEventListener("click", () => { clearTimeout(tauntTimer); $("taunt").classList.remove("show", "hold"); });
+$("taunt").addEventListener("click", () => { clearTimeout(tauntTimer); stopVoice(); $("taunt").classList.remove("show", "hold"); });
 // Pause the countdown while the pointer rests on the message.
 $("taunt").addEventListener("pointerenter", () => {
   const el = $("taunt"); if (!el.classList.contains("show")) return;
@@ -1501,7 +1569,13 @@ $("segTaunts").addEventListener("click", e => {
   prefs.taunts = b.dataset.v; savePrefs(); syncTaunts();
   if (prefs.taunts === "on") showTaunt("risky", "N", "w", 1);
 });
-function syncTaunts() { $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
+$("segVoice").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  prefs.voice = b.dataset.v; savePrefs(); syncTaunts();
+  if (prefs.taunts === "on") showTaunt("lost", "B", "w", 2);
+});
+function syncTaunts() {
+  $("segVoice").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.voice))); $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
 syncTaunts();
 for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
   $(id).value = prefs[key];
