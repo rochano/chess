@@ -842,6 +842,36 @@ function syncMusicButton() {
   b.setAttribute("aria-pressed", String(prefs.music));
   b.setAttribute("aria-label", prefs.music ? "Turn music off" : "Turn music on");
 }
+// Mobile browsers only allow sound after a tap, and iPhones mute Web Audio
+// while the ring/silent switch is on. On the first tap we start the audio
+// context, ask for a "playback" audio session, and loop a silent <audio>
+// element, which moves iOS into the media channel so the game is audible.
+let unlocked = false;
+function silentWavUrl() {
+  const rate = 8000, n = rate / 2, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+  const str = (o, t) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
+  str(0, "RIFF"); v.setUint32(4, 36 + n, true); str(8, "WAVE"); str(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+  str(36, "data"); v.setUint32(40, n, true);
+  for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+  return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+}
+function unlockAudio() {
+  if (unlocked) return;
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    const a = ctx();
+    const src = a.createBufferSource(); src.buffer = a.createBuffer(1, 1, 22050);
+    src.connect(a.destination); src.start(0);
+    const el = new Audio(silentWavUrl());
+    el.loop = true; el.setAttribute("playsinline", "");
+    const p = el.play(); if (p && p.catch) p.catch(() => {});
+    unlocked = true;
+  } catch (e) {}
+}
+for (const ev of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(ev, unlockAudio, { capture: true, passive: true });
+
 document.addEventListener("visibilitychange", () => {
   if (!audio) return;
   if (document.hidden) audio.suspend(); else if (MUSIC.timer || prefs.music) audio.resume();
