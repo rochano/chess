@@ -1200,6 +1200,54 @@ function raiseStress(side, pieceType, kind) {
   if (pieceType === "Q") level = Math.max(level, 2);
   return level;
 }
+/* Sergeant voice: cartoon gibberish built from vowel formants. The words are not
+   real, but pitch, speed and roughness follow how angry he is. */
+const VOWELS = [[730, 1090], [530, 1840], [570, 840], [300, 2200], [440, 1020], [660, 1700]];
+let voiceNodes = [];
+function voice(text, level) {
+  try {
+    const a = ctx(), v = al();
+    voiceNodes.forEach(n => { try { n.stop(); } catch (e) {} });
+    voiceNodes = [];
+    if (v <= 0) return;
+    const base = [0, 125, 165, 215][level], step = [0, 0.11, 0.092, 0.074][level];
+    const chars = text.replace(/\s+/g, "").length;
+    const count = Math.min(34, Math.max(6, Math.round(chars / 2.6)));
+    const shout = /!/.test(text);
+    let shaper = null;
+    if (level === 3) {
+      shaper = a.createWaveShaper();
+      const curve = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 128 - 1; curve[i] = Math.tanh(x * 3); }
+      shaper.curve = curve; shaper.connect(sfxBus);
+    }
+    let t = a.currentTime + 0.08;
+    for (let k = 0; k < count; k++) {
+      const [f1, f2] = VOWELS[Math.floor(Math.random() * VOWELS.length)];
+      const progress = k / count;
+      // Calm: falls gently. Angry: wobbles. Furious: jumps around and rises at the end.
+      let pitch = base * (1 + (Math.random() - 0.5) * (0.12 + level * 0.1));
+      if (level === 1) pitch *= 1.08 - progress * 0.18;
+      if (level >= 2 && shout && progress > 0.75) pitch *= 1.25 + (level - 2) * 0.2;
+      if (level === 3 && Math.random() < 0.25) pitch *= 1.35;
+      const dur = step * (0.75 + Math.random() * 0.5);
+      const o = a.createOscillator(); o.type = "sawtooth";
+      o.frequency.setValueAtTime(pitch, t);
+      o.frequency.linearRampToValueAtTime(pitch * (level === 1 ? 0.94 : 1.06), t + dur);
+      const g = a.createGain();
+      env(g, t, v * (0.55 + level * 0.12) * (level === 3 ? 1 : 3.2), 0.012, dur);
+      for (const [f, q] of [[f1, 7], [f2, 9]]) {
+        const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = q;
+        o.connect(bp).connect(g);
+      }
+      g.connect(shaper || sfxBus);
+      o.start(t); o.stop(t + dur + 0.03);
+      voiceNodes.push(o);
+      t += dur + (Math.random() < 0.18 ? step * 0.9 : step * 0.15);
+    }
+  } catch (e) {}
+}
+
 function showTaunt(kind, pieceType, side, level) {
   if (prefs.taunts === "off") return;
   const el = $("taunt");
@@ -1211,7 +1259,7 @@ function showTaunt(kind, pieceType, side, level) {
   $("angerLabel").textContent = ANGER_LABEL[level];
   el.classList.toggle("warn", kind === "risky");
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
-  sfx.grumble(level);
+  voice($("tauntText").textContent, level);
   // Long enough to read while the 3D scene is moving: about 8 s, more for long lines.
   const ms = Math.max(8000, $("tauntText").textContent.length * 160);
   el.style.setProperty("--taunt-ms", ms + "ms");
