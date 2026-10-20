@@ -170,6 +170,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 
 .status { min-height: 1.4em; margin: 0; font-weight: 800; font-size: 15px; color: var(--ink-soft); text-align: center; }
 .status.alert { color: var(--flag); }
+.overbar { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.overbar .btn { font-size: 15px; padding: 8px 16px; }
 
 /* Side panel */
 .side { display: grid; gap: 14px; min-width: 0; }
@@ -319,6 +321,10 @@ select {
         </div>
       </div>
       <p class="status" id="status" aria-live="polite"></p>
+      <div class="overbar" id="overBar" hidden>
+        <button class="btn" id="showResult">Show result</button>
+        <button class="btn go" id="againBtn">Play again</button>
+      </div>
     </section>
 
     <aside class="side">
@@ -960,6 +966,7 @@ function render() {
   $("pB").classList.toggle("on", !G.over && st.turn === "b");
   renderCaps();
   renderClocks();
+  $("overBar").hidden = !G.over;
   if (typeof Battle !== "undefined") Battle.refresh();
 
   const humanTurn = !G.over && !G.thinking && !(G.mode === "cpu" && st.turn === "b");
@@ -1032,6 +1039,7 @@ function newGame() {
   G.st = initialState(); G.history = []; G.captured = { w: [], b: [] };
   G.selected = null; G.last = null; G.hint = null; G.over = null; G.started = false; G.thinking = false;
   G.moves = legalMoves(G.st); G.keys = [posKey(G.st)];
+  if (typeof Battle !== "undefined" && Battle.focus) Battle.focus(-1);
   G.names = {
     w: prefs.nameW.trim() || (G.mode === "cpu" ? "You" : "Player 1"),
     b: G.mode === "cpu" ? "Computer" : prefs.nameB.trim() || "Player 2",
@@ -1261,7 +1269,15 @@ $("resign").addEventListener("click", () => {
 });
 $("confNo").addEventListener("click", () => hide("confirm"));
 $("confYes").addEventListener("click", () => { hide("confirm"); const a = confirmAction; confirmAction = null; if (a) a(); });
-$("resView").addEventListener("click", () => hide("result"));
+$("resView").addEventListener("click", () => {
+  hide("result"); render();
+  if (typeof Battle !== "undefined" && Battle.active && G.over) {
+    const loser = G.over.winner ? opp(G.over.winner) : G.st.turn;
+    Battle.focus(kingSq(G.st.board, loser));
+  }
+});
+$("showResult").addEventListener("click", () => show("result"));
+$("againBtn").addEventListener("click", () => { newGame(); openMenu(); });
 $("resAgain").addEventListener("click", () => { hide("result"); newGame(); openMenu(); });
 
 document.addEventListener("keydown", e => {
@@ -1295,7 +1311,7 @@ const Battle = (() => {
   let embers, torches = [], banners = [], checkLight, shake = 0;
   const orbit = { yaw: 0, pitch: 0.58, dist: 10.5, targetYaw: 0 };
   const camPos = new T.Vector3(0, 5, 10), camLook = new T.Vector3();
-  let followUntil = 0, followMesh = null, followDir = new T.Vector3(0, 0, -1);
+  let followUntil = 0, followMesh = null, followDir = new T.Vector3(0, 0, -1), focusPt = null;
 
   const sqPos = i => new T.Vector3((i & 7) - 3.5, 0.1, (i >> 3) - 3.5);
   const HEIGHT = { P: 0.62, R: 0.8, N: 0.85, B: 0.95, Q: 1.08, K: 1.18 };
@@ -1581,7 +1597,7 @@ const Battle = (() => {
         const dx = e.clientX - down.x, dy = e.clientY - down.y;
         if (Math.abs(dx) + Math.abs(dy) > 6) moved = true;
         if (moved) {
-          orbit.targetYaw = down.yaw - dx * 0.008;
+          orbit.targetYaw = down.yaw - dx * 0.008; focusPt = null;
           orbit.pitch = Math.min(1.25, Math.max(0.18, down.pitch + dy * 0.006));
           followUntil = 0;
         }
@@ -1622,8 +1638,15 @@ const Battle = (() => {
     } else {
       followMesh = null;
       const y = orbit.yaw, pt = orbit.pitch, d = orbit.dist * (camera.aspect < 1.1 ? 1.28 : 1);
-      want.set(Math.sin(y) * Math.cos(pt) * d, Math.sin(pt) * d + 0.6, Math.cos(y) * Math.cos(pt) * d);
-      look.set(0, 0, -0.3 * Math.cos(y));
+      if (focusPt) {
+        // Close-up on the final position (e.g. the checkmated king).
+        const fd = 5.2;
+        want.set(focusPt.x + Math.sin(y) * Math.cos(0.42) * fd, Math.sin(0.42) * fd + 0.5, focusPt.z + Math.cos(y) * Math.cos(0.42) * fd);
+        look.copy(focusPt).setY(0.5);
+      } else {
+        want.set(Math.sin(y) * Math.cos(pt) * d, Math.sin(pt) * d + 0.6, Math.cos(y) * Math.cos(pt) * d);
+        look.set(0, 0, -0.3 * Math.cos(y));
+      }
     }
     const k = 1 - Math.exp(-dt * (followMesh ? 5 : 3.5));
     camPos.lerp(want, k); camLook.lerp(look, k);
@@ -1711,7 +1734,8 @@ const Battle = (() => {
     } else if (raf) { cancelAnimationFrame(raf); raf = 0; }
     return true;
   };
-  api.resetView = () => { orbit.pitch = 0.58; orbit.dist = 10.5; orbit.targetYaw = sideYaw(); lastSide = orbit.targetYaw; };
+  api.focus = sq => { focusPt = sq >= 0 ? sqPos(sq) : null; followUntil = 0; };
+  api.resetView = () => { focusPt = null; orbit.pitch = 0.58; orbit.dist = 10.5; orbit.targetYaw = sideYaw(); lastSide = orbit.targetYaw; };
   document.addEventListener("visibilitychange", () => {
     if (!api.active) return;
     if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
