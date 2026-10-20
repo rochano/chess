@@ -192,6 +192,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .sq.sel::before { background: rgba(245, 195, 68, 0.6); box-shadow: inset 0 0 0 0.5cqw var(--ink); }
 .sq.hint::before { box-shadow: inset 0 0 0 0.7cqw var(--leaf); background: rgba(110, 139, 78, 0.28); }
 .sq.check::before { background: radial-gradient(circle, rgba(255, 216, 77, 0.95) 0 30%, rgba(255, 216, 77, 0.35) 60%, transparent 72%); }
+.sq.can::before { box-shadow: inset 0 0 0 0.6cqw #4FB3D9; background: rgba(79, 179, 217, 0.3); animation: can 0.8s ease-in-out infinite alternate; }
+@keyframes can { from { opacity: 0.45; } to { opacity: 1; } }
 .sq.mate::before { background: radial-gradient(circle, rgba(229, 72, 77, 0.95) 0 30%, rgba(229, 72, 77, 0.4) 60%, transparent 72%); }
 .sq.target::after {
   content: ""; position: absolute; width: 30%; height: 30%; border-radius: 50%;
@@ -514,7 +516,7 @@ select {
     <h2 id="credTitle">Credits</h2>
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.21-b</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.21-c</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -1027,6 +1029,7 @@ function render() {
     if (G.selected === i) cls.push("sel");
     if (G.hint && (G.hint.from === i || G.hint.to === i)) cls.push("hint");
     if (i === kingInCheck) cls.push(G.over && G.over.type === "mate" ? "mate" : "check");
+    if (G.stuck && G.moves.some(m => m.from === i)) cls.push("can");
     if (targets.has(i)) { cls.push("target"); if (p || targets.get(i).ep) cls.push("take"); }
     el.className = cls.join(" ");
     el.innerHTML = p ? pieceHTML(p, i === G.animTo ? "lift" : "") : "";
@@ -1044,6 +1047,7 @@ function render() {
   const status = $("status");
   status.classList.toggle("alert", kingInCheck >= 0 && !G.over);
   if (G.over) status.textContent = G.over.text;
+  else if (G.stuck) status.textContent = G.stuck.text;
   else if (kingInCheck >= 0) status.textContent = "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.";
   else if (G.hint) status.textContent = "Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to);
   else if (!G.history.length) status.textContent = G.mode === "cpu" ? "You play White. Tap a piece to see its moves." : "Tap a piece to see its moves.";
@@ -1152,7 +1156,22 @@ function onSquare(i) {
     }
   }
   G.selected = p && p[0] === G.st.turn && G.selected !== i ? i : null;
-  if (G.selected !== null) sfx.select();
+  G.stuck = null;
+  if (G.selected !== null && !G.moves.some(m => m.from === G.selected)) {
+    // This piece has no legal move: say why and point at the pieces that can move.
+    const t = p[1], check = inCheck(G.st.board, G.st.turn);
+    G.stuck = {
+      until: Date.now() + 4500,
+      text: check
+        ? (t === "K" ? "Your king has no safe square: its neighbours are blocked by your own pieces or attacked. " : "This " + NAME[t] + " can't stop the check. ")
+          + "Block the check or capture the attacker. Glowing pieces can move."
+        : "This " + NAME[t] + " has no legal move" + (t === "K" ? "" : " (it may be pinned to your king)") + ". Glowing pieces can move.",
+    };
+    G.selected = null;
+    if (typeof Battle !== "undefined" && Battle.focus) Battle.focus(-1); // pull the camera back so the glowing pieces show
+    sfx.click();
+    setTimeout(() => { if (G.stuck && Date.now() >= G.stuck.until) { G.stuck = null; render(); } }, 4600);
+  } else if (G.selected !== null) sfx.select();
   render();
 }
 
@@ -1873,6 +1892,7 @@ const Battle = (() => {
     marks = [];
     if (G.last) { mark(G.last.from, markGeo, 0xF5C344, 0.28); mark(G.last.to, markGeo, 0xF5C344, 0.35); }
     if (G.hint) { mark(G.hint.from, markGeo, 0x7DB35A, 0.5); mark(G.hint.to, markGeo, 0x7DB35A, 0.5); }
+    if (G.stuck) for (const f of new Set(G.moves.map(m => m.from))) mark(f, ringGeo, 0x4FB3D9, 0.95);
     if (G.selected !== null) {
       mark(G.selected, markGeo, 0xFFD24A, 0.6);
       for (const mv of G.moves) if (mv.from === G.selected) {
