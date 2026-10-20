@@ -133,6 +133,20 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .taunt .bubble b { display: block; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--flag); }
 .taunt .bubble p { margin: 2px 0 0; font-weight: 800; font-size: 16px; line-height: 1.35; }
 .taunt.warn .bubble b { color: var(--ember); }
+.taunt .soldier .steam, .taunt .soldier .cheeks { display: none; }
+.taunt[data-level="2"] .soldier .cheeks, .taunt[data-level="3"] .soldier .cheeks { display: inline; }
+.taunt[data-level="3"] .soldier .steam { display: inline; animation: steam 0.6s ease-in-out infinite alternate; }
+.taunt[data-level="3"] .soldier .face { fill: #EE8F70; }
+.taunt[data-level="3"] .soldier .sweat { display: none; }
+.taunt[data-level="3"].show .soldier { animation: rant 0.16s ease-in-out 0.4s 6 alternate; }
+.taunt[data-level="3"] .bubble { border-color: var(--flag); box-shadow: 4px 4px 0 var(--flag); }
+.taunt[data-level="3"] .bubble p { font-size: 17px; }
+@keyframes steam { from { transform: translateY(0); opacity: .5; } to { transform: translateY(-4px); opacity: 1; } }
+.anger { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; font-weight: 800; color: var(--ink-soft); }
+.anger i { width: 18px; height: 8px; border-radius: 3px; border: 1.5px solid var(--ink); background: var(--paper-2); }
+.anger i.on { background: var(--sun); }
+.taunt[data-level="2"] .anger i.on { background: var(--ember); }
+.taunt[data-level="3"] .anger i.on { background: var(--flag); }
 .taunt .bubble small { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-soft); }
 .taunt .bubble .bar { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 3px; border-radius: 2px; background: var(--paper-2); overflow: hidden; }
 .taunt .bubble .bar i { display: block; height: 100%; background: var(--ink-soft); transform-origin: left; }
@@ -353,7 +367,8 @@ select {
           <path d="M14 112c2-20 14-30 32-30s30 10 32 30z" fill="#5E6B3A" stroke="#2F2620" stroke-width="3"/>
           <path d="M38 84l8 10 8-10" fill="#C9A227" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
           <rect x="34" y="70" width="24" height="16" rx="5" fill="#E8B48C" stroke="#2F2620" stroke-width="3"/>
-          <ellipse cx="46" cy="52" rx="24" ry="25" fill="#F0C29B" stroke="#2F2620" stroke-width="3"/>
+          <ellipse class="face" cx="46" cy="52" rx="24" ry="25" fill="#F0C29B" stroke="#2F2620" stroke-width="3"/>
+          <g class="cheeks"><ellipse cx="30" cy="68" rx="5" ry="3" fill="#E5574A" opacity=".55"/><ellipse cx="62" cy="68" rx="5" ry="3" fill="#E5574A" opacity=".55"/></g>
           <path d="M16 46c0-20 13-31 30-31s30 11 30 31c0 3-2 4-5 4H21c-3 0-5-1-5-4z" fill="#6B7A3E" stroke="#2F2620" stroke-width="3"/>
           <path d="M12 48h68" stroke="#2F2620" stroke-width="5" stroke-linecap="round"/>
           <circle cx="46" cy="30" r="5" fill="#C9A227" stroke="#2F2620" stroke-width="2"/>
@@ -361,9 +376,10 @@ select {
           <circle cx="36" cy="63" r="2.8" fill="#2F2620"/><circle cx="56" cy="63" r="2.8" fill="#2F2620"/>
           <path d="M33 72c4-4 9-5 13-2 4-3 9-2 13 2-5 2-9 2-13 0-4 2-8 2-13 0z" fill="#3A2A1E"/>
           <path d="M38 74q8 10 16 0z" fill="#8E2A22" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
-          <path d="M70 54q8-4 6 6" fill="none" stroke="#7FB3E0" stroke-width="3" stroke-linecap="round"/>
+          <path class="sweat" d="M70 54q8-4 6 6" fill="none" stroke="#7FB3E0" stroke-width="3" stroke-linecap="round"/>
+          <g class="steam" fill="none" stroke="#9AA0A6" stroke-width="3.5" stroke-linecap="round"><path d="M10 30q-6-6 0-12t0-12"/><path d="M82 30q6-6 0-12t0-12"/></g>
         </svg>
-        <div class="bubble"><b id="tauntWho">Sergeant Somchai</b><p id="tauntText"></p><small>แตะเพื่อปิด</small><span class="bar"><i></i></span></div>
+        <div class="bubble"><b id="tauntWho">Sergeant Somchai</b><p id="tauntText"></p><div class="anger" aria-hidden="false"><span>ความเครียด</span><i></i><i></i><i></i><span id="angerLabel"></span></div><small>แตะเพื่อปิด</small><span class="bar"><i></i></span></div>
       </div>
       <p class="status" id="status" aria-live="polite"></p>
       <div class="overbar" id="overBar" hidden>
@@ -849,7 +865,10 @@ const sfx = {
   promote: () => { clack(mv()); [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.25, mv() * 0.4, "sine", 0.05 + i * 0.06)); },
   check: () => { tone(988, 0.5, al() * 0.7, "sine"); tone(1482, 0.35, al() * 0.25, "sine"); tone(740, 0.5, al() * 0.4, "triangle", 0.12); },
   tick: () => tone(1500, 0.03, al() * 0.4, "square"),
-  grumble: () => { tone(150, 0.18, al() * 0.5, "sawtooth"); tone(120, 0.25, al() * 0.45, "sawtooth", 0.16); },
+  grumble: (level = 1) => {
+    const v = al() * (0.35 + level * 0.15);
+    for (let k = 0; k < level + 1; k++) tone(160 - k * 12 + level * 10, 0.16, v, "sawtooth", k * 0.14);
+  },
   click: () => tone(520, 0.04, mv() * 0.3, "triangle"),
   end: () => {
     const o = G.over; if (!o) return;
@@ -1097,7 +1116,7 @@ function newGame() {
     w: prefs.nameW.trim() || (G.mode === "cpu" ? "You" : "Player 1"),
     b: G.mode === "cpu" ? "Computer" : prefs.nameB.trim() || "Player 2",
   };
-  G.reported = false; G.startedAt = new Date();
+  G.reported = false; G.startedAt = new Date(); G.stress = { w: 0, b: 0 };
   $("nameW").innerHTML = esc(G.names.w) + "<small>White</small>";
   $("nameB").innerHTML = esc(G.names.b) + "<small>Black · " + (G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
   $("avW").innerHTML = AVATAR.p1;
@@ -1153,36 +1172,46 @@ function doMove(m) {
 const THAI_PIECE = { P: "เบี้ย", N: "ม้า", B: "บิชอป", R: "เรือ", Q: "ควีน", K: "คิง" };
 const RANT = {
   risky: [
-    "ผู้บัญชาการ! จะส่ง{p}ไปตายเปล่าๆ แบบนี้เหรอครับ!",
-    "เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!",
-    "ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!",
-    "แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!",
-    "ท่านครับ ผมว่า{p}มันกลัวแล้วนะ ถอยก่อนดีไหม!",
+    ["เอ่อ ท่านครับ {p}ตัวนั้นดูเสี่ยงๆ นะครับ", "ท่านครับ {p}ยืนตรงนั้นไม่มีใครคุ้มกันนะ ระวังหน่อย", "ผมว่า{p}มันกลัวแล้วนะครับ ถอยก่อนดีไหม"],
+    ["เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!", "ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!", "แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!"],
+    ["อีกแล้วเหรอท่าน!!! ส่ง{p}ไปตายเปล่าๆ อีกแล้ว!!!", "ผมจะลาออกแล้วนะครับ!!! {p}ยืนรอโดนกินแบบนั้นได้ไง!!!", "ท่านเล่นให้ข้าศึกเหรอครับ!!! {p}โดนเล็งอยู่เห็นไหม!!!"],
   ],
   lost: [
-    "เสีย{p}ไปอีกตัวแล้วครับท่าน! ตั้งสติหน่อย!",
-    "โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!",
-    "ท่านครับ เสีย{p}แบบนี้ เราไม่ได้กลับบ้านแน่!",
-    "{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!",
-    "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!",
+    ["เสีย{p}ไปตัวนึงแล้วครับท่าน ตั้งใจหน่อยนะ", "อ้าว {p}ของเราไปแล้ว... ไม่เป็นไรครับ สู้ต่อ", "{p}ล้มไปแล้วครับ คราวหน้าระวังหน่อยนะท่าน"],
+    ["โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!", "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!", "{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!"],
+    ["พอแล้วท่าน!!! เสีย{p}อีกแล้ว!!! ผมจะบ้าตาย!!!", "ท่านครับ!!! {p}ไปแล้ว!!! เราจะเหลืออะไรให้สู้!!!", "ผมยื่นใบลาออกตอนนี้เลยนะครับ!!! เสีย{p}แบบนี้!!!"],
   ],
 };
+const ANGER_LABEL = ["", "หงุดหงิด", "โมโห", "เดือดสุดๆ"];
 let tauntTimer = 0, tauntLeft = 0, tauntStart = 0, lastRant = {};
 function material(board, color) { return board.reduce((s, p) => s + (p ? (p[0] === color ? 1 : -1) * VAL[p[1]] : 0), 0); }
 function humanSide(c) { return G.mode !== "cpu" || c === "w"; }
-function pickLine(kind) {
-  const list = RANT[kind];
-  let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === lastRant[kind]);
-  lastRant[kind] = k; return list[k];
+function pickLine(kind, level) {
+  const list = RANT[kind][level - 1], key = kind + level;
+  let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === lastRant[key]);
+  lastRant[key] = k; return list[k];
 }
-function showTaunt(kind, pieceType, side) {
+// Stress builds with each mistake (more for bigger pieces) and cools off with clean moves.
+function raiseStress(side, pieceType, kind) {
+  G.stress = G.stress || { w: 0, b: 0 };
+  G.stress[side] = Math.min(100, G.stress[side] + VAL[pieceType] / 100 * 7 + (kind === "lost" ? 12 : 4));
+  const v = G.stress[side];
+  let level = v < 35 ? 1 : v < 70 ? 2 : 3;
+  if (pieceType === "Q") level = Math.max(level, 2);
+  return level;
+}
+function showTaunt(kind, pieceType, side, level) {
   if (prefs.taunts === "off") return;
   const el = $("taunt");
-  $("tauntText").textContent = pickLine(kind).replace("{p}", THAI_PIECE[pieceType]);
-  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือนแล้วนะ" : "จ่าสมชาย โมโหแล้ว") + (G.mode === "cpu" ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
+  level = level || 1;
+  el.dataset.level = level;
+  $("tauntText").textContent = pickLine(kind, level).replace(/\{p\}/g, THAI_PIECE[pieceType]);
+  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือน" : "จ่าสมชาย ด่า") + (G.mode === "cpu" ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
+  el.querySelectorAll(".anger i").forEach((d, k) => d.classList.toggle("on", k < level));
+  $("angerLabel").textContent = ANGER_LABEL[level];
   el.classList.toggle("warn", kind === "risky");
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
-  sfx.grumble();
+  sfx.grumble(level);
   // Long enough to read while the 3D scene is moving: about 8 s, more for long lines.
   const ms = Math.max(8000, $("tauntText").textContent.length * 160);
   el.style.setProperty("--taunt-ms", ms + "ms");
@@ -1195,21 +1224,24 @@ function sergeant(m, prev, next, mover) {
   // 1) The opponent just won material from a human side.
   if (next.captured && humanSide(victim) && VAL[next.captured[1]] >= 300) {
     const before = G.history.length >= 2 ? material(G.history[G.history.length - 2].st.board, victim) : material(prev.board, victim);
-    if (before - material(next.board, victim) >= 250) { showTaunt("lost", next.captured[1], victim); return; }
+    if (before - material(next.board, victim) >= 250) { showTaunt("lost", next.captured[1], victim, raiseStress(victim, next.captured[1], "lost")); return; }
   }
   // 2) A human move that leaves material hanging: compare the position as it
   //    stands with what is left after the opponent's best run of captures.
   if (!humanSide(mover)) return;
   const stand = evaluate(next.board) * (mover === "w" ? 1 : -1);
   const after = -quiesce(next, -Infinity, Infinity, 0);
-  if (stand - after < 220) return;
+  if (stand - after < 220) {
+    if (G.stress) G.stress[mover] = Math.max(0, G.stress[mover] - 8);
+    return;
+  }
   // Name the most valuable piece of ours the opponent can take.
   let worst = null;
   for (const mv of pseudoMoves(next, victim)) {
     const t = next.board[mv.to];
     if (t && t[0] === mover && t[1] !== "K" && (!worst || VAL[t[1]] > VAL[worst])) worst = t[1];
   }
-  if (worst) showTaunt("risky", worst, mover);
+  if (worst) showTaunt("risky", worst, mover, raiseStress(mover, worst, "risky"));
 }
 
 function maybeComputer() {
@@ -1419,7 +1451,7 @@ $("taunt").addEventListener("pointerleave", () => {
 $("segTaunts").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   prefs.taunts = b.dataset.v; savePrefs(); syncTaunts();
-  if (prefs.taunts === "on") showTaunt("risky", "Q", "w");
+  if (prefs.taunts === "on") showTaunt("risky", "N", "w", 1);
 });
 function syncTaunts() { $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
 syncTaunts();
