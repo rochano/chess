@@ -121,7 +121,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 }
 .taunt.show { transform: none; pointer-events: auto; cursor: pointer; }
 .taunt .soldier { width: 92px; height: 112px; filter: drop-shadow(3px 4px 0 rgba(47, 38, 32, 0.6)); }
-.taunt.show .soldier { animation: rant 0.32s ease-in-out 0.4s 4 alternate; }
+.taunt.show .soldier { animation: rant 0.3s ease-in-out 0.4s 2 alternate; }
 @keyframes rant { from { transform: rotate(-3deg); } to { transform: rotate(4deg) translateY(-3px); } }
 .taunt .bubble {
   position: relative; margin-bottom: 46px; margin-left: 6px; padding: 10px 14px;
@@ -133,6 +133,12 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .taunt .bubble b { display: block; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--flag); }
 .taunt .bubble p { margin: 2px 0 0; font-weight: 800; font-size: 16px; line-height: 1.35; }
 .taunt.warn .bubble b { color: var(--ember); }
+.taunt .bubble small { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; color: var(--ink-soft); }
+.taunt .bubble .bar { position: absolute; left: 12px; right: 12px; bottom: 5px; height: 3px; border-radius: 2px; background: var(--paper-2); overflow: hidden; }
+.taunt .bubble .bar i { display: block; height: 100%; background: var(--ink-soft); transform-origin: left; }
+.taunt.show .bubble .bar i { animation: drain var(--taunt-ms, 8000ms) linear forwards; }
+.taunt.hold .bubble .bar i { animation-play-state: paused; }
+@keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @media (max-width: 460px) { .taunt { grid-template-columns: 70px minmax(0, 1fr); } .taunt .soldier { width: 70px; height: 86px; } .taunt .bubble p { font-size: 14px; } }
 @media (prefers-reduced-motion: reduce) { .taunt { transition: none; } .taunt.show .soldier { animation: none; } }
 .frame {
@@ -357,7 +363,7 @@ select {
           <path d="M38 74q8 10 16 0z" fill="#8E2A22" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
           <path d="M70 54q8-4 6 6" fill="none" stroke="#7FB3E0" stroke-width="3" stroke-linecap="round"/>
         </svg>
-        <div class="bubble"><b id="tauntWho">Sergeant Somchai</b><p id="tauntText"></p></div>
+        <div class="bubble"><b id="tauntWho">Sergeant Somchai</b><p id="tauntText"></p><small>แตะเพื่อปิด</small><span class="bar"><i></i></span></div>
       </div>
       <p class="status" id="status" aria-live="polite"></p>
       <div class="overbar" id="overBar" hidden>
@@ -1161,7 +1167,7 @@ const RANT = {
     "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!",
   ],
 };
-let tauntTimer = 0, lastRant = {};
+let tauntTimer = 0, tauntLeft = 0, tauntStart = 0, lastRant = {};
 function material(board, color) { return board.reduce((s, p) => s + (p ? (p[0] === color ? 1 : -1) * VAL[p[1]] : 0), 0); }
 function humanSide(c) { return G.mode !== "cpu" || c === "w"; }
 function pickLine(kind) {
@@ -1177,8 +1183,12 @@ function showTaunt(kind, pieceType, side) {
   el.classList.toggle("warn", kind === "risky");
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
   sfx.grumble();
+  // Long enough to read while the 3D scene is moving: about 8 s, more for long lines.
+  const ms = Math.max(8000, $("tauntText").textContent.length * 160);
+  el.style.setProperty("--taunt-ms", ms + "ms");
+  tauntLeft = ms; tauntStart = Date.now();
   clearTimeout(tauntTimer);
-  tauntTimer = setTimeout(() => el.classList.remove("show"), 3600);
+  tauntTimer = setTimeout(() => el.classList.remove("show"), ms);
 }
 function sergeant(m, prev, next, mover) {
   const victim = next.turn;
@@ -1395,7 +1405,17 @@ document.addEventListener("keydown", e => {
   else if (!$("menu").hidden && !$("closeMenu").hidden) hide("menu");
 });
 
-$("taunt").addEventListener("click", () => $("taunt").classList.remove("show"));
+$("taunt").addEventListener("click", () => { clearTimeout(tauntTimer); $("taunt").classList.remove("show", "hold"); });
+// Pause the countdown while the pointer rests on the message.
+$("taunt").addEventListener("pointerenter", () => {
+  const el = $("taunt"); if (!el.classList.contains("show")) return;
+  clearTimeout(tauntTimer); tauntLeft -= Date.now() - tauntStart; el.classList.add("hold");
+});
+$("taunt").addEventListener("pointerleave", () => {
+  const el = $("taunt"); if (!el.classList.contains("hold")) return;
+  el.classList.remove("hold"); tauntStart = Date.now();
+  tauntTimer = setTimeout(() => el.classList.remove("show"), Math.max(1500, tauntLeft));
+});
 $("segTaunts").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   prefs.taunts = b.dataset.v; savePrefs(); syncTaunts();
