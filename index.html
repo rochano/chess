@@ -1234,8 +1234,9 @@ function voice(text, level) {
     try {
       const u = new SpeechSynthesisUtterance(text.replace(/!+/g, "!"));
       u.voice = thaiVoice; u.lang = thaiVoice.lang;
-      u.pitch = [1, 0.75, 1.05, 1.4][level];
-      u.rate = [1, 0.95, 1.15, 1.4][level];
+      u.pitch = [1, 0.8, 1.1, 1.45][level];
+      // Keep speed close to normal so Thai stays clear; anger shows in pitch instead.
+      u.rate = [1, 0.9, 1, 1.08][level];
       u.volume = Math.min(1, v * 1.2);
       speechSynthesis.speak(u);
       return;
