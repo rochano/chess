@@ -220,6 +220,12 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .seg button { border: 0; padding: 8px 4px; background: var(--paper-2); font-weight: 800; font-size: 14px; }
 .seg button + button { border-left: 2px solid var(--ink); }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.names { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; }
+.names input {
+  width: 100%; min-width: 0; padding: 8px 10px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper-2);
+  font: inherit; font-weight: 800; color: var(--ink);
+}
+.saved { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
 .btns { display: grid; gap: 10px; }
 .btn {
   border: 2.5px solid var(--ink); border-radius: 10px; padding: 10px 16px; background: var(--stone);
@@ -325,6 +331,13 @@ select {
       </div>
     </div>
     <div class="field">
+      <span class="lbl">Player names</span>
+      <div class="names">
+        <input id="inNameW" maxlength="24" placeholder="White" aria-label="White player name" autocomplete="off">
+        <input id="inNameB" maxlength="24" placeholder="Black" aria-label="Black player name" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
       <span class="lbl">Clock</span>
       <div class="seg" id="segClock">
         <button data-v="0" aria-pressed="false">None</button>
@@ -406,6 +419,7 @@ select {
     <div class="result-badge" id="resBadge"></div>
     <h2 id="resTitle">Checkmate</h2>
     <p id="resText"></p>
+    <p class="saved" id="resSaved" hidden></p>
     <div class="row2">
       <button class="btn" id="resView">View board</button>
       <button class="btn go" id="resAgain">Play again</button>
@@ -670,7 +684,10 @@ const THEMES = {
   slate: ["#D8DCE0", "#4A525C", "#6A737D"],
 };
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, theme: "walnut" };
+// Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
+const SHEET_URL = "";
+
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, theme: "walnut", nameW: "", nameB: "" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -800,6 +817,32 @@ function renderClocks() {
 }
 
 /* ---------- Game flow ---------- */
+function esc(t) { return String(t).replace(/[&<>"']/g, ch => "&#" + ch.charCodeAt(0) + ";"); }
+
+function reportResult() {
+  const el = $("resSaved");
+  el.hidden = true;
+  if (!SHEET_URL || G.reported) return;
+  G.reported = true;
+  const o = G.over;
+  const row = {
+    finishedAt: new Date().toISOString(),
+    white: G.names.w,
+    black: G.names.b,
+    opponent: G.mode === "cpu" ? "Computer (" + ["", "Easy", "Normal", "Hard"][G.level] + ")" : "Friend",
+    winner: o.type === "draw" ? "Draw" : o.winner === "w" ? G.names.w : G.names.b,
+    result: o.type === "draw" ? "1/2-1/2" : o.winner === "w" ? "1-0" : "0-1",
+    reason: { mate: "Checkmate", flag: "Time", resign: "Resignation", draw: o.text.replace(/\.$/, "") }[o.type],
+    moves: Math.ceil(G.history.length / 2),
+    clock: G.tc ? prefs.clock : "None",
+    minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
+  };
+  el.hidden = false; el.textContent = "Saving to the score sheet…";
+  fetch(SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) })
+    .then(() => { el.textContent = "Result sent to the score sheet."; })
+    .catch(() => { el.textContent = "Couldn't reach the score sheet. Check your connection."; G.reported = false; });
+}
+
 function newGame() {
   G.mode = prefs.mode; G.level = +prefs.level;
   const [base, inc] = prefs.clock === "0" ? [0, 0] : prefs.clock.split("+").map(Number);
@@ -808,8 +851,13 @@ function newGame() {
   G.st = initialState(); G.history = []; G.captured = { w: [], b: [] };
   G.selected = null; G.last = null; G.hint = null; G.over = null; G.started = false; G.thinking = false;
   G.moves = legalMoves(G.st); G.keys = [posKey(G.st)];
-  $("nameW").innerHTML = (G.mode === "cpu" ? "You" : "Player 1") + "<small>White</small>";
-  $("nameB").innerHTML = (G.mode === "cpu" ? "Computer" : "Player 2") + "<small>Black · " + (G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
+  G.names = {
+    w: prefs.nameW.trim() || (G.mode === "cpu" ? "You" : "Player 1"),
+    b: G.mode === "cpu" ? "Computer" : prefs.nameB.trim() || "Player 2",
+  };
+  G.reported = false; G.startedAt = new Date();
+  $("nameW").innerHTML = esc(G.names.w) + "<small>White</small>";
+  $("nameB").innerHTML = esc(G.names.b) + "<small>Black · " + (G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
   $("avW").innerHTML = AVATAR.p1;
   $("avB").innerHTML = G.mode === "cpu" ? AVATAR.cpu : AVATAR.p2;
   render();
@@ -941,6 +989,7 @@ function askPromotion(cands) {
 
 function showResult() {
   const o = G.over, badge = $("resBadge");
+  reportResult();
   const youLost = G.mode === "cpu" && o.winner === "b";
   if (o.type === "draw") { badge.className = "result-badge draw"; badge.textContent = "♚"; $("resTitle").textContent = "Draw"; }
   else {
@@ -961,6 +1010,8 @@ function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
     $(seg).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs[key]))));
   $("levelField").hidden = prefs.mode !== "cpu";
+  $("inNameB").hidden = prefs.mode === "cpu";
+  $("inNameW").placeholder = prefs.mode === "cpu" ? "Your name" : "White";
 }
 for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]]) {
   $(seg).addEventListener("click", e => {
@@ -1025,6 +1076,11 @@ document.addEventListener("keydown", e => {
   else if (!$("result").hidden) hide("result");
   else if (!$("menu").hidden && !$("closeMenu").hidden) hide("menu");
 });
+
+for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
+  $(id).value = prefs[key];
+  $(id).addEventListener("input", e => { prefs[key] = e.target.value; savePrefs(); });
+}
 
 applyTheme();
 syncMenu();
