@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H279VKG5J3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-H279VKG5J3');
+</script>
 <style>[hidden]{display:none!important}body{margin:0}img{max-width:100%}</style>
 </head>
 <body>
@@ -389,6 +396,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Pieces use the Noto Sans Symbols 2 typeface.</p>
+    <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
 </div>
@@ -825,6 +833,7 @@ function reportResult() {
   if (!SHEET_URL || G.reported) return;
   G.reported = true;
   const o = G.over;
+  if (window.gtag) gtag("event", "game_end", { opponent: G.mode, result: o.type, moves: Math.ceil(G.history.length / 2) });
   const row = {
     finishedAt: new Date().toISOString(),
     white: G.names.w,
