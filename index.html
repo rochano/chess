@@ -488,6 +488,14 @@ select {
       </div>
     </div>
     <div class="field">
+      <span class="lbl">Sergeant speaking speed</span>
+      <div class="seg" id="segRate">
+        <button data-v="0.65" aria-pressed="false">Slow</button>
+        <button data-v="0.8" aria-pressed="true">Medium</button>
+        <button data-v="1" aria-pressed="false">Normal</button>
+      </div>
+    </div>
+    <div class="field">
       <label class="lbl" for="theme">Theme select</label>
       <select id="theme">
         <option value="walnut">Walnut</option>
@@ -506,7 +514,7 @@ select {
     <h2 id="credTitle">Credits</h2>
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface.</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.21-b</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -808,7 +816,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", theme: "walnut", nameW: "", nameB: "" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", voiceRate: "0.8", theme: "walnut", nameW: "", nameB: "" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -1232,13 +1240,18 @@ function voice(text, level) {
   if (v <= 0) return;
   if (prefs.voice !== "mumble" && thaiVoice) {
     try {
-      const u = new SpeechSynthesisUtterance(text.replace(/!+/g, "!"));
-      u.voice = thaiVoice; u.lang = thaiVoice.lang;
-      u.pitch = [1, 0.8, 1.1, 1.45][level];
-      // Keep speed close to normal so Thai stays clear; anger shows in pitch instead.
-      u.rate = [1, 0.9, 1, 1.08][level];
-      u.volume = Math.min(1, v * 1.2);
-      speechSynthesis.speak(u);
+      // Speak phrase by phrase (split at spaces and punctuation) so there are
+      // natural pauses, at a steady slow speed. Anger shows in pitch only.
+      const phrases = text.replace(/\.{2,}|…/g, " ").split(/[\s!?]+/).filter(Boolean);
+      const rate = +prefs.voiceRate || 0.8;
+      for (const ph of phrases) {
+        const u = new SpeechSynthesisUtterance(ph);
+        u.voice = thaiVoice; u.lang = thaiVoice.lang;
+        u.pitch = [1, 0.85, 1.1, 1.4][level];
+        u.rate = rate;
+        u.volume = Math.min(1, v * 1.2);
+        speechSynthesis.speak(u);
+      }
       return;
     } catch (e) {}
   }
@@ -1575,7 +1588,13 @@ $("segVoice").addEventListener("click", e => {
   prefs.voice = b.dataset.v; savePrefs(); syncTaunts();
   if (prefs.taunts === "on") showTaunt("lost", "B", "w", 2);
 });
+$("segRate").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  prefs.voiceRate = b.dataset.v; savePrefs(); syncTaunts();
+  if (prefs.taunts === "on") showTaunt("lost", "B", "w", 3);
+});
 function syncTaunts() {
+  $("segRate").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs.voiceRate))));
   $("segVoice").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.voice))); $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
 syncTaunts();
 for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
