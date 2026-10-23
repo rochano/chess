@@ -20,3 +20,7 @@ The Leaderboard's "Everyone" tab reads the Scores tab through the same web app (
 ## Online play
 
 Online games connect the two devices directly with [PeerJS](https://peerjs.com/) (WebRTC) and its free public signalling server. The host creates a room and shares the code or link; the host plays White.
+
+## Credits
+
+Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), taken from [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts) by Benjamin Gleitzman. A sparse set of notes per instrument is stored in `sounds/`.

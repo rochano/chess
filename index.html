@@ -653,7 +653,8 @@ select {
     <h2 id="credTitle">Credits</h2>
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-c</p>
+    <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-d</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -1081,17 +1082,20 @@ const sfx = {
 };
 
 /* Background music: a slow lo-fi loop (Am7 - Fmaj7 - Cmaj7 - G6) with a soft pad, bass and sparse plucks. */
-/* Adaptive music. Each theme is a 4-bar loop scheduled one bar at a time, so a
-   change of theme or of intensity lands on the next bar line.
-   menu    the main theme: the leitmotif over Am F C G, the tune players remember
-   lesson  bright C major plucks for teaching and drills
-   battle  A minor for games; intensity 0-3 adds drums, bass, speed and strings
-           as the pressure rises (check, low clock, material down, endgame)
-   boss    driving A phrygian riff for boss stages
-   after   a soft pad after a game ends */
-const MUSIC = { timer: null, next: 0, bar: 0, theme: "menu", level: 0, want: { theme: "menu", level: 0 } };
+/* Adaptive orchestral music. Each theme is a 4-bar loop scheduled one bar at a
+   time, so a change of theme or intensity lands on the next bar line.
+   menu    slow and warm: the leitmotif on cello over harp and strings
+   lesson  easy-going: flute tunes over pizzicato strings and harp
+   battle  games. Intensity 0 is flute over strings, 1 brings cello and timpani,
+           2 and 3 are the full orchestra: horns on the leitmotif, tremolo strings,
+           trumpets and timpani rolls, faster as the pressure rises
+   boss    driving full orchestra for boss stages
+   after   a lone cello after a game ends
+   Instruments are real samples (FluidR3 GM soundfont, CC BY 3.0) loaded on first
+   play; until a sample arrives, a simple synth voice stands in. */
+const MUSIC = { timer: null, next: 0, bar: 0, theme: "menu", level: 0 };
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
-function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 0.22 : 0; }
+function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 0.3 : 0; }
 // The leitmotif: [midi note, start beat, length in beats] per bar.
 const MOTIF = [
   [[76, 0, 1], [81, 1, 1], [79, 2, 0.5], [76, 2.5, 0.5], [74, 3, 1]],
@@ -1103,140 +1107,193 @@ const MOTIF_MINOR = [MOTIF[0], MOTIF[1], [[77, 0, 1], [81, 1, 1], [86, 2, 1], [8
 const LESSON_RIFF = [
   [[72, 0, 0.5], [76, 0.5, 0.5], [79, 1, 1], [76, 2, 0.5], [79, 2.5, 0.5], [81, 3, 1]],
   [[79, 0, 0.5], [76, 0.5, 0.5], [74, 1, 1], [72, 2, 2]],
+  [[77, 0, 0.5], [81, 0.5, 0.5], [84, 1, 1], [81, 2, 0.5], [77, 2.5, 0.5], [76, 3, 1]],
+  [[74, 0, 1], [79, 1, 1], [72, 2, 2]],
 ];
 const SONGS = {
-  menu: { bpm: 84, chords: [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]], roots: [45, 41, 48, 43] },
+  menu: { bpm: 72, chords: [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62]], roots: [45, 41, 48, 43] },
   lesson: { bpm: 96, chords: [[60, 64, 67], [57, 60, 64], [57, 60, 65], [55, 59, 62]], roots: [48, 45, 41, 43] },
-  battle: { bpm: 96, chords: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], roots: [45, 41, 38, 40] },
-  boss: { bpm: 124, chords: [[57, 60, 64], [58, 62, 65], [57, 60, 64], [52, 56, 59]], roots: [45, 46, 45, 40] },
-  after: { bpm: 70, chords: [[57, 60, 64], [53, 57, 60]], roots: [45, 41] },
+  battle: { bpm: 88, chords: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], roots: [45, 41, 38, 40] },
+  boss: { bpm: 120, chords: [[57, 60, 64], [58, 62, 65], [57, 60, 64], [52, 56, 59]], roots: [45, 46, 45, 40] },
+  after: { bpm: 63, chords: [[57, 60, 64], [53, 57, 60]], roots: [45, 41] },
 };
 function barLength() { const th = SONGS[MUSIC.theme]; return (60 / (th.bpm + (MUSIC.theme === "battle" ? MUSIC.level * 8 : 0))) * 4; }
 
-/* --- instruments --- */
+/* --- samples --- */
+const INST = {
+  cello: { gain: 1, attack: 0.07, release: 0.35, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72] },
+  contrabass: { gain: 1.1, attack: 0.05, release: 0.3, notes: [24, 27, 30, 33, 36, 39, 42, 45, 48] },
+  flute: { gain: 0.75, attack: 0.05, release: 0.25, notes: [60, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96] },
+  string_ensemble_1: { gain: 0.55, attack: 0.3, release: 0.6, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] },
+  tremolo_strings: { gain: 0.45, attack: 0.12, release: 0.4, notes: [48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] },
+  french_horn: { gain: 0.8, attack: 0.08, release: 0.35, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72] },
+  trumpet: { gain: 0.55, attack: 0.02, release: 0.2, notes: [51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] },
+  timpani: { gain: 1.2, attack: 0.004, release: 0.8, perc: true, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60] },
+  pizzicato_strings: { gain: 1, attack: 0.004, release: 0.3, perc: true, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] },
+  orchestral_harp: { gain: 0.8, attack: 0.004, release: 0.6, perc: true, notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96] },
+};
+const ORCH = { buf: {}, asked: {}, out: null };
+// Load the instruments a theme needs (the rest follow in the background).
+const NEEDS = {
+  menu: ["cello", "orchestral_harp", "string_ensemble_1", "contrabass"],
+  lesson: ["flute", "pizzicato_strings", "orchestral_harp"],
+  battle: ["flute", "string_ensemble_1", "cello", "contrabass", "timpani", "french_horn", "tremolo_strings", "trumpet"],
+};
+function orchLoad(names) {
+  for (const name of names) {
+    if (ORCH.asked[name]) continue;
+    ORCH.asked[name] = true; ORCH.buf[name] = {};
+    for (const n of INST[name].notes) {
+      fetch("sounds/" + name + "/" + n + ".mp3")
+        .then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+        .then(b => new Promise((res, rej) => audio.decodeAudioData(b, res, rej)))
+        .then(d => { ORCH.buf[name][n] = d; })
+        .catch(() => {});
+    }
+  }
+}
+// Music goes through a hall reverb so the orchestra sounds like it is in a room.
+function orchOut() {
+  if (ORCH.out && ORCH.out.context === audio) return ORCH.out;
+  const dry = audio.createGain(), verb = audio.createConvolver(), send = audio.createGain();
+  const len = Math.floor(audio.sampleRate * 2.4), ir = audio.createBuffer(2, len, audio.sampleRate);
+  for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+  verb.buffer = ir; send.gain.value = 0.32; dry.gain.value = 2.5;
+  dry.connect(musicBus); dry.connect(send); send.connect(verb); verb.connect(musicBus);
+  ORCH.out = dry;
+  return dry;
+}
+function play(name, t, n, dur, vol) {
+  const cfg = INST[name], set = ORCH.buf[name], out = orchOut();
+  let best = null;
+  if (set) for (const k in set) if (best === null || Math.abs(k - n) < Math.abs(best - n)) best = +k;
+  if (best === null || Math.abs(best - n) > 4) {
+    // Stand-in voice until the sample has loaded.
+    if (name === "timpani") return mTom(t, n, vol * 0.4);
+    return mOsc(cfg.perc ? "triangle" : "sawtooth", midi(n), t, cfg.perc ? Math.min(dur, 0.5) : dur, vol * (cfg.perc ? 0.12 : 0.04), out, cfg.perc ? 0.005 : cfg.attack);
+  }
+  const src = audio.createBufferSource(), g = audio.createGain(), rate = Math.pow(2, (n - best) / 12);
+  src.buffer = set[best]; src.playbackRate.value = rate;
+  const room = set[best].duration / rate - 0.05;
+  const hold = cfg.perc ? Math.min(room - cfg.release, Math.max(dur, 0.6)) : Math.min(dur, room - cfg.release);
+  const peak = vol * cfg.gain, a = Math.min(cfg.attack, Math.max(0.01, hold / 2));
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(peak, t + a);
+  g.gain.setValueAtTime(peak, t + Math.max(a, hold));
+  g.gain.linearRampToValueAtTime(0.0001, t + Math.max(a, hold) + cfg.release);
+  src.connect(g).connect(out); src.start(t); src.stop(t + Math.max(a, hold) + cfg.release + 0.05);
+}
+function line(name, t, bar, beat, vol, oct = 0) { for (const [n, b, d] of bar) play(name, t + b * beat, n + oct, d * beat * 0.97, vol); }
+function chordOn(name, t, notes, dur, vol, oct = 0) { for (const n of notes) play(name, t, n + oct, dur, vol); }
+
+/* --- synth helpers (stand-ins and percussion) --- */
 function mOsc(type, f, t, dur, peak, out, attack = 0.01, det = 0) {
   const o = audio.createOscillator(), g = audio.createGain();
   o.type = type; o.frequency.value = f; o.detune.value = det;
   env(g, t, peak, attack, dur); o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.05);
   return o;
 }
-function mPad(t, notes, dur, vol, out) {
-  for (const n of notes) for (const det of [-7, 7]) {
-    const o = audio.createOscillator(), g = audio.createGain();
-    o.type = "triangle"; o.frequency.value = midi(n); o.detune.value = det;
-    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + Math.min(0.8, dur / 3));
-    g.gain.setValueAtTime(vol, t + dur - 0.5); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.4);
-    o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.5);
-  }
+function mNoise(t, dur, vol, type, freq, out) {
+  const n = audio.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
+  const f = audio.createBiquadFilter(); f.type = type; f.frequency.value = freq;
+  const g = audio.createGain(); env(g, t, vol, 0.004, dur);
+  n.connect(f).connect(g).connect(out || orchOut()); n.start(t); n.stop(t + dur + 0.05);
 }
-function mNoise(t, dur, vol, type, freq, q) {
-  const n = audio.createBufferSource(); n.buffer = noiseBuf;
-  const f = audio.createBiquadFilter(); f.type = type; f.frequency.value = freq; if (q) f.Q.value = q;
-  const g = audio.createGain(); env(g, t, vol, 0.002, dur);
-  n.connect(f).connect(g).connect(musicBus); n.start(t); n.stop(t + dur + 0.05);
-}
-function mKick(t, vol) {
-  const o = audio.createOscillator(), g = audio.createGain();
-  o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-  env(g, t, vol, 0.003, 0.32); o.connect(g).connect(musicBus); o.start(t); o.stop(t + 0.35);
-}
-function mSnare(t, vol) { mNoise(t, 0.18, vol, "bandpass", 1900, 0.8); mOsc("triangle", 185, t, 0.1, vol * 0.5, musicBus); }
-function mHat(t, vol) { mNoise(t, 0.05, vol, "highpass", 7500); }
+function mCrash(t, vol) { mNoise(t, 2.2, vol, "highpass", 4200); mNoise(t, 0.6, vol * 0.6, "bandpass", 2500); }
 function mTom(t, n, vol) {
   const o = audio.createOscillator(), g = audio.createGain();
   o.frequency.setValueAtTime(midi(n) * 1.5, t); o.frequency.exponentialRampToValueAtTime(midi(n), t + 0.12);
-  env(g, t, vol, 0.004, 0.4); o.connect(g).connect(musicBus); o.start(t); o.stop(t + 0.45);
+  env(g, t, vol, 0.004, 0.5); o.connect(g).connect(orchOut()); o.start(t); o.stop(t + 0.55);
 }
-function mBass(t, n, dur, vol) {
-  const lp = audio.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 520; lp.connect(musicBus);
-  mOsc("sawtooth", midi(n), t, dur, vol, lp, 0.01);
-}
-function mTrem(t, notes, dur, vol, out) {
-  // Tremolo strings: the sound of rising tension.
-  for (const n of notes) {
-    const o = audio.createOscillator(), g = audio.createGain(), lfo = audio.createOscillator(), lg = audio.createGain();
-    o.type = "sawtooth"; o.frequency.value = midi(n);
-    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.3); g.gain.setValueAtTime(vol, t + dur - 0.2); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.1);
-    lfo.frequency.value = 9; lg.gain.value = vol * 0.8; lfo.connect(lg).connect(g.gain);
-    o.connect(g).connect(out); for (const x of [o, lfo]) { x.start(t); x.stop(t + dur + 0.2); }
-  }
-}
-function mMelody(t, bar, beat, type, vol, out, oct = 0) {
-  for (const [n, b, d] of bar) {
-    mOsc(type, midi(n + oct), t + b * beat, d * beat * 0.95, vol, out, 0.015);
-    if (type === "triangle") mOsc("sine", midi(n + oct + 12), t + b * beat, d * beat * 0.6, vol * 0.25, out, 0.01); // bell shimmer
-  }
-}
+function timpRoll(t, n, len, vol) { const k = Math.round(len / 0.07); for (let i = 0; i < k; i++) play("timpani", t + i * 0.07, n, 0.3, vol * (0.35 + 0.65 * i / k)); }
 
 /* --- one bar of the current theme --- */
 function scheduleBar(t) {
   const name = MUSIC.theme, th = SONGS[name], lv = MUSIC.level, k = MUSIC.bar % th.chords.length;
-  const len = barLength(), beat = len / 4, chord = th.chords[k], root = th.roots[k];
-  const lp = audio.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = name === "battle" ? 900 + lv * 650 : name === "boss" ? 2400 : 1500; lp.connect(musicBus);
+  const len = barLength(), beat = len / 4, chord = th.chords[k], root = th.roots[k], pass = Math.floor(MUSIC.bar / 4);
   if (name === "menu") {
-    mPad(t, chord, len, 0.07, lp);
-    for (const b of [0, 2]) mOsc("sine", midi(root - 12), t + b * beat, beat * 1.6, 0.26, musicBus, 0.02);
-    for (let e = 0; e < 8; e++) mOsc("triangle", midi(chord[e % 3] + 12), t + e * beat / 2, beat * 0.45, 0.05, lp);
-    // The leitmotif every other pass, so it stays special.
-    if (Math.floor(MUSIC.bar / 4) % 2 === 0) mMelody(t, MOTIF[k], beat, "triangle", 0.11, lp);
-    if (MUSIC.bar % 4 === 3) mKick(t + 3 * beat, 0.25);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.09);
+    play("contrabass", t, root - 12, len * 0.9, 0.22);
+    for (let e = 0; e < 8; e++) play("orchestral_harp", t + e * beat / 2, chord[e % 3] + (e < 4 ? 12 : 24), beat, 0.13);
+    // The leitmotif on cello; every other pass the flute answers an octave up.
+    if (pass % 2 === 0) line("cello", t, MOTIF[k], beat, 0.42, -12);
+    else if (k >= 2) line("flute", t, MOTIF[k], beat, 0.22);
   } else if (name === "lesson") {
-    mPad(t, chord, len, 0.04, lp);
-    for (let e = 0; e < 8; e++) mOsc("triangle", midi((e % 2 ? chord[(e >> 1) % 3] : root) + 12), t + e * beat / 2, beat * 0.3, e % 2 ? 0.06 : 0.09, lp);
-    if (MUSIC.bar % 4 >= 2) mMelody(t, LESSON_RIFF[MUSIC.bar % 2], beat, "triangle", 0.09, lp);
-    for (let e = 0; e < 4; e++) mHat(t + e * beat + beat / 2, 0.05 + lv * 0.02);
-    if (lv >= 1) { mKick(t, 0.3); mKick(t + 2 * beat, 0.25); }
+    for (let e = 0; e < 8; e++) play("pizzicato_strings", t + e * beat / 2, e % 2 ? chord[(e >> 1) % 3] : root, beat, e % 2 ? 0.18 : 0.26);
+    line("flute", t, LESSON_RIFF[(MUSIC.bar + (pass % 2) * 0) % 4], beat, 0.3);
+    if (k % 2 === 1) for (let e = 0; e < 4; e++) play("orchestral_harp", t + e * beat, chord[e % 3] + 24, beat, 0.1);
+    if (lv >= 1) { play("timpani", t, root, beat, 0.35); play("timpani", t + 2 * beat, root + 7 - 12, beat, 0.25); }
   } else if (name === "battle") {
-    mPad(t, chord, len, 0.06 - lv * 0.008, lp);
     if (lv === 0) {
-      for (const b of [0, 2.5]) mOsc("sine", midi(root - 12), t + b * beat, beat * 1.4, 0.24, musicBus, 0.02);
-      if (Math.floor(MUSIC.bar / 4) % 2 === 1) mMelody(t, MOTIF_MINOR[k], beat, "triangle", 0.08, lp);
+      chordOn("string_ensemble_1", t, chord, len * 0.95, 0.15);
+      play("pizzicato_strings", t, root - 12, beat, 0.45); play("pizzicato_strings", t + 2 * beat, root - 5, beat, 0.35);
+      for (const b of [1, 3]) play("orchestral_harp", t + b * beat, chord[b % 3] + 12, beat, 0.12);
+      if (pass % 2 === 1) line("flute", t, MOTIF_MINOR[k], beat, 0.4);
+    } else if (lv === 1) {
+      chordOn("string_ensemble_1", t, chord, len * 0.95, 0.09);
+      for (let e = 0; e < 8; e++) play("cello", t + e * beat / 2, root - 12 + (e % 4 === 3 ? 7 : 0), beat * 0.45, 0.4);
+      play("contrabass", t, root - 12, len * 0.8, 0.2);
+      play("timpani", t, root - 12 + 12, beat, 0.45);
+      chordOn("french_horn", t, [chord[0] - 12, chord[2] - 12], len * 0.9, 0.12);
+      if (pass % 2 === 1) line("flute", t, MOTIF_MINOR[k], beat, 0.24);
     } else {
-      for (let e = 0; e < 8; e++) mBass(t + e * beat / 2, root - 12 + (e === 7 ? 7 : 0), beat * 0.42, 0.13 + lv * 0.02);
-      mKick(t, 0.42); mKick(t + 2 * beat, 0.42);
-      if (lv >= 2) { mKick(t + 1.5 * beat, 0.3); mKick(t + 3.5 * beat, 0.3); }
-      mSnare(t + beat, 0.16 + lv * 0.04); mSnare(t + 3 * beat, 0.16 + lv * 0.04);
-      const hats = lv >= 3 ? 16 : lv >= 2 ? 8 : 4;
-      for (let e = 0; e < hats; e++) mHat(t + e * len / hats, 0.04 + (e % 2 ? 0 : 0.02));
-      if (lv === 1 && Math.floor(MUSIC.bar / 4) % 2 === 1) mMelody(t, MOTIF_MINOR[k], beat, "triangle", 0.085, lp);
-      if (lv >= 2) {
-        // Urgent repeated notes on the chord's top voice.
-        for (let e = 0; e < 8; e++) mOsc("square", midi(chord[2] + 12), t + e * beat / 2, beat * 0.18, 0.025 + lv * 0.006, lp);
-        if (k === 3) [0, 1, 2, 3].forEach(i => mTom(t + 3 * beat + i * beat / 4, 45 - i * 3, 0.3));
+      // Full orchestra.
+      chordOn("tremolo_strings", t, chord.map(n => n + 12), len * 0.95, 0.14 + (lv - 2) * 0.04);
+      const steps = lv >= 3 ? 16 : 8;
+      for (let e = 0; e < steps; e++) {
+        const at = t + e * len / steps;
+        play("cello", at, root - 12 + (e % 8 === 6 ? 7 : 0), len / steps * 0.8, 0.32);
+        if (e % 2 === 0) play("contrabass", at, root - 12, len / steps * 1.6, 0.24);
       }
-      if (lv >= 3) mTrem(t, chord.map(n => n + 12), len, 0.018, lp);
+      line("french_horn", t, MOTIF_MINOR[k], beat, 0.42, -12);
+      for (const b of [0, 1.5, 2, 3.5]) play("timpani", t + b * beat, b % 2 ? root - 5 : root, beat, 0.55);
+      play("trumpet", t, chord[2] + 12, beat * 0.4, 0.3); play("trumpet", t + 2 * beat, chord[1] + 12, beat * 0.4, 0.3);
+      if (lv >= 3) line("trumpet", t, MOTIF_MINOR[k], beat, 0.24);
+      if (k === 0) mCrash(t, 0.1 + lv * 0.02);
+      if (k === 3) timpRoll(t + 2 * beat, root, beat * 2, 0.5);
     }
   } else if (name === "boss") {
     const riff = [0, 0, 3, 0, 1, 0, -1, 0];
+    chordOn("tremolo_strings", t, chord.map(n => n + 12), len * 0.95, 0.16);
     for (let e = 0; e < 8; e++) {
-      mBass(t + e * beat / 2, root - 12, beat * 0.4, 0.17);
-      mOsc("sawtooth", midi(57 + riff[e]), t + e * beat / 2, beat * 0.28, 0.03 + lv * 0.005, lp);
-      mKick(t + e * beat / 2, e % 2 ? 0.22 : 0.45);
+      const at = t + e * beat / 2;
+      play("string_ensemble_1", at, 69 + riff[e], beat * 0.35, 0.3);
+      play("cello", at, root - 12, beat * 0.4, 0.34);
+      play("contrabass", at, root - 12, beat * 0.4, 0.2);
+      play("timpani", at, root - 12 + 12, beat, e % 2 ? 0.35 : 0.6);
     }
-    mSnare(t + beat, 0.26); mSnare(t + 3 * beat, 0.26);
-    for (let e = 0; e < 8; e++) mHat(t + e * beat / 2 + beat / 4, 0.05);
-    mTrem(t, chord.map(n => n + 12), len, 0.016, lp);
-    if (k === 3) [0, 1, 2, 3, 4, 5].forEach(i => mTom(t + 2.5 * beat + i * beat / 4, 48 - i * 2, 0.32));
+    chordOn("french_horn", t, [chord[0] - 12, chord[1] - 12, chord[2] - 12], len * 0.9, 0.2);
+    play("trumpet", t + 3.5 * beat, chord[2] + 12, beat * 0.5, 0.36);
+    if (k === 0) mCrash(t, 0.16);
+    if (k === 3) timpRoll(t + 2 * beat, root, beat * 2, 0.6);
   } else {
-    mPad(t, chord, len, 0.05, lp);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.07);
+    if (k === 0) line("cello", t, [[64, 0, 2], [60, 2, 1], [62, 3, 1]], beat, 0.5);
+    else line("cello", t, [[64, 0, 1.5], [60, 1.5, 0.5], [57, 2, 2]], beat, 0.5);
   }
   MUSIC.bar++;
 }
-// Short phrases over the music: winning, losing, a draw, a promotion in rank.
+// Short phrases: winning (orchestra fanfare), losing (cello), a draw (flute), a rank-up.
 function musicSting(kind) {
   try {
-    const a = ctx(), t = a.currentTime + 0.05, out = musicBus;
-    const play = (notes, beat, type, vol) => notes.forEach(([n, b, d]) => mOsc(type, midi(n), t + b * beat, d * beat, vol, out, 0.01));
+    const a = ctx(), t = a.currentTime + 0.05;
+    orchLoad(["trumpet", "french_horn", "timpani", "string_ensemble_1", "cello", "contrabass", "flute"]);
     if (kind === "win" || kind === "rank") {
-      play([[72, 0, 0.5], [76, 0.5, 0.5], [79, 1, 0.5], [84, 1.5, 2.5]], 0.2, "triangle", 0.2);
-      play([[60, 1.5, 2.5], [64, 1.5, 2.5], [67, 1.5, 2.5]], 0.2, "triangle", 0.09);
-      if (kind === "rank") play([[79, 3.5, 0.5], [84, 4, 0.5], [88, 4.5, 3]], 0.2, "triangle", 0.18);
-      mKick(t + 0.3, 0.4); mNoise(t + 0.3, 1.2, 0.08, "highpass", 5000);
+      line("trumpet", t, [[72, 0, 0.5], [76, 0.5, 0.5], [79, 1, 0.5], [84, 1.5, 3]], 0.22, 0.45);
+      chordOn("french_horn", t + 0.33, [48, 55, 60, 64], 1.2, 0.3);
+      chordOn("string_ensemble_1", t + 0.33, [60, 64, 67, 72], 1.4, 0.18);
+      play("contrabass", t + 0.33, 36, 1.3, 0.3);
+      timpRoll(t, 48, 0.33, 0.6); play("timpani", t + 0.33, 36, 1, 0.8); mCrash(t + 0.33, 0.14);
+      if (kind === "rank") {
+        line("trumpet", t + 1.3, [[79, 0, 0.5], [84, 0.5, 0.5], [88, 1, 3]], 0.22, 0.45);
+        chordOn("french_horn", t + 1.52, [52, 55, 60, 67], 1.4, 0.3);
+        play("timpani", t + 1.52, 36, 1, 0.8); mCrash(t + 1.52, 0.16);
+      }
     } else if (kind === "lose") {
-      play([[69, 0, 1], [65, 1, 1], [64, 2, 1], [57, 3, 3]], 0.42, "triangle", 0.16);
-      play([[45, 0, 6]], 0.42, "sine", 0.22);
+      line("cello", t, [[57, 0, 1], [53, 1, 1], [52, 2, 1], [45, 3, 3]], 0.5, 0.5);
+      play("contrabass", t, 33, 2.5, 0.3);
     } else {
-      play([[69, 0, 1], [72, 1, 1], [71, 2, 3]], 0.38, "triangle", 0.14);
+      line("flute", t, [[81, 0, 1], [84, 1, 1], [83, 2, 3]], 0.4, 0.35);
     }
   } catch (e) {}
 }
@@ -1270,6 +1327,7 @@ function updateMusic() {
   const m = musicMood();
   if (m.level > 3) m.level = 3;
   if (m.theme !== MUSIC.theme) { MUSIC.theme = m.theme; MUSIC.bar = 0; }
+  orchLoad(NEEDS[m.theme] || NEEDS.battle);
   MUSIC.level = m.level;
 }
 function startMusic() {
@@ -1278,6 +1336,7 @@ function startMusic() {
     musicBus.gain.cancelScheduledValues(a.currentTime);
     musicBus.gain.setTargetAtTime(musicLevel(), a.currentTime, 0.4);
     updateMusic();
+    setTimeout(() => orchLoad(Object.keys(INST)), 3000);
     if (MUSIC.timer || !prefs.music) return;
     MUSIC.next = a.currentTime + 0.1;
     MUSIC.timer = setInterval(() => {
