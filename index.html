@@ -382,6 +382,52 @@ select {
 .ls-fb.bad { background: #FBE0DC; color: #9C2B22; }
 .lesson .btn { font-size: 16px; padding: 8px 10px; }
 .lesson .btn.go:disabled { opacity: 0.5; }
+/* Road to chess master */
+.board { position: relative; }
+#arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.coach { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 12px; padding: 12px; background: var(--card); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); }
+.coach[hidden] { display: none; }
+.coach-face svg { width: 64px; height: 78px; display: block; }
+.coach-face .steam, .coach-face .sweat { display: none; }
+.coach-body { display: grid; gap: 8px; min-width: 0; }
+.coach-step { font-weight: 800; font-size: 12px; letter-spacing: 0.06em; color: var(--ink-soft); }
+.coach-text { margin: 0; font-weight: 800; font-size: 17px; line-height: 1.45; }
+.coach-fb { margin: 0; padding: 7px 10px; border-radius: 10px; border: 2px solid var(--ink); font-weight: 800; line-height: 1.45; }
+.coach-fb[hidden] { display: none; }
+.coach-fb.ok { background: #E4F0D8; }
+.coach-fb.bad { background: #FBE0DC; color: #9C2B22; }
+.coach-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.coach-acts .btn { font-size: 15px; padding: 7px 14px; }
+.coach-acts .btn.say { padding: 7px 10px; }
+@media (max-width: 460px) { .coach { grid-template-columns: 46px minmax(0, 1fr); gap: 8px; padding: 10px; } .coach-face svg { width: 46px; height: 56px; } .coach-text { font-size: 15.5px; } }
+.rankchip { font-weight: 800; font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 2px solid var(--ink); background: var(--sun); white-space: nowrap; }
+.ls-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+.ls-dots i { min-width: 30px; height: 26px; padding: 0 6px; border-radius: 8px; border: 2px solid var(--ink); display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 12px; background: var(--paper-2); color: var(--ink-soft); }
+.ls-dots i.on { background: var(--sun); color: var(--ink); }
+.ls-dots i.ok { background: var(--leaf); color: var(--card); }
+.road { width: min(100%, 480px); }
+.road-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; }
+.road-head b { display: block; font-size: 17px; }
+.road-head small { display: block; color: var(--ink-soft); font-size: 13px; line-height: 1.4; }
+.meter { height: 10px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper-2); overflow: hidden; margin-top: 6px; }
+.meter i { display: block; height: 100%; background: var(--ember); }
+.rank-badge { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ink); background: var(--slate); color: var(--card); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 26px; box-shadow: 0 3px 0 var(--ink); }
+.rank-badge.big { width: 88px; height: 88px; font-size: 42px; justify-self: center; background: var(--sun); color: var(--ink); box-shadow: 0 0 0 8px rgba(245, 195, 68, 0.35); }
+.rank-badge.top { background: var(--flag); color: var(--card); }
+.road-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; max-height: 56vh; overflow-y: auto; }
+.chap { border: 2.5px solid var(--ink); border-radius: 12px; padding: 10px; background: var(--paper-2); display: grid; gap: 8px; }
+.chap.done { background: #E4F0D8; }
+.chap.locked { opacity: 0.55; }
+.chap-head { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center; }
+.chap-head .n { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; background: var(--card); font-size: 14px; }
+.chap.done .chap-head .n { background: var(--leaf); color: var(--card); }
+.chap-head b { display: block; font-size: 15px; }
+.chap-head small { color: var(--ink-soft); font-size: 12.5px; }
+.chap-lessons { display: grid; gap: 6px; }
+.chap-lessons button { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 7px 10px; border: 2px solid var(--ink); border-radius: 10px; background: var(--card); font-weight: 800; font-size: 14px; text-align: left; box-shadow: 0 2px 0 var(--ink); }
+.chap-lessons button.boss { background: #FFF3CF; }
+.chap-lessons button:disabled { cursor: not-allowed; box-shadow: none; }
+.chap-lessons .stars { color: var(--ember); letter-spacing: 1px; white-space: nowrap; }
 .sq.look::before { box-shadow: inset 0 0 0 0.6cqw var(--ember); background: rgba(224, 122, 62, 0.22); animation: can 0.9s ease-in-out infinite alternate; }
 
 /* Leaderboard */
@@ -412,6 +458,15 @@ select {
 
   <main class="table">
     <section class="board-col">
+      <div class="coach" id="coach" hidden>
+        <div class="coach-face" id="coachFace" aria-hidden="true"></div>
+        <div class="coach-body">
+          <small class="coach-step" id="coachStep"></small>
+          <p class="coach-text" id="coachText" aria-live="polite"></p>
+          <p class="coach-fb" id="coachFb" hidden></p>
+          <div class="coach-acts" id="coachActs"></div>
+        </div>
+      </div>
       <div class="frame">
         <div class="files top" aria-hidden="true"></div>
         <div class="ranks left" aria-hidden="true"></div>
@@ -454,14 +509,12 @@ select {
 
     <aside class="side">
       <div class="lesson" id="lesson">
-        <div class="ls-top"><span class="ls-num" id="lsNum">บทที่ 1</span><button class="chip" id="lsList">ทุกบทเรียน</button></div>
+        <div class="ls-top"><span class="ls-num" id="lsNum"></span><span class="rankchip" id="lsRank"></span></div>
         <h3 id="lsTitle"></h3>
-        <p class="ls-goal" id="lsGoal"></p>
+        <div class="ls-dots" id="lsDots"></div>
         <div class="tipbox look"><b>ควรดูตรงไหน</b><ul id="lsLook"></ul></div>
         <div class="tipbox warn"><b>ระวังอะไร</b><ul id="lsWarn"></ul></div>
-        <p class="ls-fb" id="lsFb" hidden></p>
-        <div class="row2"><button class="btn" id="lsHint">คำใบ้</button><button class="btn" id="lsRetry">เริ่มใหม่</button></div>
-        <div class="row2"><button class="btn" id="lsExit">ออก</button><button class="btn go" id="lsNext">ข้อถัดไป</button></div>
+        <div class="row2"><button class="btn" id="lsExit">ออก</button><button class="btn" id="lsList">แผนที่</button></div>
       </div>
       <div class="player" id="pB">
         <div class="avatar" id="avB"></div>
@@ -530,7 +583,7 @@ select {
     <div class="btns">
       <button class="btn go" id="newGame">New game</button>
       <div class="row2">
-        <button class="btn" id="openTrain">Training room</button>
+        <button class="btn" id="openTrain">Road to master</button>
         <button class="btn" id="openLeader">Leaderboard</button>
       </div>
       <div class="row2">
@@ -600,7 +653,7 @@ select {
     <h2 id="credTitle">Credits</h2>
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-b</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -633,17 +686,29 @@ select {
     <h2 id="tutTitle"></h2>
     <div class="tut-body" id="tutBody"></div>
     <div class="row2"><button class="btn" id="tutBack">ย้อนกลับ</button><button class="btn go" id="tutNext">ถัดไป</button></div>
-    <div class="row2"><button class="linkbtn" id="tutSkip">ข้าม</button><button class="linkbtn" id="tutTrain">ไปห้องเทรนนิ่ง</button></div>
+    <div class="row2"><button class="linkbtn" id="tutSkip">ข้าม</button><button class="linkbtn" id="tutTrain">ไปเส้นทางสู่เทพ</button></div>
   </div>
 </div>
 
-<!-- Training room -->
+<!-- Road to chess master -->
 <div class="scrim" id="train" hidden>
-  <div class="card" role="dialog" aria-labelledby="trainTitle">
-    <h2 id="trainTitle">Training room</h2>
-    <p>ฝึกทีละเรื่อง แต่ละบทจะบอกว่าควรดูตรงไหนและต้องระวังอะไร แล้วให้ลองเดินเอง</p>
-    <ol class="lessons" id="lessonList"></ol>
-    <div class="btns"><button class="btn" id="closeTrain">Back to menu</button></div>
+  <div class="card road" role="dialog" aria-labelledby="trainTitle">
+    <h2 id="trainTitle">เส้นทางสู่เทพหมากรุก</h2>
+    <div class="road-head">
+      <div class="rank-badge" id="roadRank">0</div>
+      <div><b id="roadRankName"></b><small id="roadStars"></small><div class="meter"><i id="roadMeter"></i></div></div>
+    </div>
+    <ol class="road-list" id="lessonList"></ol>
+    <div class="btns"><button class="btn" id="closeTrain">ปิด</button></div>
+  </div>
+</div>
+
+<div class="scrim" id="rankup" hidden>
+  <div class="card center" role="dialog" aria-labelledby="ruTitle">
+    <div class="rank-badge big" id="ruBadge">1</div>
+    <h2 id="ruTitle">เลื่อนยศ!</h2>
+    <p id="ruText"></p>
+    <div class="btns"><button class="btn go" id="ruOk">ไปต่อ</button></div>
   </div>
 </div>
 
@@ -1168,6 +1233,7 @@ function render() {
   status.classList.toggle("alert", kingInCheck >= 0 && !G.over);
   if (G.over) status.textContent = G.over.text;
   else if (G.stuck) status.textContent = G.stuck.text;
+  else if (G.mode === "train" && Train.phase === "teach") status.textContent = Train.status();
   else if (kingInCheck >= 0) status.textContent = "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.";
   else if (G.hint) status.textContent = "Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to);
   else if (G.mode === "train") status.textContent = Train.status();
@@ -1184,6 +1250,7 @@ function render() {
   renderClocks();
   $("overBar").hidden = !G.over || G.mode === "train";
   syncModeUI();
+  drawArrows();
   if (typeof Battle !== "undefined") Battle.refresh();
 
   const humanTurn = !G.over && !G.thinking && humanSide(st.turn);
@@ -1253,7 +1320,7 @@ function reportResult() {
 
 function newGame() {
   G.mode = prefs.mode === "online" && !Net.live ? "friend" : prefs.mode; G.level = +prefs.level;
-  G.look = null;
+  G.look = null; G.arrows = null;
   const [base, inc] = prefs.clock === "0" ? [0, 0] : prefs.clock.split("+").map(Number);
   G.tc = base ? { base: base * 60000, inc: inc * 1000 } : null;
   G.clocks = { w: G.tc ? G.tc.base : 0, b: G.tc ? G.tc.base : 0 };
@@ -1309,6 +1376,7 @@ function doMove(m) {
   G.history.push({ st: G.st, captured: { w: G.captured.w.slice(), b: G.captured.b.slice() }, last: G.last, started: G.started, keysLen: G.keys.length });
   const prevSt = G.st;
   const next = applyMove(G.st, m);
+  if (G.mode === "train" && Train.passTurn()) { next.turn = mover; next.ep = -1; }
   if (next.captured) G.captured[mover].push(next.captured);
   if (G.tc && G.started) G.clocks[mover] += G.tc.inc;
   G.started = true;
@@ -1318,7 +1386,8 @@ function doMove(m) {
   const key = posKey(next); G.keys.push(key);
   const check = inCheck(next.board, next.turn);
 
-  if (!G.moves.length) {
+  if (G.mode === "train" && Train.passTurn()) G.over = null;
+  else if (!G.moves.length) {
     G.over = check
       ? { type: "mate", winner: mover, text: "Checkmate. " + (mover === "w" ? "White" : "Black") + " wins." }
       : { type: "draw", text: "Stalemate. The game is a draw." };
@@ -1593,7 +1662,7 @@ setInterval(() => {
 }, 100);
 
 /* ---------- Overlays ---------- */
-const overlays = ["menu", "settings", "credits", "confirm", "promo", "result", "tutorial", "train", "leader"];
+const overlays = ["menu", "settings", "credits", "confirm", "promo", "result", "tutorial", "train", "leader", "rankup"];
 function anyOverlay() { return overlays.some(id => !$(id).hidden); }
 function show(id) { $(id).hidden = false; const f = $(id).querySelector("button, select, input"); if (f) f.focus({ preventScroll: true }); }
 function hide(id) { $(id).hidden = true; }
@@ -1673,6 +1742,7 @@ function myColor() {
 let flipped = false;
 function syncModeUI() {
   $("app").classList.toggle("training", G.mode === "train");
+  if (G.mode !== "train") $("coach").hidden = true;
   $("app").classList.toggle("asblack", myColor() === "b");
   // The flat board turns round when this device plays Black.
   const f = myColor() === "b";
@@ -1699,173 +1769,541 @@ function fromFEN(fen) {
 function lsGet(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-/* ---------- Training room: short lessons on what to look at and what to watch out for ---------- */
-const anyOf = list => m => list.includes(uci(m));
-function noMateIn1(next) {
-  for (const r of legalMoves(next)) {
-    const s2 = applyMove(next, r);
-    if (!legalMoves(s2).length && inCheck(s2.board, s2.turn)) return false;
-  }
-  return true;
-}
-const LESSONS = [
-  { title: "คุมกลางกระดาน", short: "เริ่มเกมด้วยการยึดตรงกลาง",
-    fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    goal: "ดันเบี้ยหน้าคิง (e) หรือหน้าควีน (d) ไป 2 ช่อง เพื่อยึดกลางกระดาน",
-    look: ["4 ช่องกลาง e4 d4 e5 d5 (วงสีส้ม) คือหัวใจของกระดาน", "หมากที่อยู่กลางเดินไปได้หลายทาง หมากริมกระดานเดินได้น้อย"],
-    warn: ["อย่าเริ่มด้วยเบี้ยริม (a, h) เพราะแทบไม่ช่วยอะไร", "อย่าเอาควีนออกมาเร็ว เดี๋ยวโดนไล่เสียจังหวะ"],
-    marks: ["e4", "d4", "e5", "d5"], hint: "e2e4", ok: anyOf(["e2e4", "d2d4"]),
-    win: "เยี่ยม! เบี้ยกลางยึดพื้นที่ และเปิดทางให้บิชอปกับควีนออกมาได้ด้วย",
-    fail: "ยังไม่ใช่ ลองดันเบี้ย e หรือ d ไป 2 ช่อง" },
-  { title: "ออกม้า ออกบิชอป", short: "พาหมากรองออกมาเล่นให้ไว",
-    fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
-    goal: "พาม้าหรือบิชอปที่ยังอยู่แถวหลังออกมา 1 ตัว",
-    look: ["ม้าชอบอยู่ f3 หรือ c3 ใกล้ตรงกลาง", "บิชอปชอบแนวทแยงยาวที่เล็งเข้าฝั่งข้าศึก เช่น c4 หรือ b5"],
-    warn: ["ช่วงเปิดเกม อย่าเดินตัวเดิมซ้ำหลายตา", "ม้าริมกระดาน (a3, h3) เดินได้น้อยลงครึ่งหนึ่ง"],
-    marks: ["f3", "c3", "c4", "b5"], hint: "g1f3", ok: anyOf(["g1f3", "b1c3", "f1c4", "f1b5"]),
-    win: "ใช่เลย! ออกหมากรองให้ครบก่อน แล้วค่อยวางแผนบุก ม้าที่ f3 ยังจ่อเบี้ย e5 อยู่ด้วย",
-    fail: "ตานี้ให้เอาม้าหรือบิชอปออกมาก่อน หมากรองที่ออกเร็วช่วยทั้งบุกและป้องกัน" },
-  { title: "เห็นของฟรี ต้องเก็บ", short: "หาหมากข้าศึกที่ไม่มีใครคุ้มกัน",
-    fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
-    goal: "ควีนดำมายืนให้กินฟรี หาให้เจอแล้วกินเลย",
-    look: ["ทุกตา ไล่ดูหมากข้าศึกทีละตัวว่ามีตัวไหนไม่มีใครคุ้มกัน", "แล้วดูว่าหมากเราตัวไหนเดินไปถึงตัวนั้นได้"],
-    warn: ["ก่อนกิน เช็กก่อนว่าช่องนั้นมีหมากข้าศึกรอกินคืนไหม"],
-    marks: ["h4", "f3"], hint: "f3h4", ok: anyOf(["f3h4"]),
-    win: "กินควีนฟรี! ได้เปรียบไป 9 แต้มเลย",
-    fail: "ยังมีควีนดำยืนไม่มีใครคุ้มกันอยู่ที่ h4 ลองดูม้าที่ f3" },
-  { title: "โดนจ่อแล้วต้องหนี", short: "หมากเราโดนเล็ง ต้องรู้ตัวก่อน",
-    fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3",
-    goal: "ควีนของเราที่ h5 โดนม้า f6 จ่อกินอยู่ พาควีนหนีไปช่องที่ปลอดภัย",
-    look: ["ทุกครั้งที่ข้าศึกเดิน ถามตัวเองว่า ตานี้มันจ่อกินอะไรของเรา", "ช่องที่จะหนีไป ต้องไม่มีหมากข้าศึกเล็งอยู่"],
-    warn: ["อย่าหนีไปช่องที่ยังโดนกินได้", "ควีนกับเรือเป็นตัวใหญ่ เสียไปแล้วเกมพลิกได้ง่าย"],
-    marks: ["h5", "f6"], hint: "h5e2", punish: true,
-    ok: (m, prev, next) => sqName(m.from) === "h5" && !attacked(next.board, m.to, "b"),
-    win: "ปลอดภัยแล้ว! นิสัยที่ดีคือเช็กทุกตาว่าข้าศึกจ่อกินอะไรเราอยู่",
-    fail: "ควีนยังโดนกินได้! ดูว่าดำจะเอาอะไรมากิน แล้วลองใหม่" },
-  { title: "ม้าส้อม", short: "จ่อ 2 ตัวพร้อมกันในตาเดียว",
-    fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
-    goal: "หาตาที่ม้าจ่อคิงและเรือดำพร้อมกัน",
-    look: ["ม้าเดินเป็นรูปตัว L และกระโดดข้ามหมากได้", "มองหาช่องที่ม้าแตะได้ทั้งคิงและตัวใหญ่พร้อมกัน"],
-    warn: ["ช่องที่ม้าไปต้องไม่โดนกินคืน", "ข้าศึกก็ส้อมเราได้ ระวังคิงกับควีนยืนห่างกันแบบม้าเดินถึง"],
-    marks: ["c7", "e8", "a8"], hint: "b5c7", ok: anyOf(["b5c7"]),
-    win: "รุกพร้อมจ่อเรือ! ดำต้องหนีคิงก่อน แล้วเราเก็บเรือฟรี",
-    fail: "ยังไม่ใช่ หาช่องที่ม้าจ่อทั้งคิงที่ e8 และเรือที่ a8 ได้พร้อมกัน" },
-  { title: "ตรึงหมาก (Pin)", short: "ล็อกหมากที่ยืนบังคิงไว้",
-    fen: "4k3/pp3ppp/2n5/8/8/8/PPP2PPP/4KB2 w - - 0 1",
-    goal: "ทำให้ม้าดำที่ c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง",
-    look: ["หมากข้าศึกที่ยืนเรียงแนวเดียวกับคิงของมัน คือเป้าตรึง", "บิชอปตรึงตามแนวทแยง เรือตรึงตามแนวตรง"],
-    warn: ["หมากเราก็โดนตรึงได้ถ้ายืนหน้าคิงในแนวเดียวกัน", "หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้ อย่าพึ่งมัน"],
-    marks: ["c6", "e8", "b5"], hint: "f1b5", ok: anyOf(["f1b5"]),
-    win: "ม้า c6 ขยับไม่ได้แล้ว เพราะถ้าขยับคิงจะโดนกิน",
-    fail: "ลองหาช่องที่บิชอปยืนแล้วเล็งผ่านม้า c6 ไปถึงคิง e8" },
-  { title: "เข้าป้อม (Castling)", short: "เก็บคิงให้ปลอดภัย",
-    fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1",
-    goal: "เอาคิงหลบเข้ามุมให้ปลอดภัย และพาเรือออกมาเล่น",
-    look: ["แตะคิงแล้วแตะช่อง g1 คิงจะเดิน 2 ช่องและเรือจะข้ามมาเอง", "เข้าป้อมได้เมื่อคิงกับเรือยังไม่เคยเดิน และช่องระหว่างทางว่าง"],
-    warn: ["เข้าป้อมไม่ได้ถ้ากำลังโดนรุก หรือต้องเดินผ่านช่องที่โดนเล็ง", "อย่าปล่อยคิงไว้กลางกระดานนาน เพราะแนวกลางจะเปิดเร็ว"],
-    marks: ["e1", "g1", "h1"], hint: "e1g1", ok: m => m.castle === "K",
-    win: "คิงปลอดภัยหลังเบี้ย และเรือได้ออกมาช่วยเล่นแล้ว",
-    fail: "ตานี้ลองเข้าป้อม: แตะคิง e1 แล้วแตะ g1" },
-  { title: "รุกฆาตแถวหลัง", short: "คิงที่ไม่มีช่องหายใจ",
-    fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1",
-    goal: "คิงดำโดนเบี้ยตัวเองขังไว้ หาตารุกฆาตในตาเดียว",
-    look: ["คิงที่หลบหลังเบี้ย 3 ตัวไม่มีช่องหนี", "เรือหรือควีนที่วิ่งเข้าแถวหลังได้ คือจบเกม"],
-    warn: ["คิงของเราก็โดนแบบนี้ได้ เปิดช่องหายใจให้คิงบ้าง เช่นดันเบี้ย h ไป 1 ช่อง"],
-    marks: ["a8", "f7", "g7", "h7"], hint: "a1a8", ok: () => G.over && G.over.type === "mate",
-    win: "รุกฆาต! จำไว้เลยว่าแถวหลังอันตรายแค่ไหน",
-    fail: "ยังไม่จบ หาตาที่เรือเข้าไปรุกคิงแล้วคิงหนีไม่ได้" },
-  { title: "กันรุกฆาตเร็ว", short: "ป้องกันกลลวง 4 ตา (Scholar's mate)",
-    fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
-    goal: "คุณเล่นฝ่ายดำ ควีนกับบิชอปขาวรุมช่อง f7 อยู่ หาตาที่กันรุกฆาตได้",
-    look: ["f7 มีแค่คิงคุ้มกัน จึงเป็นจุดอ่อนช่วงเปิดเกม", "ควีน h5 กับบิชอป c4 เล็งช่องเดียวกันอยู่"],
-    warn: ["ม้า f6 ไล่ควีนดูดี แต่จะโดน Qxf7 รุกฆาตทันที", "ทุกตา เช็กว่าข้าศึกมีตารุก (check) หรือกินอะไรได้บ้าง"],
-    marks: ["f7", "h5", "c4"], hint: "g7g6", punish: true, ok: (m, prev, next) => noMateIn1(next),
-    win: "รอดแล้ว! ตอนนี้ f7 ปลอดภัย ฝ่ายขาวจะเสียจังหวะเพราะเอาควีนออกมาเร็ว",
-    fail: "โดนรุกฆาต! ควีนขาวกิน f7 ได้ ลองป้องกันช่อง f7 หรือไล่ควีนออกไป" },
+/* ---------- Road to chess master: course content ----------
+   Each chapter ends with a boss lesson. Each lesson teaches first (slides shown on
+   the board with arrows and circles), then drills. Drill goals:
+   collect  capture every enemy piece within n moves (the other side does not move)
+   pick     play one of the moves in ok
+   win      win at least target centipawns within n moves
+   keep     move so nothing is lost
+   defend   stop the opponent's mate and keep material
+   mate     checkmate within n moves
+   promote  promote a pawn within n moves without losing it
+   opening  castle and develop three minor pieces within n moves without losing material
+   beat     win a full game against the computer at level */
+const RANKS = ["ทหารเกณฑ์", "พลทหาร", "สิบตรี", "สิบเอก", "จ่าสิบเอก", "ร้อยตรี", "ร้อยเอก", "พันเอก", "เทพหมากรุก"];
+const COURSE = [
+  { title: "ฝึกเดินหมาก", rank: 1, lessons: [
+    { title: "เรือ", look: ["เรือวิ่งเป็นเส้นตรง กี่ช่องก็ได้", "มองทั้ง 4 ทิศ: ขึ้น ลง ซ้าย ขวา"], warn: ["ข้ามหมากไม่ได้ ถ้ามีหมากขวางต้องหยุด"],
+      teach: [
+        { fen: "8/8/8/8/3R4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4d1", "d4a4", "d4h4"], text: "เรือเดินเป็นเส้นตรง ขึ้น ลง ซ้าย ขวา กี่ช่องก็ได้ ตามลูกศรเลย" },
+        { fen: "8/8/8/3n4/8/8/8/1P1R4 w - - 0 1", arrows: ["d1d5"], marks: ["b1", "d5"], text: "ข้ามหมากไม่ได้ ทางซ้ายติดเบี้ยเราที่ b1 จึงไปได้แค่ c1 แต่ถ้าเจอหมากข้าศึก (ม้า d5) กินมันได้แล้วหยุดตรงนั้น" },
+      ],
+      drills: [
+        { goal: "collect", n: 3, fen: "8/8/8/p3p3/8/8/4p3/R7 w - - 0 1", text: "เก็บเบี้ยดำให้หมด 3 ตัว ภายใน 3 ตา (ฝ่ายดำจะไม่เดิน)", hint: "a1a5" },
+        { goal: "collect", n: 2, fen: "8/7n/8/8/8/3P4/8/3R3b w - - 0 1", text: "เก็บหมากดำ 2 ตัว ภายใน 2 ตา ระวังเบี้ยเราเองขวางทาง", hint: "d1h1" },
+      ] },
+    { title: "บิชอป", look: ["บิชอปวิ่งแนวทแยง กี่ช่องก็ได้", "บิชอปอยู่บนสีเดิมตลอดเกม"], warn: ["บิชอปช่องขาวไม่มีวันไปช่องดำได้"],
+      teach: [
+        { fen: "8/8/8/8/3B4/8/8/8 w - - 0 1", arrows: ["d4h8", "d4a7", "d4a1", "d4g1"], text: "บิชอปเดินแนวทแยงได้ไกล 4 ทิศ และอยู่บนสีเดิมตลอดเกม" },
+      ],
+      drills: [
+        { goal: "collect", n: 3, fen: "8/6p1/8/4p3/8/2p5/8/B7 w - - 0 1", text: "เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา", hint: "a1c3" },
+        { goal: "collect", n: 2, fen: "8/3p4/8/1p6/8/8/8/5B2 w - - 0 1", text: "เก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา", hint: "f1b5" },
+      ] },
+    { title: "ม้า", look: ["ม้าเดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1", "ม้ากระโดดข้ามหมากได้ ตัวเดียวในเกม"], warn: ["ม้าที่อยู่ริมกระดานเดินได้น้อยลงมาก"],
+      teach: [
+        { fen: "8/8/8/8/3N4/8/8/8 w - - 0 1", arrows: ["d4c6", "d4e6", "d4f5", "d4f3", "d4e2", "d4c2", "d4b3", "d4b5"], text: "ม้าเดินเป็นรูปตัว L ได้ 8 ทาง และกระโดดข้ามหมากตัวอื่นได้" },
+        { fen: "8/8/8/8/8/8/5PPP/6N1 w - - 0 1", arrows: ["g1f3", "g1h3", "g1e2"], text: "ถึงจะมีเบี้ยล้อมอยู่ ม้าก็กระโดดออกมาได้" },
+      ],
+      drills: [
+        { goal: "collect", n: 3, fen: "8/8/5p2/3p4/8/2p5/8/1N6 w - - 0 1", text: "เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา", hint: "b1c3" },
+        { goal: "collect", n: 2, fen: "8/8/8/8/3p4/8/4pPPP/6N1 w - - 0 1", text: "กระโดดออกมาเก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา", hint: "g1e2" },
+      ] },
+    { title: "ควีน คิง และเบี้ย", look: ["ควีน = เรือ + บิชอป เดินได้ 8 ทิศ", "คิงเดินทีละ 1 ช่อง", "เบี้ยเดินตรง แต่กินทแยง"], warn: ["คิงห้ามเดินเข้าช่องที่ข้าศึกเล็งอยู่", "เบี้ยเดินถอยหลังไม่ได้"],
+      teach: [
+        { fen: "8/8/8/8/3Q4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4h8", "d4h4", "d4g1", "d4d1", "d4a1", "d4a4", "d4a7"], text: "ควีนแรงที่สุด เดินได้ทั้งเส้นตรงและแนวทแยง 8 ทิศ" },
+        { fen: "8/8/8/8/3K4/8/8/8 w - - 0 1", marks: ["c5", "d5", "e5", "c4", "e4", "c3", "d3", "e3"], text: "คิงเดินได้ทีละ 1 ช่องทุกทิศ (วงสีส้ม) และห้ามเดินเข้าช่องที่โดนเล็ง" },
+        { fen: "8/8/8/3p4/4P3/8/1P6/8 w - - 0 1", arrows: ["b2b4", "e4d5"], text: "เบี้ยเดินหน้าทีละช่อง ตาแรกเดินได้ 2 ช่อง แต่เวลากินจะกินทางทแยงหน้า" },
+      ],
+      drills: [
+        { goal: "collect", n: 4, fen: "8/p7/7p/8/8/4p3/7p/Q7 w - - 0 1", text: "ใช้ควีนเก็บเบี้ยดำ 4 ตัว ภายใน 4 ตา", hint: "a1a7" },
+        { goal: "collect", n: 3, fen: "8/8/8/5p2/4p3/3p4/4P3/8 w - - 0 1", text: "ใช้เบี้ยขาวกินเบี้ยดำ 3 ตัว ภายใน 3 ตา (เบี้ยกินทางทแยง)", hint: "e2d3" },
+      ] },
+    { title: "ด่านบอส: เก็บกวาด", boss: true, look: ["วางแผนก่อนเดิน: ตัวไหนเก็บอะไร ลำดับไหน"], warn: ["ตาไม่พอถ้าเดินเสียเปล่าแม้แต่ตาเดียว", "ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! ใช้ทุกอย่างที่ฝึกมา เก็บหมากให้หมดโดยไม่เสียตาเปล่า" }],
+      drills: [
+        { goal: "collect", n: 4, fen: "8/5p2/8/4p3/2p5/8/8/5BN1 w - - 0 1", text: "ใช้บิชอปกับม้าเก็บให้หมด 3 ตัว ภายใน 4 ตา" },
+        { goal: "collect", n: 4, fen: "8/1p6/5p2/8/8/8/1p6/5b1Q w - - 0 1", text: "ใช้ควีนเก็บให้หมด 4 ตัว ภายใน 4 ตา" },
+      ] },
+  ] },
+  { title: "ของฟรีและของแพง", rank: 2, lessons: [
+    { title: "กินของฟรี", look: ["ค่าหมาก: เบี้ย 1 ม้า 3 บิชอป 3 เรือ 5 ควีน 9", "หมากข้าศึกที่ไม่มีใครคุ้มกัน = ของฟรี"], warn: ["ก่อนกิน ดูว่าช่องนั้นมีใครรอกินคืนไหม", "อย่าเอาตัวแพงไปแลกตัวถูก"],
+      teach: [
+        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", marks: ["d1", "a1", "b1", "c1"], text: "หมากแต่ละตัวมีค่าไม่เท่ากัน: เบี้ย 1, ม้า 3, บิชอป 3, เรือ 5, ควีน 9 แต้ม (คิงมีค่าเท่าชีวิต)" },
+        { fen: "4k3/8/4p3/3n3b/8/5N2/8/3RK3 w - - 0 1", arrows: ["f3h4", "d1d5"], marks: ["h5", "d5"], text: "บิชอป h5 ไม่มีใครคุ้มกัน (ของฟรี) แต่ม้า d5 มีเบี้ย e6 คุ้มอยู่ ถ้าเอาเรือไปกิน จะโดนเบี้ยกินคืน เสีย 5 ได้ 3" },
+      ],
+      drills: [
+        { goal: "win", target: 800, n: 1, fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", text: "ควีนดำยืนอยู่โดยไม่มีใครคุ้มกัน หาแล้วกินเลย", hint: "f3h4" },
+        { goal: "win", target: 800, n: 1, fen: "r3k2r/ppp2ppp/2n5/3q4/8/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1", text: "ดำเผลออีกแล้ว มีตัวใหญ่ให้กินฟรี", hint: "c3d5" },
+        { goal: "win", target: 300, n: 1, fen: "6k1/5ppp/4p3/3n4/7b/5N2/5PPP/3R2K1 w - - 0 1", text: "มีให้กิน 2 ตัว ตัวไหนกินแล้วไม่โดนกินคืน?", hint: "f3h4" },
+      ] },
+    { title: "โดนจ่อแล้วต้องหนี", look: ["ทุกตาที่ข้าศึกเดิน ถามว่า: มันจ่อกินอะไรเรา", "หนีไปช่องที่ไม่มีใครเล็ง หรือหาคนมาคุ้มกัน"], warn: ["อย่าหนีไปช่องที่ยังโดนกินได้"],
+      teach: [
+        { fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", arrows: ["f6h5"], marks: ["h5"], text: "ม้าดำ f6 จ่อกินควีนเราที่ h5 อยู่ (ลูกศร) ต้องรู้ตัวก่อนจะสาย" },
+      ],
+      drills: [
+        { goal: "keep", n: 1, fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", text: "พาควีนหนีไปช่องที่ปลอดภัย", hint: "h5e2" },
+        { goal: "keep", n: 1, fen: "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4", text: "เบี้ย a6 ไล่บิชอปเรา ทำยังไงไม่ให้เสียหมาก", hint: "b5a4" },
+        { goal: "keep", n: 1, fen: "6k1/5ppp/8/8/3b4/8/1R3PPP/6K1 w - - 0 1", text: "บิชอปดำจ่อเรือเราอยู่ หนีให้รอด (ถ้าหนีแล้วได้รุกด้วยยิ่งดี)", hint: "b2b8" },
+      ] },
+    { title: "ด่านบอส: ตาไว", boss: true, look: ["มองหาของฟรีของข้าศึก", "เช็กว่าของเราโดนจ่ออยู่ไหม"], warn: ["ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! แต่ละโจทย์อาจเป็นการกินของฟรี หรือการหนี ต้องดูให้ออกเอง" }],
+      drills: [
+        { goal: "win", target: 300, n: 1, fen: "r1bqkbnr/pppp1ppp/8/4n3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 4", text: "หาของฟรีให้เจอ" },
+        { goal: "keep", n: 1, fen: "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq d6 0 5", text: "เบี้ย d5 จ่อบิชอปเราอยู่ ตอบให้ดีโดยไม่เสียหมาก" },
+      ] },
+  ] },
+  { title: "รุกและรุกฆาต", rank: 3, lessons: [
+    { title: "แก้รุก", look: ["โดนรุกแก้ได้ 3 ทาง: หนี บัง หรือกินตัวที่รุก", "ทางที่ดีที่สุดมักเป็นการกินตัวที่รุก"], warn: ["เดินอย่างอื่นไม่ได้จนกว่าจะแก้รุก"],
+      teach: [
+        { fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", arrows: ["e4e1"], marks: ["e1"], text: "ควีนดำรุกคิงเราตามแนว e (ลูกศร) เราต้องแก้ด้วยการ หนี บัง หรือกิน" },
+      ],
+      drills: [
+        { goal: "win", target: 800, n: 1, fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", text: "โดนรุก! แก้รุกแบบที่ได้กำไรที่สุด", hint: "d2e4" },
+      ] },
+    { title: "รุกฆาตในตาเดียว", look: ["รุกฆาต = รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินไม่ได้", "คิงที่ติดหมากตัวเองล้อมอยู่ อันตรายที่สุด"], warn: ["รุกแล้วคิงยังหนีได้ ไม่ใช่รุกฆาต", "ถ้าคิงไม่โดนรุกแต่เดินไม่ได้เลย จะเป็นอับ (เสมอ)"],
+      teach: [
+        { fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", arrows: ["a1a8"], marks: ["f7", "g7", "h7"], text: "คิงดำโดนเบี้ยตัวเองขังไว้ ถ้าเรือวิ่งเข้าแถวหลัง คิงจะหนีไม่ได้ = รุกฆาตแถวหลัง" },
+        { fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", arrows: ["h1h8"], marks: ["a7", "b7", "b8"], text: "ใช้คิงเราช่วย: คิง b6 คุมช่อง a7 b7 ควีนมาคุมแถว 8 คิงดำก็ไม่มีที่ไป" },
+      ],
+      drills: [
+        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", text: "รุกฆาตในตาเดียว", hint: "a1a8" },
+        { goal: "mate", n: 1, fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", text: "รุกฆาตในตาเดียว (ใช้คิงช่วย)", hint: "h1h8" },
+        { goal: "mate", n: 1, fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", text: "รุกฆาตด้วยม้า: คิงดำติดหมากตัวเองหมดแล้ว", hint: "g5f7" },
+        { goal: "mate", n: 1, fen: "7k/R7/8/8/8/8/8/1R5K w - - 0 1", text: "เรือ 2 ตัวช่วยกัน รุกฆาตในตาเดียว", hint: "b1b8" },
+      ] },
+    { title: "ด่านบอส: มือสังหาร", boss: true, look: ["หาช่องที่คิงข้าศึกหนีได้ แล้วปิดให้หมด"], warn: ["ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! รุกฆาตในตาเดียว 3 ข้อติด" }],
+      drills: [
+        { goal: "mate", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", text: "รุกฆาตในตาเดียว" },
+        { goal: "mate", n: 1, fen: "5rk1/5ppp/8/8/8/8/1B6/K5Q1 w - - 0 1", text: "รุกฆาตในตาเดียว" },
+        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", text: "รุกฆาตในตาเดียว" },
+      ] },
+  ] },
+  { title: "อาวุธลับ: ส้อม ตรึง เสียบ", rank: 4, lessons: [
+    { title: "ส้อม (Fork)", look: ["ส้อม = จ่อ 2 ตัวพร้อมกัน ข้าศึกหนีได้ตัวเดียว", "ม้าส้อมเก่งที่สุด เพราะกระโดดได้และเล็งได้หลายทิศ", "เบี้ยก็ส้อมได้!"], warn: ["ช่องที่ไปส้อมต้องไม่โดนกินคืน"],
+      teach: [
+        { fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", arrows: ["b5c7"], text: "ม้า b5 กำลังจะกระโดดไป c7" },
+        { fen: "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1", arrows: ["c7e8", "c7a8"], marks: ["e8", "a8"], text: "จาก c7 ม้าจ่อทั้งคิงและเรือ คิงต้องหนี แล้วเราก็กินเรือฟรี นี่คือส้อม" },
+      ],
+      drills: [
+        { goal: "win", target: 450, n: 2, fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: "หาตาที่ม้าจ่อคิงกับเรือพร้อมกัน แล้วเก็บเรือ", hint: "b5c7" },
+        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/2n1n3/8/3P4/8/7K w - - 0 1", text: "ใช้เบี้ยส้อมม้า 2 ตัว แล้วเก็บมาให้ได้ 1 ตัว", hint: "d3d4" },
+      ] },
+    { title: "ตรึง (Pin) และเสียบ (Skewer)", look: ["ตรึง: หมากที่บังคิงอยู่ ขยับไม่ได้", "เสียบ: รุกตัวใหญ่ข้างหน้า พอมันหลบ ก็กินตัวข้างหลัง"], warn: ["หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้"],
+      teach: [
+        { fen: "4k3/pp3ppp/2n5/1B6/8/8/PPP2PPP/4K3 w - - 0 1", arrows: ["b5e8"], marks: ["c6"], text: "ตรึง: ม้า c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง ถ้าขยับคิงจะโดนกิน" },
+        { fen: "q7/8/8/3k4/8/5B2/8/7K w - - 0 1", arrows: ["f3a8"], marks: ["d5", "a8"], text: "เสียบ: บิชอปรุกคิง d5 คิงต้องหลบ แล้วบิชอปก็กินควีน a8 ที่อยู่ข้างหลัง" },
+      ],
+      drills: [
+        { goal: "pick", ok: ["f1b5"], fen: "4k3/pp3ppp/2n5/8/8/8/PPP2PPP/4KB2 w - - 0 1", text: "ตรึงม้า c6 ไว้กับคิง", hint: "f1b5" },
+        { goal: "win", target: 450, n: 2, fen: "q7/8/8/3k4/8/8/8/3B3K w - - 0 1", text: "เสียบคิงกับควีนดำ แล้วกินควีน", hint: "d1f3" },
+        { goal: "win", target: 300, n: 2, fen: "8/8/8/qk6/8/8/8/6KR w - - 0 1", text: "ใช้เรือเสียบคิงกับควีน", hint: "h1h5" },
+      ] },
+    { title: "ด่านบอส: นักฆ่าเงียบ", boss: true, look: ["หาตัวที่ยืนเรียงกัน หรือยืนให้ม้าแตะได้ 2 ตัว"], warn: ["ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! ใช้ส้อมหรือเสียบให้ได้กำไร" }],
+      drills: [
+        { goal: "win", target: 800, n: 2, fen: "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: "ได้กำไรให้มากที่สุด" },
+        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/1n1n4/8/2P5/8/4K3 w - - 0 1", text: "ได้กำไรอย่างน้อย 1 ตัว" },
+      ] },
+  ] },
+  { title: "เปิดเกมแบบมือโปร", rank: 5, lessons: [
+    { title: "3 กฎทอง", look: ["1) ยึดกลางกระดานด้วยเบี้ย e หรือ d", "2) ออกม้าและบิชอปให้ไว", "3) เข้าป้อมให้คิงปลอดภัย"], warn: ["อย่าเดินตัวเดิมซ้ำ", "อย่าเอาควีนออกเร็ว"],
+      teach: [
+        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arrows: ["e2e4", "d2d4"], marks: ["e4", "d4", "e5", "d5"], text: "กฎข้อ 1: ยึด 4 ช่องกลาง เพราะหมากที่อยู่กลางเดินได้หลายทาง" },
+        { fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", arrows: ["g1f3", "b1c3", "f1c4"], text: "กฎข้อ 2: ออกม้าและบิชอปมาทางกลาง" },
+        { fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", arrows: ["e1g1", "h1f1"], text: "กฎข้อ 3: เข้าป้อม แตะคิงแล้วแตะ g1 เรือจะข้ามมาเอง" },
+      ],
+      drills: [
+        { goal: "pick", ok: ["e2e4", "d2d4"], fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ตาแรก: ยึดกลางกระดาน", hint: "e2e4" },
+        { goal: "pick", ok: ["g1f3", "b1c3", "f1c4", "f1b5"], fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", text: "ออกหมากรอง 1 ตัว", hint: "g1f3" },
+        { goal: "pick", ok: ["e1g1"], fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", text: "เข้าป้อม", hint: "e1g1" },
+      ] },
+    { title: "กับดักเปิดเกม", look: ["f7 (หรือ f2 ของเรา) มีแค่คิงคุ้มกัน เป็นจุดอ่อน", "ควีนที่ออกมาเร็ว ไล่ด้วยการออกหมากได้"], warn: ["ม้า f6 ดูดี แต่ถ้าควีนกับบิชอปรุม f7 อยู่ จะโดนรุกฆาต"],
+      teach: [
+        { fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", arrows: ["h5f7", "c4f7"], marks: ["f7"], text: "กลลวง 4 ตา: ควีนกับบิชอปขาวรุมช่อง f7 ถ้าดำไม่กัน จะโดน Qxf7 รุกฆาต" },
+      ],
+      drills: [
+        { goal: "defend", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", text: "คุณเล่นฝ่ายดำ กันรุกฆาตให้ได้ โดยไม่เสียหมาก", hint: "g7g6" },
+        { goal: "pick", ok: ["g1f3", "b1c3"], fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3", text: "ควีนดำออกมาเร็ว ไล่มันด้วยการออกหมาก (ไม่ใช่ใช้ควีนเรา)", hint: "b1c3" },
+      ] },
+    { title: "ด่านบอส: เปิดเกมจริง", boss: true, look: ["ยึดกลาง ออกม้าบิชอป 3 ตัว แล้วเข้าป้อม"], warn: ["ห้ามเสียหมาก", "ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ด่านบอส! เล่นจริงกับคอมพิวเตอร์ ภายใน 10 ตา ต้องออกม้าหรือบิชอป 3 ตัว และเข้าป้อม โดยไม่เสียหมาก" }],
+      drills: [
+        { goal: "opening", n: 10, level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ออกม้า/บิชอป 3 ตัว + เข้าป้อม ภายใน 10 ตา ห้ามเสียหมาก" },
+      ] },
+  ] },
+  { title: "รุกฆาต 2 ตา", rank: 6, lessons: [
+    { title: "คิดล่วงหน้า 2 ตา", look: ["ตาแรกบีบคิงให้ไม่มีที่ไป ตาที่สองรุกฆาต", "บางทีต้องยอมเสียตัวใหญ่ก่อน (สละ) เพื่อรุกฆาต"], warn: ["ระวังทำให้คิงข้าศึกอับ (ไม่มีทางเดินแต่ไม่โดนรุก = เสมอ)"],
+      teach: [
+        { fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", arrows: ["a2a7", "b1b8"], text: "บันไดเรือ: เรือตัวแรกปิดแถว 7 แล้วเรือตัวที่สองรุกฆาตที่แถว 8" },
+        { fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", arrows: ["b3g8", "h6f7"], marks: ["g8"], text: "สละควีน: ควีนรุกที่ g8 เรือดำต้องกิน แล้วม้า f7 รุกฆาตเพราะคิงโดนหมากตัวเองล้อม (ม้าอุดอู้)" },
+      ],
+      drills: [
+        { goal: "mate", n: 2, fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", text: "รุกฆาตใน 2 ตา", hint: "a2a7" },
+        { goal: "mate", n: 2, fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", text: "รุกฆาตใน 2 ตา (ต้องกล้าสละ)", hint: "b3g8" },
+      ] },
+    { title: "ด่านบอส: 2 ตาจบ", boss: true, look: ["ลองคิดว่าข้าศึกจะตอบยังไง ทุกทาง"], warn: ["ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! รุกฆาตใน 2 ตา" }],
+      drills: [
+        { goal: "mate", n: 2, fen: "7k/8/8/8/8/8/1R6/R5K1 w - - 0 1", text: "รุกฆาตใน 2 ตา" },
+        { goal: "mate", n: 2, fen: "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6", text: "ดำเพิ่งกินควีนเรา แต่เรารุกฆาตใน 2 ตาได้!" },
+      ] },
+  ] },
+  { title: "ปิดเกม (Endgame)", rank: 7, lessons: [
+    { title: "เบี้ยเข้าเมือง", look: ["เบี้ยที่ถึงแถวสุดท้ายเปลี่ยนเป็นควีนได้", "นับตา: เบี้ยเราถึงก่อน หรือคิงข้าศึกตามทัน"], warn: ["อย่าปล่อยให้เบี้ยโดนกินระหว่างทาง"],
+      teach: [{ fen: "8/8/8/1P6/8/8/8/6k1 w - - 0 1", arrows: ["b5b8"], marks: ["b8"], text: "เบี้ยวิ่งไปแถวสุดท้ายแล้วเลือกเป็นควีน คิงดำอยู่ไกล ตามไม่ทัน" }],
+      drills: [
+        { goal: "promote", n: 3, fen: "8/8/8/1P6/8/8/8/K5k1 w - - 0 1", text: "พาเบี้ยเข้าเมืองให้เป็นควีน", hint: "b5b6" },
+        { goal: "promote", n: 6, fen: "7k/7p/8/8/8/8/P7/K7 w - - 0 1", text: "แข่งกันวิ่ง! ใครเข้าเมืองก่อน", hint: "a2a4" },
+      ] },
+    { title: "รุกฆาตด้วยควีน", look: ["ใช้ควีนขังคิงข้าศึกไว้ในกล่องที่เล็กลงเรื่อยๆ (ห่างแบบม้าเดิน)", "พาคิงเรามาช่วย แล้วรุกฆาตที่ขอบกระดาน"], warn: ["ระวังอับ! ถ้าคิงข้าศึกไม่โดนรุกแต่ไม่มีที่เดิน = เสมอ", "อย่าเอาควีนไปยืนข้างคิงข้าศึกโดยไม่มีคนคุ้ม"],
+      teach: [{ fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", arrows: ["a1c3", "e1e2"], text: "ขั้นตอน: ควีนบีบคิงดำไปที่ขอบกระดาน แล้วเดินคิงเรามาใกล้ จากนั้นรุกฆาต" }],
+      drills: [
+        { goal: "mate", n: 16, fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", text: "รุกฆาตด้วยควีนกับคิง ภายใน 16 ตา", hint: "a1c3" },
+      ] },
+    { title: "ด่านบอส: เรือปิดเกม", boss: true, look: ["เรือขังคิงทีละแถว คิงเราเดินเข้าไปประกบ"], warn: ["อย่าให้คิงข้าศึกเข้าใกล้เรือเรา", "ด่านบอสไม่มีคำใบ้"],
+      teach: [{ fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", arrows: ["a1a4"], text: "ด่านบอส! เรือกับคิงต้องช่วยกัน เรือปิดแถว คิงเราเดินเข้าไปประกบคิงข้าศึก แล้วเรือรุกฆาตที่ขอบ" }],
+      drills: [
+        { goal: "mate", n: 30, fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", text: "รุกฆาตด้วยเรือกับคิง ภายใน 30 ตา" },
+      ] },
+  ] },
+  { title: "ด่านเทพ", rank: 8, lessons: [
+    { title: "ล้มคอมพิวเตอร์", boss: true, look: ["ใช้ทุกอย่าง: ยึดกลาง ออกหมาก เข้าป้อม หาของฟรี และอย่าแจกฟรี"], warn: ["คอมไม่พลาดง่ายๆ ตรวจทุกตาว่าโดนจ่ออะไรอยู่", "ด่านเทพไม่มีคำใบ้"],
+      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ด่านสุดท้าย! ชนะคอมพิวเตอร์ให้ได้ทั้ง 3 ระดับ แล้วคุณคือเทพหมากรุก" }],
+      drills: [
+        { goal: "beat", level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Easy" },
+        { goal: "beat", level: 2, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Normal" },
+        { goal: "beat", level: 3, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Hard" },
+      ] },
+  ] },
 ];
+
+/* ---------- Road to chess master: judging a drill move ---------- */
+const TJ = {
+  // Search value of st from side's point of view (two plies plus captures).
+  value(st, side, depth) { const v = negamax(st, depth || 2, -1e9, 1e9, 0); return st.turn === side ? v : -v; },
+  stat(st, side) { const v = evaluate(st.board); return side === "w" ? v : -v; },
+  // A move for the side to move that forces mate within n of its moves, or null.
+  mateIn(st, n) {
+    const ms = legalMoves(st);
+    ms.sort((a, b) => orderScore(st, b) - orderScore(st, a));
+    for (const m of ms) {
+      const s = applyMove(st, m), rs = legalMoves(s);
+      if (!rs.length) { if (inCheck(s.board, s.turn)) return m; continue; }
+      if (n > 1 && rs.every(r => TJ.mateIn(applyMove(s, r), n - 1))) return m;
+    }
+    return null;
+  },
+  // The defender is to move: does the attacker still force mate within n?
+  stillMates(st, n) {
+    const rs = legalMoves(st);
+    if (!rs.length) return inCheck(st.board, st.turn);
+    return rs.every(r => !!TJ.mateIn(applyMove(st, r), n));
+  },
+  noMateIn1(st) { return !TJ.mateIn(st, 1); },
+  mat(board, side) { return board.reduce((s, p) => s + (p ? (p[0] === side ? 1 : -1) * VAL[p[1]] : 0), 0); },
+  count(board, side, t) { return board.filter(p => p && p[0] === side && (!t || p[1] === t)).length; },
+  // Set up the bookkeeping for a drill.
+  begin(d, st) {
+    const side = st.turn;
+    return { side, used: 0, start: TJ.stat(st, side), startMat: TJ.mat(st.board, side), pawns: TJ.count(st.board, side, "P"), castled: false };
+  },
+  /* Judge the position after the player's move m.
+     Returns ["ok"], ["fail", why], ["go"] (opponent replies) or ["self"] (player moves again). */
+  judge(d, c, st, m) {
+    const side = c.side, them = opp(side);
+    c.used++;
+    if (m.castle) c.castled = true;
+    const left = (d.n || 99) - c.used;
+    const moves = legalMoves(st);
+    const mated = !moves.length && inCheck(st.board, st.turn);
+    const stuck = !moves.length && !mated;
+    if (d.goal === "collect") {
+      if (!st.board.some(p => p && p[0] === them && p[1] !== "K")) return ["ok"];
+      return left <= 0 ? ["fail", "ตาหมดแล้ว แต่ยังเก็บไม่ครบ ลองวางลำดับใหม่"] : ["self"];
+    }
+    if (d.goal === "pick") return d.ok.includes(uci(m)) ? ["ok"] : ["fail", null];
+    if (mated) return ["ok"];
+    if (stuck) return ["fail", "อับ! คิงข้าศึกไม่มีทางเดินแต่ไม่โดนรุก เกมเลยเสมอ ต้องเว้นช่องให้มันหายใจ"];
+    if (d.goal === "keep") return TJ.value(st, side) >= c.start - 100 ? ["ok"] : ["fail", null];
+    if (d.goal === "defend") return TJ.noMateIn1(st) && TJ.value(st, side) >= c.start - 150 ? ["ok"] : ["fail", null];
+    if (d.goal === "mate") {
+      if (left <= 0) return ["fail", "ตาหมดแล้ว ยังรุกฆาตไม่สำเร็จ"];
+      if (left <= 2 && !TJ.stillMates(st, left)) return ["fail", "ตานี้ปล่อยให้คิงข้าศึกหนีรอด"];
+      if (d.n > 2 && TJ.value(st, side) < c.start - 300) return ["fail", "ระวัง! หมากเรากำลังจะโดนกิน"];
+      return ["go"];
+    }
+    if (d.goal === "win") {
+      const v = TJ.value(st, side, d.n > 1 ? 3 : 2);
+      if (v < c.start + d.target - 120) return ["fail", null];
+      if (TJ.mat(st.board, side) - c.startMat >= d.target - 50) return ["ok"];
+      return left <= 0 ? ["fail", null] : ["go"];
+    }
+    if (d.goal === "promote") {
+      if (m.promo) return TJ.value(st, side) >= c.start - 50 ? ["ok"] : ["fail", "ควีนใหม่โดนกินทันที"];
+      if (TJ.count(st.board, side, "P") < c.pawns) return ["fail", "เบี้ยโดนกินแล้ว"];
+      return left <= 0 ? ["fail", "ตาหมดแล้ว เบี้ยยังไม่ถึงแถวสุดท้าย"] : ["go"];
+    }
+    if (d.goal === "opening") {
+      if (TJ.value(st, side) < c.start - 150) return ["fail", "เสียหมากแล้ว! เปิดเกมต้องระวังของฟรี"];
+      const r = side === "w" ? 56 : 0;
+      const out = [[1, "N"], [2, "B"], [5, "B"], [6, "N"]].filter(([f, t]) => st.board[r + f] !== side + t).length;
+      if (c.castled && out >= 3) return ["ok"];
+      return left <= 0 ? ["fail", "ครบ 10 ตาแล้ว ยังออกหมากหรือเข้าป้อมไม่ครบ"] : ["go"];
+    }
+    if (d.goal === "beat") return ["go"];
+    return ["go"];
+  },
+  // The opponent's reply during a drill.
+  reply(d, st) {
+    if (d.goal === "beat" || d.goal === "opening") {
+      const lvl = d.level || 2;
+      return bestMove(st, lvl === 1 ? 1 : lvl === 2 ? 2 : 3, lvl === 1 ? 140 : d.goal === "opening" ? 40 : 0);
+    }
+    return bestMove(st, d.goal === "win" ? 3 : 2, 0);
+  },
+};
+
+/* ---------- Road to chess master: the lesson runner ---------- */
+const STAR = n => "★".repeat(n) + "☆".repeat(3 - n);
 const Train = {
-  idx: -1, done: false, wait: false, timer: 0,
-  lesson() { return LESSONS[this.idx]; },
-  side() { const L = this.lesson(); return L ? L.fen.split(" ")[1] : "w"; },
-  progress() { return lsGet("chess-train", []); },
+  ci: -1, li: -1, phase: "", step: 0, di: 0, c: null, wait: false, done: false, mistakes: 0, hinted: false, timer: 0, results: [], fb: null,
+  chapter() { return COURSE[this.ci]; },
+  lesson() { return COURSE[this.ci] && COURSE[this.ci].lessons[this.li]; },
+  drill() { const L = this.lesson(); return L && L.drills[this.di]; },
+  side() { return this.phase === "drill" && this.c ? this.c.side : "w"; },
+  passTurn() { return this.phase === "drill" && this.drill().goal === "collect"; },
+  best() { return lsGet("chess-road", {}); },
+  lessonStars(ci, li) { return this.best()[ci + "." + li] || 0; },
+  chapterDone(ci) { return COURSE[ci].lessons.every((_, li) => this.lessonStars(ci, li) > 0); },
+  chapterOpen(ci) { return ci === 0 || this.chapterDone(ci - 1); },
+  lessonOpen(ci, li) { return this.chapterOpen(ci) && (li === 0 || this.lessonStars(ci, li - 1) > 0); },
+  rank() { let k = 0; while (k < COURSE.length && this.chapterDone(k)) k++; return k; },
+  totalStars() { return Object.values(this.best()).reduce((s, v) => s + v, 0); },
   status() {
-    if (this.done) return "ผ่านบทนี้แล้ว กด ข้อถัดไป เพื่อไปต่อ";
-    if (this.wait) return "ดูสิว่าเกิดอะไรขึ้น เดี๋ยวกลับมาลองใหม่";
-    return "ภารกิจ: " + this.lesson().goal;
+    if (this.phase === "teach") return "ดูลูกศรบนกระดาน แล้วกด ถัดไป";
+    if (this.done) return "ผ่านแล้ว!";
+    if (this.wait) return G.thinking ? "ข้าศึกกำลังคิด…" : "ดูว่าเกิดอะไรขึ้น…";
+    return "ภารกิจ: " + this.drill().text;
   },
+
+  /* --- road map --- */
   openList() {
-    const done = this.progress();
-    $("lessonList").innerHTML = LESSONS.map((L, i) =>
-      `<li class="${done.includes(i) ? "done" : ""}"><button data-i="${i}"><span class="n">${i + 1}</span><span><b>${esc(L.title)}</b><small>${esc(L.short)}</small></span><span class="tick">${done.includes(i) ? "✓" : ""}</span></button></li>`).join("");
-    closeAll(); show("train");
-  },
-  start(i, keepFb) {
-    const L = LESSONS[i];
     clearTimeout(this.timer);
-    if (Net.link) Net.leave();
-    this.idx = i; this.done = false; this.wait = false;
+    const rank = this.rank(), all = COURSE.reduce((s, ch) => s + ch.lessons.length * 3, 0);
+    $("roadRank").textContent = rank;
+    $("roadRankName").textContent = "ยศตอนนี้: " + RANKS[rank];
+    $("roadStars").textContent = "ดาว " + this.totalStars() + " / " + all + (rank < COURSE.length ? " · ผ่านบท " + (rank + 1) + " เพื่อเลื่อนเป็น " + RANKS[rank + 1] : " · สูงสุดแล้ว!");
+    $("roadMeter").style.width = Math.round(rank / COURSE.length * 100) + "%";
+    $("lessonList").innerHTML = COURSE.map((ch, ci) => {
+      const open = this.chapterOpen(ci), done = this.chapterDone(ci);
+      return `<li class="chap ${open ? "" : "locked"} ${done ? "done" : ""}">
+        <div class="chap-head"><span class="n">${open ? ci + 1 : "🔒"}</span><span><b>บทที่ ${ci + 1}: ${esc(ch.title)}</b><small>ผ่านแล้วได้ยศ ${esc(RANKS[ch.rank])}</small></span></div>
+        <div class="chap-lessons">${ch.lessons.map((L, li) => {
+          const ok = this.lessonOpen(ci, li), st = this.lessonStars(ci, li);
+          return `<button data-c="${ci}" data-l="${li}" ${ok ? "" : "disabled"} class="${L.boss ? "boss" : ""}"><span>${L.boss ? "👑 " : ""}${esc(L.title)}</span><span class="stars">${ok ? STAR(st) : "🔒"}</span></button>`;
+        }).join("")}</div></li>`;
+    }).join("");
+    closeAll(); show("train");
+    const cur = $("lessonList").querySelector(".chap:not(.done):not(.locked)");
+    if (cur) cur.scrollIntoView({ block: "nearest" });
+  },
+
+  /* --- board helpers --- */
+  setBoard(fen) {
     newGame();
     G.mode = "train"; G.tc = null;
-    G.st = fromFEN(L.fen); G.moves = legalMoves(G.st); G.keys = [posKey(G.st)];
-    G.look = L.marks.map(sqIdx);
+    G.st = fromFEN(fen); G.moves = legalMoves(G.st); G.keys = [posKey(G.st)];
     G.names = { w: "White", b: "Black" };
-    $("lsNum").textContent = "บทที่ " + (i + 1) + " จาก " + LESSONS.length + " · คุณเล่นฝ่าย" + (this.side() === "w" ? "ขาว" : "ดำ");
-    $("lsTitle").textContent = L.title;
-    $("lsGoal").textContent = L.goal;
+  },
+  coach(step, text, acts) {
+    $("coach").hidden = false;
+    $("coachStep").textContent = step;
+    $("coachText").textContent = text;
+    $("coachActs").innerHTML = "";
+    for (const [label, fn, cls] of acts) {
+      const b = document.createElement("button");
+      b.className = "btn " + (cls || ""); b.textContent = label; b.addEventListener("click", fn);
+      $("coachActs").appendChild(b);
+    }
+    if (window.speechSynthesis && thaiVoice) {
+      const b = document.createElement("button");
+      b.className = "btn say"; b.textContent = "🔊"; b.setAttribute("aria-label", "อ่านออกเสียง");
+      b.addEventListener("click", () => voice($("coachText").textContent, 1));
+      $("coachActs").appendChild(b);
+    }
+  },
+  feedback(text, ok) {
+    const el = $("coachFb");
+    el.hidden = !text; el.textContent = text || ""; el.className = "coach-fb " + (ok ? "ok" : "bad");
+  },
+  card() {
+    const ch = this.chapter(), L = this.lesson();
+    $("lsNum").textContent = "บทที่ " + (this.ci + 1) + ": " + ch.title;
+    $("lsRank").textContent = RANKS[this.rank()];
+    $("lsTitle").textContent = (L.boss ? "👑 " : "") + L.title;
     $("lsLook").innerHTML = L.look.map(t => `<li>${esc(t)}</li>`).join("");
     $("lsWarn").innerHTML = L.warn.map(t => `<li>${esc(t)}</li>`).join("");
-    if (!keepFb) $("lsFb").hidden = true;
-    $("lsNext").disabled = !this.progress().includes(i);
-    $("lsNext").textContent = i === LESSONS.length - 1 ? "จบแล้ว" : "ข้อถัดไป";
-    closeAll();
+    $("lsDots").innerHTML = L.drills.map((_, k) =>
+      `<i class="${this.results[k] ? "ok" : ""} ${this.phase === "drill" && k === this.di ? "on" : ""}">${this.results[k] ? STAR(this.results[k]).replace(/☆/g, "") : k + 1}</i>`).join("");
+  },
+
+  /* --- teach slides --- */
+  start(ci, li) {
+    clearTimeout(this.timer);
+    if (Net.link) Net.leave();
+    this.ci = ci; this.li = li; this.results = []; this.step = 0;
+    this.teach();
+    startMusic();
+  },
+  teach() {
+    const L = this.lesson(), s = L.teach[this.step], last = this.step === L.teach.length - 1;
+    this.phase = "teach"; this.wait = true; this.done = false;
+    this.setBoard(s.fen);
+    G.look = (s.marks || []).map(sqIdx);
+    G.arrows = (s.arrows || []).map(a => [sqIdx(a.slice(0, 2)), sqIdx(a.slice(2, 4))]);
+    this.feedback("");
+    this.coach("สอน " + (this.step + 1) + "/" + L.teach.length + " · " + L.title, s.text, [
+      ...(this.step > 0 ? [["ย้อน", () => { this.step--; this.teach(); }]] : []),
+      [last ? "เริ่มโจทย์" : "ถัดไป", () => { if (last) this.startDrill(0); else { this.step++; this.teach(); } }, "go"],
+    ]);
+    this.card(); closeAll();
     if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
     render();
   },
-  feedback(text, ok) { const el = $("lsFb"); el.hidden = false; el.textContent = text; el.className = "ls-fb " + (ok ? "ok" : "bad"); },
+
+  /* --- drills --- */
+  startDrill(di, keepFb) {
+    clearTimeout(this.timer);
+    const L = this.lesson(); this.di = di;
+    const d = L.drills[di];
+    this.phase = "drill"; this.wait = false; this.done = false;
+    if (!keepFb) { this.mistakes = 0; this.hinted = false; }
+    this.setBoard(d.fen);
+    this.c = TJ.begin(d, G.st);
+    G.look = null; G.arrows = null;
+    if (!keepFb) this.feedback("");
+    const acts = [];
+    if (!L.boss) acts.push(["คำใบ้", () => this.hint()]);
+    acts.push(["เริ่มใหม่", () => this.startDrill(this.di, false)]);
+    const extra = d.goal === "collect" ? " (เหลือ " + d.n + " ตา)" : d.goal === "mate" && d.n > 1 ? "" : "";
+    this.coach((L.boss ? "👑 ด่านบอส " : "โจทย์ ") + (di + 1) + "/" + L.drills.length + (this.c.side === "b" ? " · คุณเล่นฝ่ายดำ" : ""), d.text + extra, acts);
+    this.card(); closeAll();
+    if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
+    render();
+  },
   after(m, mover) {
-    if (mover !== this.side() || this.done || this.wait) return;
-    const L = this.lesson(), i = this.idx;
-    const prev = G.history[G.history.length - 1].st;
-    if (L.ok(m, prev, G.st)) {
-      this.done = true; G.look = null;
-      const done = this.progress(); if (!done.includes(i)) { done.push(i); lsSet("chess-train", done); }
-      this.feedback("ถูกต้อง! " + L.win, true);
-      $("lsNext").disabled = false;
-      sfx.promote();
-      if (window.gtag) gtag("event", "lesson_done", { lesson: i + 1 });
+    if (this.phase !== "drill" || mover !== this.side() || this.done) return;
+    const d = this.drill();
+    const r = TJ.judge(d, this.c, G.st, m);
+    if (r[0] === "ok") this.pass();
+    else if (G.over && G.over.type === "draw") this.fail("เกมเสมอ ยังไม่ผ่าน");
+    else if (r[0] === "fail") this.fail(r[1]);
+    else if (r[0] === "self") {
+      if (d.goal === "collect") $("coachText").textContent = d.text + " (เหลือ " + (d.n - this.c.used) + " ตา)";
       render();
+    } else {
+      this.wait = true; G.thinking = true; render();
+      this.timer = setTimeout(() => {
+        const rep = TJ.reply(d, G.st);
+        G.thinking = false; this.wait = false;
+        if (!rep) { render(); return; }
+        doMove(rep);
+        if (G.over) this.fail(G.over.type === "draw" ? "เกมเสมอ ยังไม่ผ่าน" : "โดนรุกฆาต! ลองใหม่อีกครั้ง");
+        else if (d.goal === "mate" && d.n > 2) $("coachText").textContent = d.text + " (เหลือ " + (d.n - this.c.used) + " ตา)";
+      }, d.goal === "beat" ? 250 : 550);
+    }
+  },
+  pass() {
+    this.done = true;
+    const stars = this.hinted ? 1 : this.mistakes === 0 ? 3 : this.mistakes === 1 ? 2 : 1;
+    this.results[this.di] = Math.max(this.results[this.di] || 0, stars);
+    const L = this.lesson(), last = this.di === L.drills.length - 1;
+    this.feedback("ผ่าน! " + STAR(stars) + (stars === 3 ? " สุดยอด ไม่พลาดเลย" : this.hinted ? " (ใช้คำใบ้)" : ""), true);
+    sfx.promote();
+    if (last) this.lessonDone();
+    else this.coach($("coachStep").textContent, "เก่งมาก ไปโจทย์ต่อไปกัน", [["โจทย์ถัดไป", () => this.startDrill(this.di + 1), "go"]]);
+    this.card(); render();
+  },
+  fail(why) {
+    if (this.done) return;
+    this.mistakes++; this.wait = true;
+    const d = this.drill();
+    const generic = { win: "ยังไม่ได้กำไร หรือโดนกินคืน ลองดูใหม่", keep: "ยังเสียหมากอยู่ ดูว่าข้าศึกจ่อกินอะไร", defend: "ยังกันไม่อยู่ หรือเสียหมาก", pick: "ยังไม่ใช่ ลองอ่านกล่อง ควรดูตรงไหน อีกที", mate: "ยังไม่ใช่รุกฆาต ข้าศึกยังหนีได้" };
+    this.feedback("✗ " + (why || generic[d.goal] || "ยังไม่ผ่าน"), false);
+    render();
+    if (d.goal === "beat") {
+      this.coach($("coachStep").textContent, d.text, [["เล่นใหม่", () => this.startDrill(this.di, true), "go"], ["แผนที่", () => this.openList()]]);
       return;
     }
-    this.wait = true;
-    this.feedback(L.fail, false);
-    render();
-    // Show what the opponent would do, then put the position back.
-    const back = () => { this.timer = setTimeout(() => { if (this.idx === i && G.mode === "train") this.start(i, true); }, 2600); };
-    if (L.punish && !G.over) {
-      this.timer = setTimeout(() => {
-        if (this.idx !== i || G.mode !== "train") return;
-        const r = bestMove(G.st, 2, 0);
-        if (r) doMove(r);
-        back();
-      }, 900);
+    const back = () => { this.timer = setTimeout(() => { if (this.phase === "drill") this.startDrill(this.di, true); }, 2600); };
+    // Show how the opponent punishes the mistake, then set the drill up again.
+    if (["win", "keep", "defend"].includes(d.goal) && !G.over && G.st.turn !== this.side()) {
+      this.timer = setTimeout(() => { const r = bestMove(G.st, 2, 0); if (r && this.phase === "drill") doMove(r); back(); }, 800);
     } else back();
   },
+  lessonDone() {
+    const key = this.ci + "." + this.li, L = this.lesson();
+    const stars = Math.min(...L.drills.map((_, k) => this.results[k] || 1));
+    const before = this.rank(), best = this.best();
+    best[key] = Math.max(best[key] || 0, stars); lsSet("chess-road", best);
+    if (window.gtag) gtag("event", "road_lesson", { lesson: key, stars });
+    const next = this.li + 1 < this.chapter().lessons.length ? [this.ci, this.li + 1] : this.ci + 1 < COURSE.length && this.chapterDone(this.ci) ? [this.ci + 1, 0] : null;
+    this.coach("จบบท: " + L.title, "ได้ " + STAR(stars) + (stars < 3 ? " ทำใหม่ได้ถ้าอยากได้ 3 ดาว" : " เต็ม!"), [
+      ...(next ? [["บทต่อไป", () => this.start(...next), "go"]] : []),
+      ["ทำอีกครั้ง", () => this.start(this.ci, this.li)],
+      ["แผนที่", () => this.openList()],
+    ]);
+    const after = this.rank();
+    if (after > before) setTimeout(() => this.rankUp(after), 700);
+  },
+  rankUp(k) {
+    $("ruBadge").textContent = k;
+    $("ruBadge").classList.toggle("top", k === COURSE.length);
+    $("ruTitle").textContent = k === COURSE.length ? "คุณคือเทพหมากรุก!" : "เลื่อนยศ!";
+    $("ruText").textContent = "ยศใหม่: " + RANKS[k] + (k < COURSE.length ? " บทต่อไปเปิดแล้ว" : " ผ่านครบทุกด่าน สุดยอดจริงๆ");
+    show("rankup"); sfx.end();
+    if (prefs.taunts !== "off") voice(k === COURSE.length ? "ทำความเคารพ ท่านคือเทพหมากรุก" : "ยินดีด้วยครับ เลื่อนยศเป็น " + RANKS[k], 1);
+  },
   hint() {
-    if (this.done || this.wait) return;
-    const L = this.lesson();
-    const m = G.moves.find(x => uci(x) === L.hint);
+    if (this.phase !== "drill" || this.done || this.wait || this.lesson().boss) return;
+    const d = this.drill();
+    let m = null;
+    if (this.c.used === 0 && d.hint) m = G.moves.find(x => uci(x) === d.hint);
+    if (!m && d.goal === "mate" && d.n - this.c.used <= 3) m = TJ.mateIn(G.st, d.n - this.c.used);
+    if (!m) m = bestMove(G.st, 3, 0);
     if (!m) return;
+    this.hinted = true;
     G.hint = m; G.selected = m.from; G.stuck = null; render();
   },
+  exit() { clearTimeout(this.timer); this.phase = ""; this.ci = -1; $("coach").hidden = true; newGame(); openMenu(); },
 };
 $("openTrain").addEventListener("click", () => Train.openList());
-$("closeTrain").addEventListener("click", () => { hide("train"); openMenu(); });
-$("lessonList").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { Train.start(+b.dataset.i); startMusic(); } });
+$("closeTrain").addEventListener("click", () => { hide("train"); if (G.mode === "train") return; openMenu(); });
+$("lessonList").addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b && !b.disabled) Train.start(+b.dataset.c, +b.dataset.l); });
 $("lsList").addEventListener("click", () => Train.openList());
-$("lsHint").addEventListener("click", () => Train.hint());
-$("lsRetry").addEventListener("click", () => Train.start(Train.idx));
-$("lsNext").addEventListener("click", () => { if (Train.idx < LESSONS.length - 1) Train.start(Train.idx + 1); else Train.openList(); });
-$("lsExit").addEventListener("click", () => { clearTimeout(Train.timer); Train.idx = -1; newGame(); openMenu(); });
+$("lsExit").addEventListener("click", () => Train.exit());
+$("ruOk").addEventListener("click", () => hide("rankup"));
+$("coachFace").innerHTML = document.querySelector("#taunt .soldier").outerHTML;
+
+// Teaching arrows on the flat board.
+function drawArrows() {
+  let svg = $("arrows");
+  if (!svg) {
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = "arrows"; svg.setAttribute("viewBox", "0 0 8 8"); svg.setAttribute("aria-hidden", "true");
+    svg.innerHTML = '<defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#E07A3E"/></marker></defs><g></g>';
+    boardEl.appendChild(svg);
+  }
+  const f = myColor() === "b";
+  const pt = i => { const r = i >> 3, c = i & 7; return f ? [7 - c + 0.5, 7 - r + 0.5] : [c + 0.5, r + 0.5]; };
+  svg.querySelector("g").innerHTML = (G.arrows || []).map(([a, b]) => {
+    const [x1, y1] = pt(a), [x2, y2] = pt(b), dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1;
+    return `<line x1="${x1 + dx / L * 0.2}" y1="${y1 + dy / L * 0.2}" x2="${x2 - dx / L * 0.32}" y2="${y2 - dy / L * 0.32}" stroke="#E07A3E" stroke-opacity="0.9" stroke-width="0.17" stroke-linecap="round" marker-end="url(#ah)"/>`;
+  }).join("");
+}
 
 /* ---------- Tutorial: a few slides before the first game ---------- */
 const TUT = [
@@ -1874,7 +2312,7 @@ const TUT = [
   { t: "หมากแต่ละตัว", b: `<div class="pcs">${[["K", "คิง: เดิน 1 ช่องทุกทิศ ต้องปกป้องให้ดี"], ["Q", "ควีน: ไปไกลได้ทั้งแนวตรงและแนวทแยง ตัวที่แรงที่สุด"], ["R", "เรือ: ไปไกลได้ตามแนวตรง"], ["B", "บิชอป: ไปไกลได้ตามแนวทแยง"], ["N", "ม้า: เดินเป็นรูปตัว L กระโดดข้ามหมากได้"], ["P", "เบี้ย: เดินหน้า 1 ช่อง (ตาแรก 2 ช่อง) กินทแยงหน้า"]].map(([k, d]) => `<div><span class="pc">${GLYPH[k]}</span><span>${d}</span></div>`).join("")}</div>` },
   { t: "กฎที่ควรรู้", b: `<ul><li><b>รุก (Check)</b> คิงโดนจ่อ ต้องแก้ทันที โดยหนี บัง หรือกินตัวที่รุก</li><li><b>เข้าป้อม</b> แตะคิงแล้วแตะช่องที่ห่าง 2 ช่อง เรือจะข้ามมาเอง</li><li><b>เบี้ยถึงแถวสุดท้าย</b> เลือกเปลี่ยนเป็นควีน เรือ บิชอป หรือม้า</li><li>กินผ่าน (en passant) และการเสมอแบบต่างๆ เกมตัดสินให้อัตโนมัติ</li></ul>` },
   { t: "ปุ่มในเกม", b: `<ul><li><b>Undo</b> ย้อนตา, <b>Hint</b> ให้คอมช่วยคิด, <b>Resign</b> ยอมแพ้</li><li><b>3D / 2D</b> สลับสนามรบกับกระดานแบน ลากเพื่อหมุนกล้อง</li><li><b>จ่าสมชาย</b> จะโผล่มาเตือนเวลาเดินเสี่ยงหรือเสียหมาก ปิดได้ใน Settings</li></ul>` },
-  { t: "เลือกโหมดเล่น", b: `<ul><li><b>Friend</b> เล่นกับเพื่อนบนเครื่องเดียวกัน</li><li><b>Computer</b> เล่นกับคอม 3 ระดับ</li><li><b>Online</b> เล่นกับเพื่อนคนละเครื่อง สร้างห้องแล้วส่งรหัสให้เพื่อน</li><li><b>Training room</b> ฝึกว่าควรดูตรงไหน ต้องระวังอะไร</li><li><b>Leaderboard</b> ใส่ชื่อก่อนเล่น แล้วชื่อจะขึ้นกระดานคะแนน</li></ul><p>มือใหม่แนะนำให้เข้า Training room ก่อน</p>` },
+  { t: "เลือกโหมดเล่น", b: `<ul><li><b>Friend</b> เล่นกับเพื่อนบนเครื่องเดียวกัน</li><li><b>Computer</b> เล่นกับคอม 3 ระดับ</li><li><b>Online</b> เล่นกับเพื่อนคนละเครื่อง สร้างห้องแล้วส่งรหัสให้เพื่อน</li><li><b>Road to master</b> เส้นทางสู่เทพหมากรุก เรียนทีละขั้นตั้งแต่เดินหมากจนล้มคอมได้ ไล่ยศจากทหารเกณฑ์</li><li><b>Leaderboard</b> ใส่ชื่อก่อนเล่น แล้วชื่อจะขึ้นกระดานคะแนน</li></ul><p>มือใหม่แนะนำให้เริ่มที่ Road to master</p>` },
 ];
 const Tutorial = {
   i: 0,
@@ -2501,6 +2939,14 @@ const Battle = (() => {
     const m = new T.Mesh(geo, new T.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
     m.rotation.x = -Math.PI / 2; m.position.copy(sqPos(i)).setY(0.065); scene.add(m); marks.push(m);
   }
+  function arrow(a, b, color) {
+    const p = sqPos(a), q = sqPos(b), dx = q.x - p.x, dz = q.z - p.z, L = Math.hypot(dx, dz);
+    const s = new T.Shape(), w = 0.09, hw = 0.27, hl = 0.4, e = L - 0.12;
+    s.moveTo(0.2, -w); s.lineTo(e - hl, -w); s.lineTo(e - hl, -hw); s.lineTo(e, 0); s.lineTo(e - hl, hw); s.lineTo(e - hl, w); s.lineTo(0.2, w); s.closePath();
+    const m = new T.Mesh(new T.ShapeGeometry(s), new T.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false, side: T.DoubleSide }));
+    m.rotation.order = "YXZ"; m.rotation.y = Math.atan2(-dz, dx); m.rotation.x = -Math.PI / 2;
+    m.position.set(p.x, 0.09, p.z); scene.add(m); marks.push(m);
+  }
   function refreshMarks() {
     for (const m of marks) scene.remove(m);
     marks = [];
@@ -2508,6 +2954,7 @@ const Battle = (() => {
     if (G.hint) { mark(G.hint.from, markGeo, 0x7DB35A, 0.5); mark(G.hint.to, markGeo, 0x7DB35A, 0.5); }
     if (G.stuck) for (const f of new Set(G.moves.map(m => m.from))) mark(f, ringGeo, 0x4FB3D9, 0.95);
     if (G.look) for (const f of G.look) mark(f, ringGeo, 0xE07A3E, 0.95);
+    if (G.arrows) for (const [a, b] of G.arrows) arrow(a, b, 0xE07A3E);
     if (G.selected !== null) {
       mark(G.selected, markGeo, 0xFFD24A, 0.6);
       for (const mv of G.moves) if (mv.from === G.selected) {
