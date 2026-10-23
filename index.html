@@ -102,9 +102,11 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 /* On computers the board fits the window height, so it shows in full without scrolling. */
 .app { --fit: 140px; }
 @media (min-width: 821px) {
-  .app { padding-block: 14px 12px; gap: 14px; }
-  .app .frame { width: min(100%, 620px, calc(100vh - var(--fit))); width: min(100%, 620px, calc(100dvh - var(--fit))); }
-  .battle { max-width: min(760px, calc((100vh - var(--fit)) * 1.25)); max-width: min(760px, calc((100dvh - var(--fit)) * 1.25)); }
+  .app { padding-block: 14px 12px; gap: 14px; max-width: 1680px; }
+  .table { grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 360px); }
+  .app .frame { width: min(100%, calc(100vh - var(--fit))); width: min(100%, calc(100dvh - var(--fit))); }
+  /* The 3D battlefield widens with the screen: up to 16:9, never taller than the window allows. */
+  .battle { max-width: 100%; aspect-ratio: auto; height: min(calc(100vh - var(--fit)), 62vw); height: min(calc(100dvh - var(--fit)), 62vw); }
   .coach { margin-bottom: 4px; padding: 10px 12px; }
 }
 .battle canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: pointer; }
@@ -663,7 +665,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-e</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-f</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
