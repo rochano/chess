@@ -332,6 +332,68 @@ select {
 .center { text-align: center; }
 .fine { font-size: 13px; color: var(--ink-soft); }
 
+/* Menu extras: online room, small link buttons */
+.linkbtn { background: none; border: 0; padding: 4px; font-weight: 800; font-size: 14px; color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; justify-self: center; }
+.join { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.join input { min-width: 0; padding: 8px 10px; border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper-2); font: inherit; font-weight: 800; color: var(--ink); text-transform: uppercase; letter-spacing: 0.12em; }
+.netmsg { padding: 10px 12px; border: 2px dashed var(--ink); border-radius: 10px; background: var(--paper-2); font-weight: 700; font-size: 14px; line-height: 1.5; display: grid; gap: 8px; }
+.netmsg[hidden] { display: none; }
+.netmsg.bad { border-color: var(--flag); color: var(--flag); }
+.netmsg .code { font-family: var(--font-display); font-size: 34px; letter-spacing: 0.18em; line-height: 1; color: var(--ink); }
+.netmsg .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.netmsg .chip { box-shadow: 0 2px 0 var(--ink); }
+
+/* Tutorial */
+.tut-dots { display: flex; gap: 6px; justify-content: center; }
+.tut-dots i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper-2); }
+.tut-dots i.on { background: var(--ember); }
+.tut-body { display: grid; gap: 10px; line-height: 1.55; }
+.tut-body p, .tut-body ul, .tut-body ol { margin: 0; }
+.tut-body ul, .tut-body ol { padding-left: 20px; display: grid; gap: 6px; }
+.pcs { display: grid; gap: 6px; }
+.pcs div { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; align-items: center; }
+.pcs .pc { font-family: var(--font-piece); font-size: 28px; line-height: 1; text-align: center; color: var(--white-pc); -webkit-text-stroke: 1.2px var(--ink); paint-order: stroke fill; }
+
+/* Training room */
+.lessons { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 52vh; overflow-y: auto; }
+.lessons button { width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border: 2.5px solid var(--ink); border-radius: 12px; background: var(--paper-2); box-shadow: 0 3px 0 var(--ink); }
+.lessons .n { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; background: var(--card); }
+.lessons .done .n { background: var(--leaf); color: var(--card); }
+.lessons b { display: block; font-size: 15px; }
+.lessons small { display: block; color: var(--ink-soft); font-size: 12.5px; line-height: 1.35; }
+.lessons .tick { font-weight: 800; color: var(--leaf); }
+.lesson { display: none; gap: 10px; padding: 14px; background: var(--card); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); }
+.training .lesson { display: grid; }
+.training .player, .training .controls { display: none; }
+.asblack #pW { order: -1; } /* playing Black: own card sits next to the controls */
+.ls-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ls-num { font-weight: 800; font-size: 12px; letter-spacing: 0.08em; color: var(--ink-soft); }
+.lesson h3 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 1.15; }
+.ls-goal { margin: 0; font-weight: 800; line-height: 1.45; padding: 8px 10px; border-radius: 10px; background: #FFF3CF; border: 2px solid var(--ink); }
+.tipbox { padding: 8px 10px; border-radius: 10px; border: 2px solid var(--ink); font-size: 14px; line-height: 1.45; }
+.tipbox b { font-size: 12px; letter-spacing: 0.06em; }
+.tipbox ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.tipbox.look { background: #E5F1F6; }
+.tipbox.look b { color: #2E7EA0; }
+.tipbox.warn { background: #FBE6E2; }
+.tipbox.warn b { color: var(--flag); }
+.ls-fb { margin: 0; padding: 8px 10px; border-radius: 10px; font-weight: 800; line-height: 1.45; border: 2px solid var(--ink); }
+.ls-fb.ok { background: #E4F0D8; }
+.ls-fb.bad { background: #FBE0DC; color: #9C2B22; }
+.lesson .btn { font-size: 16px; padding: 8px 10px; }
+.lesson .btn.go:disabled { opacity: 0.5; }
+.sq.look::before { box-shadow: inset 0 0 0 0.6cqw var(--ember); background: rgba(224, 122, 62, 0.22); animation: can 0.9s ease-in-out infinite alternate; }
+
+/* Leaderboard */
+.lb { max-height: 50vh; overflow: auto; border: 2.5px solid var(--ink); border-radius: 12px; background: var(--paper-2); }
+.lb table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.lb th, .lb td { padding: 7px 8px; text-align: right; border-bottom: 1.5px solid rgba(47, 38, 32, 0.15); }
+.lb th { position: sticky; top: 0; background: var(--ink); color: var(--paper); font-size: 12px; letter-spacing: 0.06em; }
+.lb th:nth-child(2), .lb td:nth-child(2) { text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb td:last-child { font-weight: 800; }
+.lb tr.top1 td { background: rgba(245, 195, 68, 0.45); }
+.lb .empty { padding: 16px; margin: 0; color: var(--ink-soft); font-weight: 700; line-height: 1.5; }
+
 @media (prefers-reduced-motion: reduce) {
   .pc.lift, .card { animation: none; }
 }
@@ -391,6 +453,16 @@ select {
     </section>
 
     <aside class="side">
+      <div class="lesson" id="lesson">
+        <div class="ls-top"><span class="ls-num" id="lsNum">บทที่ 1</span><button class="chip" id="lsList">ทุกบทเรียน</button></div>
+        <h3 id="lsTitle"></h3>
+        <p class="ls-goal" id="lsGoal"></p>
+        <div class="tipbox look"><b>ควรดูตรงไหน</b><ul id="lsLook"></ul></div>
+        <div class="tipbox warn"><b>ระวังอะไร</b><ul id="lsWarn"></ul></div>
+        <p class="ls-fb" id="lsFb" hidden></p>
+        <div class="row2"><button class="btn" id="lsHint">คำใบ้</button><button class="btn" id="lsRetry">เริ่มใหม่</button></div>
+        <div class="row2"><button class="btn" id="lsExit">ออก</button><button class="btn go" id="lsNext">ข้อถัดไป</button></div>
+      </div>
       <div class="player" id="pB">
         <div class="avatar" id="avB"></div>
         <div class="pname" id="nameB">Player 2<small>Black</small></div>
@@ -422,6 +494,7 @@ select {
       <div class="seg" id="segMode">
         <button data-v="friend" aria-pressed="true">Friend</button>
         <button data-v="cpu" aria-pressed="false">Computer</button>
+        <button data-v="online" aria-pressed="false">Online</button>
       </div>
     </div>
     <div class="field" id="levelField" hidden>
@@ -432,8 +505,14 @@ select {
         <button data-v="3" aria-pressed="false">Hard</button>
       </div>
     </div>
+    <div class="field" id="onlineField" hidden>
+      <span class="lbl">Play on two devices</span>
+      <button class="btn go" id="netCreate">Create a room</button>
+      <div class="join"><input id="netCode" maxlength="8" placeholder="Room code" aria-label="Room code" autocomplete="off" autocapitalize="characters"><button class="btn" id="netJoin">Join</button></div>
+      <div class="netmsg" id="netMsg" aria-live="polite" hidden></div>
+    </div>
     <div class="field">
-      <span class="lbl">Player names</span>
+      <span class="lbl" id="namesLbl">Player names</span>
       <div class="names">
         <input id="inNameW" maxlength="24" placeholder="White" aria-label="White player name" autocomplete="off">
         <input id="inNameB" maxlength="24" placeholder="Black" aria-label="Black player name" autocomplete="off">
@@ -451,10 +530,15 @@ select {
     <div class="btns">
       <button class="btn go" id="newGame">New game</button>
       <div class="row2">
+        <button class="btn" id="openTrain">Training room</button>
+        <button class="btn" id="openLeader">Leaderboard</button>
+      </div>
+      <div class="row2">
+        <button class="btn" id="openTut">How to play</button>
         <button class="btn" id="menuSettings">Settings</button>
-        <button class="btn" id="openCredits">Credits</button>
       </div>
       <button class="btn" id="closeMenu" hidden>Back to game</button>
+      <button class="linkbtn" id="openCredits">Credits</button>
     </div>
   </div>
 </div>
@@ -516,7 +600,7 @@ select {
     <h2 id="credTitle">Credits</h2>
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.21-c</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -539,6 +623,41 @@ select {
   <div class="card" role="dialog" aria-labelledby="promoTitle">
     <h2 id="promoTitle">Promote your pawn</h2>
     <div class="promo-row" id="promoRow"></div>
+  </div>
+</div>
+
+<!-- Tutorial -->
+<div class="scrim" id="tutorial" hidden>
+  <div class="card tut" role="dialog" aria-labelledby="tutTitle">
+    <div class="tut-dots" id="tutDots" aria-hidden="true"></div>
+    <h2 id="tutTitle"></h2>
+    <div class="tut-body" id="tutBody"></div>
+    <div class="row2"><button class="btn" id="tutBack">ย้อนกลับ</button><button class="btn go" id="tutNext">ถัดไป</button></div>
+    <div class="row2"><button class="linkbtn" id="tutSkip">ข้าม</button><button class="linkbtn" id="tutTrain">ไปห้องเทรนนิ่ง</button></div>
+  </div>
+</div>
+
+<!-- Training room -->
+<div class="scrim" id="train" hidden>
+  <div class="card" role="dialog" aria-labelledby="trainTitle">
+    <h2 id="trainTitle">Training room</h2>
+    <p>ฝึกทีละเรื่อง แต่ละบทจะบอกว่าควรดูตรงไหนและต้องระวังอะไร แล้วให้ลองเดินเอง</p>
+    <ol class="lessons" id="lessonList"></ol>
+    <div class="btns"><button class="btn" id="closeTrain">Back to menu</button></div>
+  </div>
+</div>
+
+<!-- Leaderboard -->
+<div class="scrim" id="leader" hidden>
+  <div class="card" role="dialog" aria-labelledby="lbTitle">
+    <h2 id="lbTitle">Leaderboard</h2>
+    <div class="seg" id="segLeader">
+      <button data-v="all" aria-pressed="true">Everyone</button>
+      <button data-v="local" aria-pressed="false">This device</button>
+    </div>
+    <div class="lb" id="lbBody"></div>
+    <p class="fine">ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน</p>
+    <div class="btns"><button class="btn" id="closeLeader">Back to menu</button></div>
   </div>
 </div>
 
@@ -1030,6 +1149,7 @@ function render() {
     if (G.hint && (G.hint.from === i || G.hint.to === i)) cls.push("hint");
     if (i === kingInCheck) cls.push(G.over && G.over.type === "mate" ? "mate" : "check");
     if (G.stuck && G.moves.some(m => m.from === i)) cls.push("can");
+    if (G.look && G.look.includes(i)) cls.push("look");
     if (targets.has(i)) { cls.push("target"); if (p || targets.get(i).ep) cls.push("take"); }
     el.className = cls.join(" ");
     el.innerHTML = p ? pieceHTML(p, i === G.animTo ? "lift" : "") : "";
@@ -1050,6 +1170,10 @@ function render() {
   else if (G.stuck) status.textContent = G.stuck.text;
   else if (kingInCheck >= 0) status.textContent = "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.";
   else if (G.hint) status.textContent = "Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to);
+  else if (G.mode === "train") status.textContent = Train.status();
+  else if (G.mode === "online" && !Net.connected) status.textContent = "Your opponent is offline. Waiting for them to come back…";
+  else if (G.mode === "online" && st.turn !== Net.color) status.textContent = "Waiting for " + G.names[st.turn] + " to move…";
+  else if (G.mode === "online" && !G.history.length) status.textContent = "You play " + (Net.color === "w" ? "White. You move first." : "Black. White moves first.");
   else if (!G.history.length) status.textContent = G.mode === "cpu" ? "You play White. Tap a piece to see its moves." : "Tap a piece to see its moves.";
   else status.textContent = "Move " + (Math.floor(G.history.length / 2) + 1);
 
@@ -1058,13 +1182,14 @@ function render() {
   $("pB").classList.toggle("on", !G.over && st.turn === "b");
   renderCaps();
   renderClocks();
-  $("overBar").hidden = !G.over;
+  $("overBar").hidden = !G.over || G.mode === "train";
+  syncModeUI();
   if (typeof Battle !== "undefined") Battle.refresh();
 
-  const humanTurn = !G.over && !G.thinking && !(G.mode === "cpu" && st.turn === "b");
-  $("undo").disabled = G.thinking || !G.history.length;
+  const humanTurn = !G.over && !G.thinking && humanSide(st.turn);
+  $("undo").disabled = G.thinking || !G.history.length || G.mode === "online";
   $("resign").disabled = !!G.over || G.thinking;
-  $("hint").disabled = !humanTurn;
+  $("hint").disabled = !humanTurn || G.mode === "online";
 }
 
 function renderCaps() {
@@ -1101,7 +1226,7 @@ function esc(t) { return String(t).replace(/[&<>"']/g, ch => "&#" + ch.charCodeA
 function reportResult() {
   const el = $("resSaved");
   el.hidden = true;
-  if (!SHEET_URL || G.reported) return;
+  if (G.reported || G.mode === "train") return;
   G.reported = true;
   const o = G.over;
   if (window.gtag) gtag("event", "game_end", { opponent: G.mode, result: o.type, moves: Math.ceil(G.history.length / 2) });
@@ -1109,7 +1234,7 @@ function reportResult() {
     finishedAt: new Date().toISOString(),
     white: G.names.w,
     black: G.names.b,
-    opponent: G.mode === "cpu" ? "Computer (" + ["", "Easy", "Normal", "Hard"][G.level] + ")" : "Friend",
+    opponent: G.mode === "cpu" ? "Computer (" + ["", "Easy", "Normal", "Hard"][G.level] + ")" : G.mode === "online" ? "Online" : "Friend",
     winner: o.type === "draw" ? "Draw" : o.winner === "w" ? G.names.w : G.names.b,
     result: o.type === "draw" ? "1/2-1/2" : o.winner === "w" ? "1-0" : "0-1",
     reason: { mate: "Checkmate", flag: "Time", resign: "Resignation", draw: o.text.replace(/\.$/, "") }[o.type],
@@ -1117,6 +1242,9 @@ function reportResult() {
     clock: G.tc ? prefs.clock : "None",
     minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
   };
+  saveLocalResult(row);
+  // In an online game both devices see the result; only the host writes it to the sheet.
+  if (!SHEET_URL || (G.mode === "online" && Net.role !== "host")) return;
   el.hidden = false; el.textContent = "Saving to the score sheet…";
   fetch(SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) })
     .then(() => { el.textContent = "Result sent to the score sheet."; })
@@ -1124,7 +1252,8 @@ function reportResult() {
 }
 
 function newGame() {
-  G.mode = prefs.mode; G.level = +prefs.level;
+  G.mode = prefs.mode === "online" && !Net.live ? "friend" : prefs.mode; G.level = +prefs.level;
+  G.look = null;
   const [base, inc] = prefs.clock === "0" ? [0, 0] : prefs.clock.split("+").map(Number);
   G.tc = base ? { base: base * 60000, inc: inc * 1000 } : null;
   G.clocks = { w: G.tc ? G.tc.base : 0, b: G.tc ? G.tc.base : 0 };
@@ -1146,7 +1275,7 @@ function newGame() {
 
 function onSquare(i) {
   if (G.over || G.thinking || anyOverlay()) return;
-  if (G.mode === "cpu" && G.st.turn === "b") return;
+  if (!humanSide(G.st.turn)) return;
   const p = G.st.board[i];
   if (G.selected !== null) {
     const cands = G.moves.filter(m => m.from === G.selected && m.to === i);
@@ -1198,7 +1327,10 @@ function doMove(m) {
   else if (insufficient(next.board)) G.over = { type: "draw", text: "Draw. Neither side can force mate." };
 
   if (G.over) sfx.end(); else if (check) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (next.captured) sfx.capture(); else sfx.move();
+  if (G.mode === "online" && mover === Net.color)
+    Net.send({ t: "move", from: m.from, to: m.to, promo: m.promo || "", n: G.history.length - 1, clock: G.clocks[mover] });
   render();
+  if (G.mode === "train") { Train.after(m, mover); return; }
   if (G.over) showResult();
   else { sergeant(m, prevSt, next, mover); maybeComputer(); }
 }
@@ -1220,7 +1352,13 @@ const RANT = {
 const ANGER_LABEL = ["", "หงุดหงิด", "โมโห", "เดือดสุดๆ"];
 let tauntTimer = 0, tauntLeft = 0, tauntStart = 0, lastRant = {};
 function material(board, color) { return board.reduce((s, p) => s + (p ? (p[0] === color ? 1 : -1) * VAL[p[1]] : 0), 0); }
-function humanSide(c) { return G.mode !== "cpu" || c === "w"; }
+// Which side(s) this device moves: both in a friend game, one side otherwise.
+function humanSide(c) {
+  if (G.mode === "train" && (Train.done || Train.wait)) return false;
+  if (G.mode === "online" && !Net.connected) return false;
+  const me = myColor();
+  return !me || c === me;
+}
 function pickLine(kind, level) {
   const list = RANT[kind][level - 1], key = kind + level;
   let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === lastRant[key]);
@@ -1355,7 +1493,7 @@ function showTaunt(kind, pieceType, side, level) {
   level = level || 1;
   el.dataset.level = level;
   $("tauntText").textContent = pickLine(kind, level).replace(/\{p\}/g, THAI_PIECE[pieceType]);
-  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือน" : "จ่าสมชาย ด่า") + (G.mode === "cpu" ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
+  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือน" : "จ่าสมชาย ด่า") + (myColor() ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
   el.querySelectorAll(".anger i").forEach((d, k) => d.classList.toggle("on", k < level));
   $("angerLabel").textContent = ANGER_LABEL[level];
   el.classList.toggle("warn", kind === "risky");
@@ -1406,7 +1544,7 @@ function maybeComputer() {
 }
 
 function undo() {
-  if (!G.history.length || G.thinking) return;
+  if (!G.history.length || G.thinking || G.mode === "online") return;
   const pop = () => {
     const h = G.history.pop();
     G.st = h.st; G.captured = h.captured; G.last = h.last; G.started = h.started; G.keys.length = h.keysLen;
@@ -1422,7 +1560,8 @@ function undo() {
 }
 
 function hint() {
-  if (G.over || G.thinking) return;
+  if (G.mode === "train") { Train.hint(); return; }
+  if (G.over || G.thinking || G.mode === "online") return;
   $("status").textContent = "Thinking about a hint…";
   setTimeout(() => {
     const m = bestMove(G.st, 2, 0, new Set(G.keys));
@@ -1440,6 +1579,9 @@ setInterval(() => {
   G.clocks[c] -= dt;
   if (G.clocks[c] <= 0) {
     G.clocks[c] = 0;
+    // Online, each device only calls time on its own clock; the other side reports theirs.
+    if (G.mode === "online" && c !== Net.color) { renderClocks(); return; }
+    if (G.mode === "online") Net.send({ t: "flag" });
     const w = opp(c);
     G.over = { type: "flag", winner: w, text: (c === "w" ? "White" : "Black") + " ran out of time. " + (w === "w" ? "White" : "Black") + " wins." };
     G.thinking = false;
@@ -1451,7 +1593,7 @@ setInterval(() => {
 }, 100);
 
 /* ---------- Overlays ---------- */
-const overlays = ["menu", "settings", "credits", "confirm", "promo", "result"];
+const overlays = ["menu", "settings", "credits", "confirm", "promo", "result", "tutorial", "train", "leader"];
 function anyOverlay() { return overlays.some(id => !$(id).hidden); }
 function show(id) { $(id).hidden = false; const f = $(id).querySelector("button, select, input"); if (f) f.focus({ preventScroll: true }); }
 function hide(id) { $(id).hidden = true; }
@@ -1479,13 +1621,13 @@ function askPromotion(cands) {
 function showResult() {
   const o = G.over, badge = $("resBadge");
   reportResult();
-  const youLost = G.mode === "cpu" && o.winner === "b";
+  const me = myColor(), youLost = !!me && o.winner !== me;
   if (o.type === "draw") { badge.className = "result-badge draw"; badge.textContent = "♚"; $("resTitle").textContent = "Draw"; }
   else {
     badge.className = "result-badge " + (o.type === "mate" ? "mate" : "win");
     badge.innerHTML = `<span class="pc ${o.winner}" style="font-size:44px">${GLYPH.K}</span>`;
     $("resTitle").textContent = o.type === "mate" ? "Checkmate" : o.type === "flag" ? "Time's up" : "Resigned";
-    if (G.mode === "cpu") $("resTitle").textContent += youLost ? ". The computer wins" : ". You win";
+    if (me) $("resTitle").textContent += youLost ? (G.mode === "cpu" ? ". The computer wins" : ". You lose") : ". You win";
   }
   $("resText").textContent = o.text;
   setTimeout(() => show("result"), o.type === "mate" ? 650 : 200);
@@ -1499,8 +1641,11 @@ function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
     $(seg).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs[key]))));
   $("levelField").hidden = prefs.mode !== "cpu";
-  $("inNameB").hidden = prefs.mode === "cpu";
-  $("inNameW").placeholder = prefs.mode === "cpu" ? "Your name" : "White";
+  $("onlineField").hidden = prefs.mode !== "online";
+  $("newGame").hidden = prefs.mode === "online";
+  $("inNameB").hidden = prefs.mode !== "friend";
+  $("inNameW").placeholder = prefs.mode === "friend" ? "White" : "Your name";
+  $("namesLbl").textContent = prefs.mode === "friend" ? "Player names" : "Your name";
 }
 for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]]) {
   $(seg).addEventListener("click", e => {
@@ -1518,6 +1663,472 @@ function applyTheme() {
   $("volMusic").value = prefs.volMusic; $("volMusicOut").textContent = prefs.volMusic;
 }
 
+/* ---------- Modes: which side this device plays ---------- */
+function myColor() {
+  if (G.mode === "cpu") return "w";
+  if (G.mode === "online") return Net.color;
+  if (G.mode === "train") return Train.side();
+  return null; // friend game: both sides on one device
+}
+let flipped = false;
+function syncModeUI() {
+  $("app").classList.toggle("training", G.mode === "train");
+  $("app").classList.toggle("asblack", myColor() === "b");
+  // The flat board turns round when this device plays Black.
+  const f = myColor() === "b";
+  if (f === flipped) return;
+  flipped = f;
+  squares.forEach((el, i) => { el.style.order = f ? 63 - i : ""; });
+  document.querySelectorAll(".files").forEach(el => { el.innerHTML = [...(f ? "hgfedcba" : "abcdefgh")].map(x => `<span>${x}</span>`).join(""); });
+  document.querySelectorAll(".ranks").forEach(el => { el.innerHTML = (f ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1]).map(n => `<span>${n}</span>`).join(""); });
+}
+
+const sqIdx = s => (8 - +s[1]) * 8 + "abcdefgh".indexOf(s[0]);
+const uci = m => sqName(m.from) + sqName(m.to) + (m.promo ? m.promo.toLowerCase() : "");
+function fromFEN(fen) {
+  const [placement, turn, cs, ep, half] = fen.split(" ");
+  const board = new Array(64).fill(null);
+  let i = 0;
+  for (const ch of placement) {
+    if (ch === "/") continue;
+    if (/\d/.test(ch)) i += +ch;
+    else board[i++] = (ch === ch.toUpperCase() ? "w" : "b") + ch.toUpperCase();
+  }
+  return { board, turn, castle: { wK: cs.includes("K"), wQ: cs.includes("Q"), bK: cs.includes("k"), bQ: cs.includes("q") }, ep: ep === "-" ? -1 : sqIdx(ep), half: +half || 0, captured: null };
+}
+function lsGet(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+/* ---------- Training room: short lessons on what to look at and what to watch out for ---------- */
+const anyOf = list => m => list.includes(uci(m));
+function noMateIn1(next) {
+  for (const r of legalMoves(next)) {
+    const s2 = applyMove(next, r);
+    if (!legalMoves(s2).length && inCheck(s2.board, s2.turn)) return false;
+  }
+  return true;
+}
+const LESSONS = [
+  { title: "คุมกลางกระดาน", short: "เริ่มเกมด้วยการยึดตรงกลาง",
+    fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    goal: "ดันเบี้ยหน้าคิง (e) หรือหน้าควีน (d) ไป 2 ช่อง เพื่อยึดกลางกระดาน",
+    look: ["4 ช่องกลาง e4 d4 e5 d5 (วงสีส้ม) คือหัวใจของกระดาน", "หมากที่อยู่กลางเดินไปได้หลายทาง หมากริมกระดานเดินได้น้อย"],
+    warn: ["อย่าเริ่มด้วยเบี้ยริม (a, h) เพราะแทบไม่ช่วยอะไร", "อย่าเอาควีนออกมาเร็ว เดี๋ยวโดนไล่เสียจังหวะ"],
+    marks: ["e4", "d4", "e5", "d5"], hint: "e2e4", ok: anyOf(["e2e4", "d2d4"]),
+    win: "เยี่ยม! เบี้ยกลางยึดพื้นที่ และเปิดทางให้บิชอปกับควีนออกมาได้ด้วย",
+    fail: "ยังไม่ใช่ ลองดันเบี้ย e หรือ d ไป 2 ช่อง" },
+  { title: "ออกม้า ออกบิชอป", short: "พาหมากรองออกมาเล่นให้ไว",
+    fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+    goal: "พาม้าหรือบิชอปที่ยังอยู่แถวหลังออกมา 1 ตัว",
+    look: ["ม้าชอบอยู่ f3 หรือ c3 ใกล้ตรงกลาง", "บิชอปชอบแนวทแยงยาวที่เล็งเข้าฝั่งข้าศึก เช่น c4 หรือ b5"],
+    warn: ["ช่วงเปิดเกม อย่าเดินตัวเดิมซ้ำหลายตา", "ม้าริมกระดาน (a3, h3) เดินได้น้อยลงครึ่งหนึ่ง"],
+    marks: ["f3", "c3", "c4", "b5"], hint: "g1f3", ok: anyOf(["g1f3", "b1c3", "f1c4", "f1b5"]),
+    win: "ใช่เลย! ออกหมากรองให้ครบก่อน แล้วค่อยวางแผนบุก ม้าที่ f3 ยังจ่อเบี้ย e5 อยู่ด้วย",
+    fail: "ตานี้ให้เอาม้าหรือบิชอปออกมาก่อน หมากรองที่ออกเร็วช่วยทั้งบุกและป้องกัน" },
+  { title: "เห็นของฟรี ต้องเก็บ", short: "หาหมากข้าศึกที่ไม่มีใครคุ้มกัน",
+    fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+    goal: "ควีนดำมายืนให้กินฟรี หาให้เจอแล้วกินเลย",
+    look: ["ทุกตา ไล่ดูหมากข้าศึกทีละตัวว่ามีตัวไหนไม่มีใครคุ้มกัน", "แล้วดูว่าหมากเราตัวไหนเดินไปถึงตัวนั้นได้"],
+    warn: ["ก่อนกิน เช็กก่อนว่าช่องนั้นมีหมากข้าศึกรอกินคืนไหม"],
+    marks: ["h4", "f3"], hint: "f3h4", ok: anyOf(["f3h4"]),
+    win: "กินควีนฟรี! ได้เปรียบไป 9 แต้มเลย",
+    fail: "ยังมีควีนดำยืนไม่มีใครคุ้มกันอยู่ที่ h4 ลองดูม้าที่ f3" },
+  { title: "โดนจ่อแล้วต้องหนี", short: "หมากเราโดนเล็ง ต้องรู้ตัวก่อน",
+    fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3",
+    goal: "ควีนของเราที่ h5 โดนม้า f6 จ่อกินอยู่ พาควีนหนีไปช่องที่ปลอดภัย",
+    look: ["ทุกครั้งที่ข้าศึกเดิน ถามตัวเองว่า ตานี้มันจ่อกินอะไรของเรา", "ช่องที่จะหนีไป ต้องไม่มีหมากข้าศึกเล็งอยู่"],
+    warn: ["อย่าหนีไปช่องที่ยังโดนกินได้", "ควีนกับเรือเป็นตัวใหญ่ เสียไปแล้วเกมพลิกได้ง่าย"],
+    marks: ["h5", "f6"], hint: "h5e2", punish: true,
+    ok: (m, prev, next) => sqName(m.from) === "h5" && !attacked(next.board, m.to, "b"),
+    win: "ปลอดภัยแล้ว! นิสัยที่ดีคือเช็กทุกตาว่าข้าศึกจ่อกินอะไรเราอยู่",
+    fail: "ควีนยังโดนกินได้! ดูว่าดำจะเอาอะไรมากิน แล้วลองใหม่" },
+  { title: "ม้าส้อม", short: "จ่อ 2 ตัวพร้อมกันในตาเดียว",
+    fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
+    goal: "หาตาที่ม้าจ่อคิงและเรือดำพร้อมกัน",
+    look: ["ม้าเดินเป็นรูปตัว L และกระโดดข้ามหมากได้", "มองหาช่องที่ม้าแตะได้ทั้งคิงและตัวใหญ่พร้อมกัน"],
+    warn: ["ช่องที่ม้าไปต้องไม่โดนกินคืน", "ข้าศึกก็ส้อมเราได้ ระวังคิงกับควีนยืนห่างกันแบบม้าเดินถึง"],
+    marks: ["c7", "e8", "a8"], hint: "b5c7", ok: anyOf(["b5c7"]),
+    win: "รุกพร้อมจ่อเรือ! ดำต้องหนีคิงก่อน แล้วเราเก็บเรือฟรี",
+    fail: "ยังไม่ใช่ หาช่องที่ม้าจ่อทั้งคิงที่ e8 และเรือที่ a8 ได้พร้อมกัน" },
+  { title: "ตรึงหมาก (Pin)", short: "ล็อกหมากที่ยืนบังคิงไว้",
+    fen: "4k3/pp3ppp/2n5/8/8/8/PPP2PPP/4KB2 w - - 0 1",
+    goal: "ทำให้ม้าดำที่ c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง",
+    look: ["หมากข้าศึกที่ยืนเรียงแนวเดียวกับคิงของมัน คือเป้าตรึง", "บิชอปตรึงตามแนวทแยง เรือตรึงตามแนวตรง"],
+    warn: ["หมากเราก็โดนตรึงได้ถ้ายืนหน้าคิงในแนวเดียวกัน", "หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้ อย่าพึ่งมัน"],
+    marks: ["c6", "e8", "b5"], hint: "f1b5", ok: anyOf(["f1b5"]),
+    win: "ม้า c6 ขยับไม่ได้แล้ว เพราะถ้าขยับคิงจะโดนกิน",
+    fail: "ลองหาช่องที่บิชอปยืนแล้วเล็งผ่านม้า c6 ไปถึงคิง e8" },
+  { title: "เข้าป้อม (Castling)", short: "เก็บคิงให้ปลอดภัย",
+    fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1",
+    goal: "เอาคิงหลบเข้ามุมให้ปลอดภัย และพาเรือออกมาเล่น",
+    look: ["แตะคิงแล้วแตะช่อง g1 คิงจะเดิน 2 ช่องและเรือจะข้ามมาเอง", "เข้าป้อมได้เมื่อคิงกับเรือยังไม่เคยเดิน และช่องระหว่างทางว่าง"],
+    warn: ["เข้าป้อมไม่ได้ถ้ากำลังโดนรุก หรือต้องเดินผ่านช่องที่โดนเล็ง", "อย่าปล่อยคิงไว้กลางกระดานนาน เพราะแนวกลางจะเปิดเร็ว"],
+    marks: ["e1", "g1", "h1"], hint: "e1g1", ok: m => m.castle === "K",
+    win: "คิงปลอดภัยหลังเบี้ย และเรือได้ออกมาช่วยเล่นแล้ว",
+    fail: "ตานี้ลองเข้าป้อม: แตะคิง e1 แล้วแตะ g1" },
+  { title: "รุกฆาตแถวหลัง", short: "คิงที่ไม่มีช่องหายใจ",
+    fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1",
+    goal: "คิงดำโดนเบี้ยตัวเองขังไว้ หาตารุกฆาตในตาเดียว",
+    look: ["คิงที่หลบหลังเบี้ย 3 ตัวไม่มีช่องหนี", "เรือหรือควีนที่วิ่งเข้าแถวหลังได้ คือจบเกม"],
+    warn: ["คิงของเราก็โดนแบบนี้ได้ เปิดช่องหายใจให้คิงบ้าง เช่นดันเบี้ย h ไป 1 ช่อง"],
+    marks: ["a8", "f7", "g7", "h7"], hint: "a1a8", ok: () => G.over && G.over.type === "mate",
+    win: "รุกฆาต! จำไว้เลยว่าแถวหลังอันตรายแค่ไหน",
+    fail: "ยังไม่จบ หาตาที่เรือเข้าไปรุกคิงแล้วคิงหนีไม่ได้" },
+  { title: "กันรุกฆาตเร็ว", short: "ป้องกันกลลวง 4 ตา (Scholar's mate)",
+    fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3",
+    goal: "คุณเล่นฝ่ายดำ ควีนกับบิชอปขาวรุมช่อง f7 อยู่ หาตาที่กันรุกฆาตได้",
+    look: ["f7 มีแค่คิงคุ้มกัน จึงเป็นจุดอ่อนช่วงเปิดเกม", "ควีน h5 กับบิชอป c4 เล็งช่องเดียวกันอยู่"],
+    warn: ["ม้า f6 ไล่ควีนดูดี แต่จะโดน Qxf7 รุกฆาตทันที", "ทุกตา เช็กว่าข้าศึกมีตารุก (check) หรือกินอะไรได้บ้าง"],
+    marks: ["f7", "h5", "c4"], hint: "g7g6", punish: true, ok: (m, prev, next) => noMateIn1(next),
+    win: "รอดแล้ว! ตอนนี้ f7 ปลอดภัย ฝ่ายขาวจะเสียจังหวะเพราะเอาควีนออกมาเร็ว",
+    fail: "โดนรุกฆาต! ควีนขาวกิน f7 ได้ ลองป้องกันช่อง f7 หรือไล่ควีนออกไป" },
+];
+const Train = {
+  idx: -1, done: false, wait: false, timer: 0,
+  lesson() { return LESSONS[this.idx]; },
+  side() { const L = this.lesson(); return L ? L.fen.split(" ")[1] : "w"; },
+  progress() { return lsGet("chess-train", []); },
+  status() {
+    if (this.done) return "ผ่านบทนี้แล้ว กด ข้อถัดไป เพื่อไปต่อ";
+    if (this.wait) return "ดูสิว่าเกิดอะไรขึ้น เดี๋ยวกลับมาลองใหม่";
+    return "ภารกิจ: " + this.lesson().goal;
+  },
+  openList() {
+    const done = this.progress();
+    $("lessonList").innerHTML = LESSONS.map((L, i) =>
+      `<li class="${done.includes(i) ? "done" : ""}"><button data-i="${i}"><span class="n">${i + 1}</span><span><b>${esc(L.title)}</b><small>${esc(L.short)}</small></span><span class="tick">${done.includes(i) ? "✓" : ""}</span></button></li>`).join("");
+    closeAll(); show("train");
+  },
+  start(i, keepFb) {
+    const L = LESSONS[i];
+    clearTimeout(this.timer);
+    if (Net.link) Net.leave();
+    this.idx = i; this.done = false; this.wait = false;
+    newGame();
+    G.mode = "train"; G.tc = null;
+    G.st = fromFEN(L.fen); G.moves = legalMoves(G.st); G.keys = [posKey(G.st)];
+    G.look = L.marks.map(sqIdx);
+    G.names = { w: "White", b: "Black" };
+    $("lsNum").textContent = "บทที่ " + (i + 1) + " จาก " + LESSONS.length + " · คุณเล่นฝ่าย" + (this.side() === "w" ? "ขาว" : "ดำ");
+    $("lsTitle").textContent = L.title;
+    $("lsGoal").textContent = L.goal;
+    $("lsLook").innerHTML = L.look.map(t => `<li>${esc(t)}</li>`).join("");
+    $("lsWarn").innerHTML = L.warn.map(t => `<li>${esc(t)}</li>`).join("");
+    if (!keepFb) $("lsFb").hidden = true;
+    $("lsNext").disabled = !this.progress().includes(i);
+    $("lsNext").textContent = i === LESSONS.length - 1 ? "จบแล้ว" : "ข้อถัดไป";
+    closeAll();
+    if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
+    render();
+  },
+  feedback(text, ok) { const el = $("lsFb"); el.hidden = false; el.textContent = text; el.className = "ls-fb " + (ok ? "ok" : "bad"); },
+  after(m, mover) {
+    if (mover !== this.side() || this.done || this.wait) return;
+    const L = this.lesson(), i = this.idx;
+    const prev = G.history[G.history.length - 1].st;
+    if (L.ok(m, prev, G.st)) {
+      this.done = true; G.look = null;
+      const done = this.progress(); if (!done.includes(i)) { done.push(i); lsSet("chess-train", done); }
+      this.feedback("ถูกต้อง! " + L.win, true);
+      $("lsNext").disabled = false;
+      sfx.promote();
+      if (window.gtag) gtag("event", "lesson_done", { lesson: i + 1 });
+      render();
+      return;
+    }
+    this.wait = true;
+    this.feedback(L.fail, false);
+    render();
+    // Show what the opponent would do, then put the position back.
+    const back = () => { this.timer = setTimeout(() => { if (this.idx === i && G.mode === "train") this.start(i, true); }, 2600); };
+    if (L.punish && !G.over) {
+      this.timer = setTimeout(() => {
+        if (this.idx !== i || G.mode !== "train") return;
+        const r = bestMove(G.st, 2, 0);
+        if (r) doMove(r);
+        back();
+      }, 900);
+    } else back();
+  },
+  hint() {
+    if (this.done || this.wait) return;
+    const L = this.lesson();
+    const m = G.moves.find(x => uci(x) === L.hint);
+    if (!m) return;
+    G.hint = m; G.selected = m.from; G.stuck = null; render();
+  },
+};
+$("openTrain").addEventListener("click", () => Train.openList());
+$("closeTrain").addEventListener("click", () => { hide("train"); openMenu(); });
+$("lessonList").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { Train.start(+b.dataset.i); startMusic(); } });
+$("lsList").addEventListener("click", () => Train.openList());
+$("lsHint").addEventListener("click", () => Train.hint());
+$("lsRetry").addEventListener("click", () => Train.start(Train.idx));
+$("lsNext").addEventListener("click", () => { if (Train.idx < LESSONS.length - 1) Train.start(Train.idx + 1); else Train.openList(); });
+$("lsExit").addEventListener("click", () => { clearTimeout(Train.timer); Train.idx = -1; newGame(); openMenu(); });
+
+/* ---------- Tutorial: a few slides before the first game ---------- */
+const TUT = [
+  { t: "ยินดีต้อนรับสู่ Chess Game", b: `<p>เป้าหมายคือ <b>รุกฆาต</b> คิงของอีกฝ่าย คือจ่อกินคิงจนมันไม่มีทางหนี</p><p>ฝ่ายขาวเดินก่อน แล้วผลัดกันเดินทีละตา หมากที่โดนกินจะออกจากกระดาน</p><p>อ่าน 6 หน้าสั้นๆ นี้ก่อน หรือกด ข้าม ก็ได้ ดูซ้ำได้จากปุ่ม How to play ในเมนู</p>` },
+  { t: "วิธีเดิน", b: `<ol><li>แตะหมากของคุณ</li><li>จุดเล็กคือช่องที่เดินได้ วงแดงคือกินได้</li><li>แตะช่องนั้นเพื่อเดิน</li></ol><p>ถ้าแตะหมากที่เดินไม่ได้ เกมจะบอกเหตุผล และหมากที่เดินได้จะเรืองแสงสีฟ้า</p>` },
+  { t: "หมากแต่ละตัว", b: `<div class="pcs">${[["K", "คิง: เดิน 1 ช่องทุกทิศ ต้องปกป้องให้ดี"], ["Q", "ควีน: ไปไกลได้ทั้งแนวตรงและแนวทแยง ตัวที่แรงที่สุด"], ["R", "เรือ: ไปไกลได้ตามแนวตรง"], ["B", "บิชอป: ไปไกลได้ตามแนวทแยง"], ["N", "ม้า: เดินเป็นรูปตัว L กระโดดข้ามหมากได้"], ["P", "เบี้ย: เดินหน้า 1 ช่อง (ตาแรก 2 ช่อง) กินทแยงหน้า"]].map(([k, d]) => `<div><span class="pc">${GLYPH[k]}</span><span>${d}</span></div>`).join("")}</div>` },
+  { t: "กฎที่ควรรู้", b: `<ul><li><b>รุก (Check)</b> คิงโดนจ่อ ต้องแก้ทันที โดยหนี บัง หรือกินตัวที่รุก</li><li><b>เข้าป้อม</b> แตะคิงแล้วแตะช่องที่ห่าง 2 ช่อง เรือจะข้ามมาเอง</li><li><b>เบี้ยถึงแถวสุดท้าย</b> เลือกเปลี่ยนเป็นควีน เรือ บิชอป หรือม้า</li><li>กินผ่าน (en passant) และการเสมอแบบต่างๆ เกมตัดสินให้อัตโนมัติ</li></ul>` },
+  { t: "ปุ่มในเกม", b: `<ul><li><b>Undo</b> ย้อนตา, <b>Hint</b> ให้คอมช่วยคิด, <b>Resign</b> ยอมแพ้</li><li><b>3D / 2D</b> สลับสนามรบกับกระดานแบน ลากเพื่อหมุนกล้อง</li><li><b>จ่าสมชาย</b> จะโผล่มาเตือนเวลาเดินเสี่ยงหรือเสียหมาก ปิดได้ใน Settings</li></ul>` },
+  { t: "เลือกโหมดเล่น", b: `<ul><li><b>Friend</b> เล่นกับเพื่อนบนเครื่องเดียวกัน</li><li><b>Computer</b> เล่นกับคอม 3 ระดับ</li><li><b>Online</b> เล่นกับเพื่อนคนละเครื่อง สร้างห้องแล้วส่งรหัสให้เพื่อน</li><li><b>Training room</b> ฝึกว่าควรดูตรงไหน ต้องระวังอะไร</li><li><b>Leaderboard</b> ใส่ชื่อก่อนเล่น แล้วชื่อจะขึ้นกระดานคะแนน</li></ul><p>มือใหม่แนะนำให้เข้า Training room ก่อน</p>` },
+];
+const Tutorial = {
+  i: 0,
+  open() { this.i = 0; this.draw(); show("tutorial"); },
+  draw() {
+    const s = TUT[this.i], last = this.i === TUT.length - 1;
+    $("tutTitle").textContent = s.t;
+    $("tutBody").innerHTML = s.b;
+    $("tutDots").innerHTML = TUT.map((_, k) => `<i class="${k === this.i ? "on" : ""}"></i>`).join("");
+    $("tutBack").disabled = this.i === 0;
+    $("tutNext").textContent = last ? "เริ่มเล่น" : "ถัดไป";
+  },
+  close() { lsSet("chess-tut", 1); hide("tutorial"); if (G.mode !== "online" && G.mode !== "train" && !G.history.length) show("menu"); },
+};
+$("tutBack").addEventListener("click", () => { if (Tutorial.i > 0) { Tutorial.i--; Tutorial.draw(); } });
+$("tutNext").addEventListener("click", () => { if (Tutorial.i < TUT.length - 1) { Tutorial.i++; Tutorial.draw(); } else Tutorial.close(); });
+$("tutSkip").addEventListener("click", () => Tutorial.close());
+$("tutTrain").addEventListener("click", () => { lsSet("chess-tut", 1); Train.openList(); });
+$("openTut").addEventListener("click", () => { hide("menu"); Tutorial.open(); });
+
+/* ---------- Leaderboard: everyone (from the score sheet) and this device ---------- */
+function saveLocalResult(row) {
+  const list = lsGet("chess-history", []);
+  list.push({ at: row.finishedAt, white: row.white, black: row.black, opponent: row.opponent, winner: row.winner, result: row.result });
+  lsSet("chess-history", list.slice(-500));
+}
+const DEFAULT_NAMES = new Set(["", "you", "player", "player 1", "player 2", "computer", "white", "black"]);
+function tally(rows) {
+  const t = new Map();
+  const add = (name, res, pts) => {
+    name = String(name || "").trim();
+    if (DEFAULT_NAMES.has(name.toLowerCase())) return;
+    const k = name.toLowerCase();
+    const e = t.get(k) || { name, p: 0, w: 0, d: 0, l: 0, pts: 0 };
+    e.p++; e[res]++; e.pts += pts; t.set(k, e);
+  };
+  for (const r of rows) {
+    // Result first; the winner's name covers rows where the sheet reformatted the result cell.
+    let res = r.result === "1-0" ? "w" : r.result === "0-1" ? "b" : r.result === "1/2-1/2" ? "d" : null;
+    if (!res && r.winner) res = r.winner === "Draw" ? "d" : r.winner === r.white ? "w" : r.winner === r.black ? "b" : null;
+    if (!res) continue;
+    const cpu = /^computer/i.test(r.opponent || "");
+    const lvl = /hard/i.test(r.opponent) ? 3 : /normal/i.test(r.opponent) ? 2 : 1;
+    const score = side => res === "d" ? ["d", 1] : res === side ? ["w", cpu ? lvl : 3] : ["l", 0];
+    add(r.white, ...score("w"));
+    if (!cpu) add(r.black, ...score("b"));
+  }
+  return [...t.values()].sort((a, b) => b.pts - a.pts || b.w - a.w || a.p - b.p || a.name.localeCompare(b.name));
+}
+function drawBoard(rows, emptyText) {
+  const list = tally(rows).slice(0, 50);
+  $("lbBody").innerHTML = list.length
+    ? `<table><thead><tr><th>#</th><th>Name</th><th>Games</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead><tbody>${list.map((e, k) =>
+        `<tr class="${k === 0 ? "top1" : ""}"><td>${k + 1}</td><td>${esc(e.name)}</td><td>${e.p}</td><td>${e.w}</td><td>${e.d}</td><td>${e.l}</td><td>${e.pts}</td></tr>`).join("")}</tbody></table>`
+    : `<p class="empty">${esc(emptyText)}</p>`;
+}
+const Leader = {
+  tab: "all",
+  open() { closeAll(); show("leader"); this.load(); },
+  load() {
+    $("segLeader").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === this.tab)));
+    if (this.tab === "local") { drawBoard(lsGet("chess-history", []), "ยังไม่มีเกมที่จบบนเครื่องนี้ ใส่ชื่อในเมนูแล้วลองเล่นสักเกม"); return; }
+    $("lbBody").innerHTML = '<p class="empty">กำลังโหลดคะแนน…</p>';
+    fetch(SHEET_URL + "?action=rows", { cache: "no-store" })
+      .then(r => r.text())
+      .then(t => {
+        if (this.tab !== "all") return;
+        const d = JSON.parse(t);
+        drawBoard(d.rows || [], "ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม");
+      })
+      .catch(() => { if (this.tab === "all") $("lbBody").innerHTML = '<p class="empty">ยังโหลดคะแนนรวมไม่ได้ (สคริปต์ Google Sheet ต้องอัปเดตเวอร์ชันใหม่ หรือเน็ตมีปัญหา) ดูแท็บ This device ไปก่อนได้</p>'; });
+  },
+};
+$("openLeader").addEventListener("click", () => Leader.open());
+$("closeLeader").addEventListener("click", () => { hide("leader"); openMenu(); });
+$("segLeader").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { Leader.tab = b.dataset.v; Leader.load(); } });
+
+/* ---------- Online: two devices, joined by a room code ----------
+   Uses PeerJS (WebRTC, peer to peer) with its free public signalling server.
+   The host plays White. Moves, resignations and clock flags go over the link. */
+const NET_PREFIX = "rochano-chess-";
+const Net = {
+  role: null, code: "", color: null, live: false, connected: false, link: null, peerName: "", lastSeen: 0, gen: 0,
+  send(d) { if (this.link) try { this.link.send(d); } catch (e) {} },
+};
+function netMsg(html, bad) { const el = $("netMsg"); el.hidden = !html; el.innerHTML = html || ""; el.classList.toggle("bad", !!bad); }
+function PeerClass() {
+  if (typeof window.Peer === "function") return window.Peer;
+  const n = window.peerjs;
+  return n && (n.Peer || n.default);
+}
+function loadPeer() {
+  if (PeerClass()) return Promise.resolve();
+  const load = src => new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => (PeerClass() ? res() : rej({ type: "load" })); s.onerror = () => rej({ type: "load" });
+    document.head.appendChild(s);
+  });
+  return load("https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js")
+    .catch(() => load("https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"));
+}
+// The transport can be swapped (window.__chessNet) so both sides can be tested in one browser.
+function netOpen(role, code, h) {
+  if (window.__chessNet) return window.__chessNet(role, code, h);
+  return loadPeer().then(() => new Promise((res, rej) => {
+    const P = PeerClass();
+    const peer = role === "host" ? new P(NET_PREFIX + code) : new P();
+    let conn = null, opened = false;
+    const wire = c => {
+      conn = c;
+      c.on("open", () => h.open());
+      c.on("data", d => h.data(d));
+      c.on("close", () => h.close());
+    };
+    peer.on("open", () => {
+      opened = true;
+      if (role === "join") wire(peer.connect(NET_PREFIX + code, { reliable: true }));
+      res({ send: d => { if (conn && conn.open) conn.send(d); }, close: () => { try { peer.destroy(); } catch (e) {} } });
+    });
+    peer.on("connection", c => { if (conn && conn.open) { c.on("open", () => c.close()); return; } wire(c); });
+    peer.on("error", e => { if (!opened) { try { peer.destroy(); } catch (x) {} rej(e); } else h.error(e); });
+    peer.on("disconnected", () => { try { peer.reconnect(); } catch (e) {} });
+  }));
+}
+function myName() { return prefs.nameW.trim() || (Net.role === "host" ? "Player 1" : "Player 2"); }
+function netHandlers(gen) {
+  const mine = f => (...a) => { if (gen === Net.gen) f(...a); };
+  return {
+    open: mine(() => {
+      Net.connected = true; Net.lastSeen = Date.now();
+      if (Net.role === "join") { Net.send({ t: "hello", name: myName() }); netMsg("Connected. Starting the game…"); }
+      if (Net.live) render();
+    }),
+    data: mine(d => {
+      Net.lastSeen = Date.now();
+      if (!Net.connected) { Net.connected = true; if (Net.live) render(); }
+      if (!d || typeof d !== "object") return;
+      if (d.t === "hello" && Net.role === "host") { Net.peerName = String(d.name || "").slice(0, 24) || "Player 2"; Net.start(); }
+      else if (d.t === "start" && Net.role === "join") startOnline("b", d.names, d.clock);
+      else if (d.t === "move") netMove(d);
+      else if ((d.t === "resign" || d.t === "flag") && G.mode === "online" && !G.over) {
+        const loser = opp(Net.color);
+        G.over = d.t === "resign"
+          ? { type: "resign", winner: Net.color, text: (loser === "w" ? "White" : "Black") + " resigned. " + (Net.color === "w" ? "White" : "Black") + " wins." }
+          : { type: "flag", winner: Net.color, text: (loser === "w" ? "White" : "Black") + " ran out of time. " + (Net.color === "w" ? "White" : "Black") + " wins." };
+        if (d.t === "flag") G.clocks[loser] = 0;
+        sfx.end(); render(); showResult();
+      } else if (d.t === "again" && Net.role === "host") Net.start();
+      else if (d.t === "bye") { Net.connected = false; if (Net.live) render(); else netMsg("Your friend left the room.", true); }
+    }),
+    close: mine(() => { Net.connected = false; if (Net.live) render(); else netMsg("The connection closed. Create or join a room again.", true); }),
+    error: mine(e => {
+      if (e && e.type === "peer-unavailable") netMsg("No room with code <b>" + esc(Net.code) + "</b>. Check the code and try again.", true);
+      else if (!Net.live) netMsg("Connection problem (" + esc((e && e.type) || "unknown") + "). Try again.", true);
+    }),
+  };
+}
+function roomCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let k = 0; k < 5; k++) c += a[Math.floor(Math.random() * a.length)]; return c; }
+function roomLink(code) { return location.origin + location.pathname + "?room=" + code; }
+Net.host = async function () {
+  Net.leave(); const gen = ++Net.gen;
+  Net.role = "host"; netMsg("Creating a room…");
+  for (let tries = 0; tries < 3; tries++) {
+    const code = roomCode();
+    try {
+      const link = await netOpen("host", code, netHandlers(gen));
+      if (gen !== Net.gen) { link.close(); return; }
+      Net.link = link; Net.code = code;
+      netMsg(`<span>Room code</span><span class="code">${code}</span><span>Send this code or the link to your friend. The game starts when they join. You play White.</span><span class="acts"><button class="chip" id="copyLink">Copy link</button>${navigator.share ? '<button class="chip" id="shareLink">Share</button>' : ""}</span>`);
+      $("copyLink").addEventListener("click", () => {
+        const done = () => { $("copyLink").textContent = "Link copied"; };
+        try { navigator.clipboard.writeText(roomLink(code)).then(done, () => prompt("Copy this link", roomLink(code))); } catch (e) { prompt("Copy this link", roomLink(code)); }
+      });
+      if ($("shareLink")) $("shareLink").addEventListener("click", () => navigator.share({ title: "Chess Game", text: "มาเล่นหมากรุกกัน รหัสห้อง " + code, url: roomLink(code) }).catch(() => {}));
+      return;
+    } catch (e) {
+      if (gen !== Net.gen) return;
+      if (!e || e.type !== "unavailable-id") { netMsg("Couldn't create a room (" + esc((e && e.type) || "network") + "). Check your connection and try again.", true); Net.role = null; return; }
+    }
+  }
+};
+Net.join = async function (code) {
+  code = String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!code) { netMsg("Type the room code your friend sent you.", true); return; }
+  Net.leave(); const gen = ++Net.gen;
+  Net.role = "join"; Net.code = code; netMsg("Joining room <b>" + esc(code) + "</b>…");
+  try {
+    const link = await netOpen("join", code, netHandlers(gen));
+    if (gen !== Net.gen) { link.close(); return; }
+    Net.link = link;
+  } catch (e) {
+    if (gen === Net.gen) { netMsg("Couldn't connect (" + esc((e && e.type) || "network") + "). Check your connection and try again.", true); Net.role = null; }
+  }
+};
+Net.start = function () {
+  const names = { w: myName(), b: Net.peerName || "Player 2" };
+  startOnline("w", names, prefs.clock);
+  Net.send({ t: "start", names, clock: prefs.clock });
+};
+Net.again = function () { if (Net.role === "host") Net.start(); else { Net.send({ t: "again" }); $("status").textContent = "Asked your opponent for a new game…"; } };
+Net.leave = function () {
+  if (Net.link) { Net.send({ t: "bye" }); const l = Net.link; setTimeout(() => l.close(), 150); }
+  Net.gen++; Net.link = null; Net.role = null; Net.color = null; Net.live = false; Net.connected = false; Net.peerName = "";
+  netMsg("");
+};
+function startOnline(color, names, clock) {
+  Net.color = color; Net.live = true; Net.connected = true;
+  const keep = [prefs.mode, prefs.clock];
+  prefs.mode = "online"; prefs.clock = /^(0|\d+\+\d+)$/.test(clock) ? clock : "5+0";
+  newGame();
+  [prefs.mode, prefs.clock] = keep;
+  G.names = { w: String(names.w || "Player 1").slice(0, 24), b: String(names.b || "Player 2").slice(0, 24) };
+  for (const c of ["w", "b"]) {
+    $(c === "w" ? "nameW" : "nameB").innerHTML = esc(G.names[c]) + "<small>" + (c === "w" ? "White" : "Black") + (c === color ? " · You" : " · Online") + "</small>";
+  }
+  $("avW").innerHTML = AVATAR.p1; $("avB").innerHTML = AVATAR.p2;
+  closeAll();
+  if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
+  render(); sfx.move(); startMusic();
+}
+function netMove(d) {
+  if (G.mode !== "online" || G.over || G.st.turn === Net.color) return;
+  if (d.n !== G.history.length) return;
+  const m = G.moves.find(x => x.from === d.from && x.to === d.to && (x.promo || "") === (d.promo || ""));
+  if (!m) return;
+  if (!$("promo").hidden) hide("promo");
+  doMove(m);
+  if (G.tc && typeof d.clock === "number") { G.clocks[opp(Net.color)] = d.clock; renderClocks(); }
+}
+// Keep-alive: notice when the other device goes quiet.
+setInterval(() => {
+  if (!Net.link) return;
+  Net.send({ t: "ping" });
+  if (Net.live && Net.connected && Date.now() - Net.lastSeen > 15000) { Net.connected = false; render(); }
+}, 4000);
+$("netCreate").addEventListener("click", () => Net.host());
+$("netJoin").addEventListener("click", () => Net.join($("netCode").value));
+$("netCode").addEventListener("keydown", e => { if (e.key === "Enter") Net.join($("netCode").value); });
+
+function initExtras() {
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("tutorial").hidden) Tutorial.close();
+    else if (!$("train").hidden) $("closeTrain").click();
+    else if (!$("leader").hidden) $("closeLeader").click();
+  });
+  const room = new URLSearchParams(location.search).get("room");
+  if (room) {
+    prefs.mode = "online"; syncMenu(); show("menu");
+    $("netCode").value = room.toUpperCase();
+    Net.join(room);
+  } else if (!lsGet("chess-tut", 0)) Tutorial.open();
+}
+
 /* ---------- Wiring ---------- */
 buildBoard();
 document.querySelector("#undo .ic").innerHTML = ICON.undo;
@@ -1528,7 +2139,7 @@ $("openSettings").innerHTML = ICON.gear;
 $("icVol").innerHTML = ICON.vol; $("icVol2").innerHTML = ICON.bell; $("icNote").innerHTML = ICON.note;
 syncMusicButton();
 
-$("newGame").addEventListener("click", () => { hide("menu"); newGame(); sfx.move(); startMusic(); });
+$("newGame").addEventListener("click", () => { if (Net.link) Net.leave(); hide("menu"); newGame(); sfx.move(); startMusic(); });
 $("musicBtn").addEventListener("click", () => {
   prefs.music = !prefs.music; savePrefs(); syncMusicButton();
   if (prefs.music) startMusic(); else stopMusic();
@@ -1554,13 +2165,15 @@ for (const id of ["volMove", "volAlert"]) {
 $("undo").addEventListener("click", undo);
 $("hint").addEventListener("click", hint);
 $("reset").addEventListener("click", () => {
+  if (G.mode === "online") { confirmBox("Leave the online game?", "You'll leave the room and your opponent will be told.", "Leave", () => { Net.leave(); newGame(); openMenu(); }); return; }
   if (!G.history.length) { openMenu(); return; }
   confirmBox("Start over?", "This game will be cleared and you can pick new settings.", "Start over", () => { newGame(); openMenu(); });
 });
 $("resign").addEventListener("click", () => {
-  const who = G.mode === "cpu" ? "w" : G.st.turn;
+  const who = myColor() || G.st.turn;
   confirmBox("Resign this game?", (who === "w" ? "White" : "Black") + " resigns and " + (who === "w" ? "Black" : "White") + " is awarded the win.", "Resign", () => {
     G.over = { type: "resign", winner: opp(who), text: (who === "w" ? "White" : "Black") + " resigned. " + (who === "w" ? "Black" : "White") + " wins." };
+    if (G.mode === "online") Net.send({ t: "resign" });
     sfx.end(); render(); showResult();
   });
 });
@@ -1574,8 +2187,8 @@ $("resView").addEventListener("click", () => {
   }
 });
 $("showResult").addEventListener("click", () => show("result"));
-$("againBtn").addEventListener("click", () => { newGame(); openMenu(); });
-$("resAgain").addEventListener("click", () => { hide("result"); newGame(); openMenu(); });
+$("againBtn").addEventListener("click", () => { if (G.mode === "online") Net.again(); else { newGame(); openMenu(); } });
+$("resAgain").addEventListener("click", () => { hide("result"); if (G.mode === "online") Net.again(); else { newGame(); openMenu(); } });
 
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
@@ -1624,6 +2237,7 @@ for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
 applyTheme();
 syncMenu();
 newGame();
+initExtras();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -1893,6 +2507,7 @@ const Battle = (() => {
     if (G.last) { mark(G.last.from, markGeo, 0xF5C344, 0.28); mark(G.last.to, markGeo, 0xF5C344, 0.35); }
     if (G.hint) { mark(G.hint.from, markGeo, 0x7DB35A, 0.5); mark(G.hint.to, markGeo, 0x7DB35A, 0.5); }
     if (G.stuck) for (const f of new Set(G.moves.map(m => m.from))) mark(f, ringGeo, 0x4FB3D9, 0.95);
+    if (G.look) for (const f of G.look) mark(f, ringGeo, 0xE07A3E, 0.95);
     if (G.selected !== null) {
       mark(G.selected, markGeo, 0xFFD24A, 0.6);
       for (const mv of G.moves) if (mv.from === G.selected) {
@@ -1951,7 +2566,7 @@ const Battle = (() => {
     let o = hit.object; while (o && o.userData.sq === undefined) o = o.parent;
     if (o) onSquare(o.userData.sq);
   }
-  function sideYaw() { return G.mode === "cpu" || G.st.turn === "w" ? 0 : Math.PI; }
+  function sideYaw() { return (myColor() || G.st.turn) === "w" ? 0 : Math.PI; }
   let lastSide = 0;
   function updateCamera(dt, now) {
     const side = sideYaw();

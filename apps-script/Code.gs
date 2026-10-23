@@ -46,8 +46,18 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+function doGet(e) {
   const sheet = getScores();
+  // ?action=rows returns recent games as JSON for the leaderboard in the game.
+  if (e && e.parameter && e.parameter.action === "rows") {
+    const last = sheet.getLastRow(), start = Math.max(2, last - 4999);
+    const vals = last >= 2 ? sheet.getRange(start, 1, last - start + 1, 6).getValues() : [];
+    const rows = vals.map(r => ({
+      at: r[0] instanceof Date ? r[0].toISOString() : String(r[0]),
+      white: String(r[1]), black: String(r[2]), opponent: String(r[3]), winner: String(r[4]), result: String(r[5]),
+    }));
+    return ContentService.createTextOutput(JSON.stringify({ rows: rows })).setMimeType(ContentService.MimeType.JSON);
+  }
   const url = sheet.getParent().getUrl();
   return HtmlService.createHtmlOutput(
     '<p style="font:16px sans-serif">Score sheet is ready. Games recorded: ' + Math.max(0, sheet.getLastRow() - 1) +
