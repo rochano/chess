@@ -454,6 +454,13 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .pc.lift, .card { animation: none; }
 }
+.netgone { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 60; width: min(440px, calc(100% - 32px)); box-sizing: border-box;
+  display: grid; gap: 8px; padding: 12px 14px; background: var(--card); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); }
+.netgone b { font-size: 15px; }
+.netgone span { font-size: 13px; color: var(--ink-soft); font-weight: 700; }
+.netgone .bar { height: 8px; border: 2px solid var(--ink); border-radius: 6px; overflow: hidden; background: var(--paper-2); }
+.netgone .bar i { display: block; width: 100%; height: 100%; background: var(--flag); transform-origin: left; transition: transform 1s linear; }
+.netgone .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 </style>
 
 <div class="app" id="app" data-board="walnut">
@@ -665,7 +672,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-f</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-g</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -1460,7 +1467,7 @@ function render() {
   else if (kingInCheck >= 0) status.textContent = "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.";
   else if (G.hint) status.textContent = "Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to);
   else if (G.mode === "train") status.textContent = Train.status();
-  else if (G.mode === "online" && !Net.connected) status.textContent = "Your opponent is offline. Waiting for them to come back…";
+  else if (G.mode === "online" && !Net.connected) status.textContent = Net.away ? "Your opponent switched away from the game. Clocks are paused." : "Your opponent lost connection. Clocks are paused while you wait.";
   else if (G.mode === "online" && st.turn !== Net.color) status.textContent = "Waiting for " + G.names[st.turn] + " to move…";
   else if (G.mode === "online" && !G.history.length) status.textContent = "You play " + (Net.color === "w" ? "White. You move first." : "Black. White moves first.");
   else if (!G.history.length) status.textContent = G.mode === "cpu" ? "You play White. Tap a piece to see its moves." : "Tap a piece to see its moves.";
@@ -1527,7 +1534,7 @@ function reportResult() {
     opponent: G.mode === "cpu" ? "Computer (" + ["", "Easy", "Normal", "Hard"][G.level] + ")" : G.mode === "online" ? "Online" : "Friend",
     winner: o.type === "draw" ? "Draw" : o.winner === "w" ? G.names.w : G.names.b,
     result: o.type === "draw" ? "1/2-1/2" : o.winner === "w" ? "1-0" : "0-1",
-    reason: { mate: "Checkmate", flag: "Time", resign: "Resignation", draw: o.text.replace(/\.$/, "") }[o.type],
+    reason: { mate: "Checkmate", flag: "Time", resign: "Resignation", abandon: "Opponent left", draw: o.text.replace(/\.$/, "") }[o.type],
     moves: Math.ceil(G.history.length / 2),
     clock: G.tc ? prefs.clock : "None",
     minutes: Math.round((Date.now() - G.startedAt) / 6000) / 10,
@@ -1866,7 +1873,7 @@ function hint() {
 let lastTick = performance.now(), lastBeep = 0;
 setInterval(() => {
   const now = performance.now(), dt = now - lastTick; lastTick = now;
-  if (!G.tc || !G.started || G.over || anyOverlay()) return;
+  if (!G.tc || !G.started || G.over || anyOverlay() || (G.mode === "online" && !Net.connected)) return;
   const c = G.st.turn;
   G.clocks[c] -= dt;
   if (G.clocks[c] <= 0) {
@@ -1919,7 +1926,7 @@ function showResult() {
   else {
     badge.className = "result-badge " + (o.type === "mate" ? "mate" : "win");
     badge.innerHTML = `<span class="pc ${o.winner}" style="font-size:44px">${GLYPH.K}</span>`;
-    $("resTitle").textContent = o.type === "mate" ? "Checkmate" : o.type === "flag" ? "Time's up" : "Resigned";
+    $("resTitle").textContent = o.type === "mate" ? "Checkmate" : o.type === "flag" ? "Time's up" : o.type === "abandon" ? (youLost ? "Away too long" : "Opponent left") : "Resigned";
     if (me) $("resTitle").textContent += youLost ? (G.mode === "cpu" ? ". The computer wins" : ". You lose") : ". You win";
   }
   $("resText").textContent = o.text;
@@ -2628,7 +2635,7 @@ $("segLeader").addEventListener("click", e => { const b = e.target.closest("butt
    The host plays White. Moves, resignations and clock flags go over the link. */
 const NET_PREFIX = "rochano-chess-";
 const Net = {
-  role: null, code: "", color: null, live: false, connected: false, link: null, peerName: "", lastSeen: 0, gen: 0,
+  role: null, code: "", color: null, live: false, connected: false, link: null, peerName: "", lastSeen: 0, gen: 0, away: false, goneAt: 0, left: false,
   send(d) { if (this.link) try { this.link.send(d); } catch (e) {} },
 };
 function netMsg(html, bad) { const el = $("netMsg"); el.hidden = !html; el.innerHTML = html || ""; el.classList.toggle("bad", !!bad); }
@@ -2675,14 +2682,16 @@ function netHandlers(gen) {
   const mine = f => (...a) => { if (gen === Net.gen) f(...a); };
   return {
     open: mine(() => {
-      Net.connected = true; Net.lastSeen = Date.now();
+      netBack(); Net.lastSeen = Date.now();
       if (Net.role === "join") { Net.send({ t: "hello", name: myName() }); netMsg("Connected. Starting the game…"); }
       if (Net.live) render();
     }),
     data: mine(d => {
       Net.lastSeen = Date.now();
-      if (!Net.connected) { Net.connected = true; if (Net.live) render(); }
       if (!d || typeof d !== "object") return;
+      if (d.t === "bye") { netLeft(); return; }
+      if (d.t === "away") { netGone(true); return; }
+      netBack();
       if (d.t === "hello" && Net.role === "host") { Net.peerName = String(d.name || "").slice(0, 24) || "Player 2"; Net.start(); }
       else if (d.t === "start" && Net.role === "join") startOnline("b", d.names, d.clock);
       else if (d.t === "move") netMove(d);
@@ -2694,9 +2703,12 @@ function netHandlers(gen) {
         if (d.t === "flag") G.clocks[loser] = 0;
         sfx.end(); render(); showResult();
       } else if (d.t === "again" && Net.role === "host") Net.start();
-      else if (d.t === "bye") { Net.connected = false; if (Net.live) render(); else netMsg("Your friend left the room.", true); }
+      else if (d.t === "claim" && G.mode === "online" && (!G.over || (G.over.type === "abandon" && G.st.turn === Net.color && G.over.winner === Net.color))) {
+        G.over = { type: "abandon", winner: opp(Net.color), text: "You were away too long, so " + (Net.color === "w" ? "Black" : "White") + " was given the win." };
+        sfx.end(); render(); showResult();
+      }
     }),
-    close: mine(() => { Net.connected = false; if (Net.live) render(); else netMsg("The connection closed. Create or join a room again.", true); }),
+    close: mine(() => { if (Net.live) netGone(false); else { Net.connected = false; netMsg("The connection closed. Create or join a room again.", true); } }),
     error: mine(e => {
       if (e && e.type === "peer-unavailable") netMsg("No room with code <b>" + esc(Net.code) + "</b>. Check the code and try again.", true);
       else if (!Net.live) netMsg("Connection problem (" + esc((e && e.type) || "unknown") + "). Try again.", true);
@@ -2745,14 +2757,86 @@ Net.start = function () {
   startOnline("w", names, prefs.clock);
   Net.send({ t: "start", names, clock: prefs.clock });
 };
-Net.again = function () { if (Net.role === "host") Net.start(); else { Net.send({ t: "again" }); $("status").textContent = "Asked your opponent for a new game…"; } };
+Net.again = function () { if (Net.left) { goneBox(`<b>Your opponent left the room</b><span>Leave the room to start a new one.</span>` + goneActs(false)); return; } if (Net.role === "host") Net.start(); else { Net.send({ t: "again" }); $("status").textContent = "Asked your opponent for a new game…"; } };
 Net.leave = function () {
   if (Net.link) { Net.send({ t: "bye" }); const l = Net.link; setTimeout(() => l.close(), 150); }
   Net.gen++; Net.link = null; Net.role = null; Net.color = null; Net.live = false; Net.connected = false; Net.peerName = "";
+  Net.away = false; Net.goneAt = 0; Net.left = false; goneBox(null);
   netMsg("");
 };
+/* ---------- Opponent left or dropped ----------
+   "bye" means they left on purpose (Leave, closed or reloaded the page): the game is theirs to lose at once.
+   Silence or a closed link may be a bad network, so they get a minute (two if they only switched apps) to come back before the win is awarded. */
+// If both devices lost each other, the one waiting for a move gets there first; the other side concedes on reconnect.
+const netGrace = () => (Net.away ? 120000 : 60000) * (G.st.turn === Net.color ? 2 : 1);
+function goneBox(html) {
+  let el = $("netGone");
+  if (!html) { if (el) el.hidden = true; return; }
+  if (!el) { el = document.createElement("div"); el.id = "netGone"; el.className = "netgone"; el.setAttribute("role", "alert"); document.body.appendChild(el); }
+  el.innerHTML = html; el.hidden = false;
+}
+function goneActs(claim) {
+  return `<span class="acts">${claim ? '<button class="chip" data-g="claim">Claim the win</button>' : ""}<button class="chip" data-g="leave">Leave the room</button><button class="chip" data-g="ok">OK</button></span>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("#netGone [data-g]");
+  if (!b) return;
+  if (b.dataset.g === "claim") netAbandon();
+  else if (b.dataset.g === "leave") { Net.leave(); newGame(); openMenu(); }
+  else goneBox(null);
+});
+function netWinText() { const w = Net.color, l = opp(w); return (l === "w" ? "White" : "Black") + " left the game. " + (w === "w" ? "White" : "Black") + " wins."; }
+function netAbandon() {
+  goneBox(null);
+  if (G.mode !== "online" || G.over || !Net.color) return;
+  G.over = { type: "abandon", winner: Net.color, text: netWinText() };
+  G.thinking = false;
+  Net.send({ t: "claim" }); // reaches them if they come back
+  sfx.end(); render(); showResult();
+}
+// They left on purpose.
+function netLeft() {
+  Net.connected = false; Net.left = true; Net.away = false;
+  if (!Net.live) { netMsg("Your friend left the room.", true); return; }
+  const name = esc(G.names[opp(Net.color)] || "Your opponent");
+  if (!G.over && G.history.length) { netAbandon(); goneBox(`<b>${name} left the game</b><span>You win by default. Leave the room to play someone else.</span>` + goneActs(false)); return; }
+  if (!G.over) { G.over = { type: "draw", winner: null, text: "Your opponent left before the first move." }; render(); }
+  else render();
+  goneBox(`<b>${name} left the room</b><span>They can't play again here. Leave the room to start a new one.</span>` + goneActs(false));
+}
+// They went quiet: app switched, screen locked or network dropped.
+function netGone(away) {
+  if (Net.left) return;
+  const first = Net.connected || !Net.goneAt;
+  Net.connected = false; Net.away = !!away;
+  if (first) Net.goneAt = Date.now();
+  if (Net.live) { render(); goneTick(); }
+}
+function netBack() {
+  if (Net.connected && !Net.goneAt) return;
+  const was = !Net.connected && Net.goneAt;
+  Net.connected = true; Net.away = false; Net.left = false; Net.goneAt = 0;
+  if (!Net.live) return;
+  render();
+  if (G.over && G.over.type === "abandon" && G.over.winner === Net.color) { Net.send({ t: "claim" }); return; }
+  if (was) {
+    goneBox(`<b>${esc(G.names[opp(Net.color)] || "Your opponent")} is back</b><span>The game carries on.</span>`);
+    setTimeout(() => { if (Net.connected && !Net.goneAt) goneBox(null); }, 2500);
+  }
+}
+function goneTick() {
+  if (!Net.live || Net.connected || Net.left || !Net.goneAt) return;
+  const name = esc(G.names[opp(Net.color)] || "Your opponent");
+  if (G.over && G.over.type === "abandon") return;
+  if (G.over) { goneBox(`<b>${name} is offline</b><span>The game is finished. Wait for them or leave the room.</span>` + goneActs(false)); return; }
+  const left = Math.max(0, netGrace() - (Date.now() - Net.goneAt)), secs = Math.ceil(left / 1000);
+  if (!left) { netAbandon(); goneBox(`<b>${name} didn't come back</b><span>You win because your opponent left the game.</span>` + goneActs(false)); return; }
+  const what = Net.away ? "switched away from the game" : "lost connection";
+  goneBox(`<b>${name} ${what}</b><span>Clocks are paused. If they're not back in ${secs} s, you win.</span><span class="bar"><i style="transform:scaleX(${left / netGrace()})"></i></span>` + goneActs(true));
+}
 function startOnline(color, names, clock) {
   Net.color = color; Net.live = true; Net.connected = true;
+  Net.away = false; Net.goneAt = 0; Net.left = false; goneBox(null);
   const keep = [prefs.mode, prefs.clock];
   prefs.mode = "online"; prefs.clock = /^(0|\d+\+\d+)$/.test(clock) ? clock : "5+0";
   newGame();
@@ -2778,9 +2862,17 @@ function netMove(d) {
 // Keep-alive: notice when the other device goes quiet.
 setInterval(() => {
   if (!Net.link) return;
-  Net.send({ t: "ping" });
-  if (Net.live && Net.connected && Date.now() - Net.lastSeen > 15000) { Net.connected = false; render(); }
-}, 4000);
+  if (!document.hidden) Net.send({ t: "ping" });
+  if (Net.live && Net.connected && Date.now() - Net.lastSeen > 10000) netGone(false);
+}, 3000);
+setInterval(goneTick, 1000);
+// Tell the other device when this one leaves or is put in the background.
+addEventListener("pagehide", () => { if (Net.link) Net.send({ t: "bye" }); });
+document.addEventListener("visibilitychange", () => {
+  if (!Net.link) return;
+  if (document.hidden) Net.send({ t: "away" });
+  else { Net.send({ t: "ping" }); if (Net.live && Net.connected) Net.lastSeen = Math.max(Net.lastSeen, Date.now() - 6000); }
+});
 $("netCreate").addEventListener("click", () => Net.host());
 $("netJoin").addEventListener("click", () => Net.join($("netCode").value));
 $("netCode").addEventListener("keydown", e => { if (e.key === "Enter") Net.join($("netCode").value); });
