@@ -686,7 +686,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-h</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-i</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -1052,12 +1052,17 @@ function ctx() {
   if (!audio) {
     audio = new (window.AudioContext || window.webkitAudioContext)();
     sfxBus = audio.createGain(); sfxBus.connect(audio.destination);
-    musicBus = audio.createGain(); musicBus.gain.value = 0; musicBus.connect(audio.destination);
+    musicBus = audio.createGain(); musicBus.gain.value = 0;
+    // A limiter keeps the loud battle themes from clipping.
+    const lim = audio.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = 0.005; lim.release.value = 0.25;
+    musicBus.connect(lim); lim.connect(audio.destination);
     noiseBuf = audio.createBuffer(1, audio.sampleRate * 0.5, audio.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
-  if (audio.state === "suspended") audio.resume();
+  // Safari can also leave it "interrupted" (another tab played sound, or the Mac slept).
+  if (audio.state !== "running" && audio.state !== "closed") { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
   return audio;
 }
 function env(g, t, peak, attack, dur) {
@@ -1127,7 +1132,7 @@ const sfx = {
    play; until a sample arrives, a simple synth voice stands in. */
 const MUSIC = { timer: null, next: 0, bar: 0, theme: "menu", level: 0 };
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
-function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 0.3 : 0; }
+function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 1.5 : 0; }
 // The leitmotif: [midi note, start beat, length in beats] per bar.
 const MOTIF = [
   [[76, 0, 1], [81, 1, 1], [79, 2, 0.5], [76, 2.5, 0.5], [74, 3, 1]],
@@ -1403,8 +1408,11 @@ function silentWavUrl() {
   for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
   return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
 }
-function unlockAudio() {
-  if (unlocked) return;
+function unlockAudio(e) {
+  // Safari only counts click, touchend and keydown as permission to play, not pointerdown,
+  // so keep trying on every tap until the audio is really running.
+  if (unlocked) { if (audio && audio.state !== "running" && e && e.type !== "pointerdown") { ctx(); if (prefs.music && !MUSIC.timer) startMusic(); } return; }
+  if (e && e.type === "pointerdown" && /^((?!chrome|android).)*safari/i.test(navigator.userAgent)) return;
   try {
     if (navigator.audioSession) navigator.audioSession.type = "playback";
     const a = ctx();
@@ -1415,13 +1423,15 @@ function unlockAudio() {
     const p = el.play(); if (p && p.catch) p.catch(() => {});
     if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
     unlocked = true;
+    // Music starts with the first tap, so the menu is not silent.
+    if (prefs.music) startMusic();
   } catch (e) {}
 }
 for (const ev of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(ev, unlockAudio, { capture: true, passive: true });
 
 document.addEventListener("visibilitychange", () => {
   if (!audio) return;
-  if (document.hidden) audio.suspend(); else if (MUSIC.timer || prefs.music) audio.resume();
+  if (document.hidden) audio.suspend(); else { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
 });
 
 /* ---------- Board build ---------- */
