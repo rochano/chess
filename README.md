@@ -4,6 +4,8 @@ A playable chess game in a single HTML page: two players on one device, two play
 
 Play it at https://rochano.github.io/chess/
 
+© 2026 Rochanapan. All rights reserved. See [LICENSE](LICENSE). The game only runs on its official site; a saved or copied page shows a link back to it.
+
 ## Saving scores to Google Sheets
 
 1. Create a Google Sheet, then open Extensions > Apps Script.

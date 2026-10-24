@@ -1,0 +1,13 @@
+Copyright (c) 2026 Rochanapan. All rights reserved.
+
+The code, graphics, logo, lessons and text of Chess Game are the property of
+Rochanapan. You may play the game at https://rochano.github.io/chess/.
+
+You may not copy, host, publish, modify, sell or distribute this game or any
+part of it, in whole or in part, without written permission from the owner.
+Viewing the source on GitHub does not grant any licence to use it.
+
+Third-party material keeps its own licence:
+- Orchestral samples in sounds/ come from the FluidR3 GM soundfont by Frank Wen,
+  licensed CC BY 3.0, via midi-js-soundfonts by Benjamin Gleitzman.
+- three.js and PeerJS are loaded from public CDNs under the MIT licence.

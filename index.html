@@ -17,6 +17,8 @@
 <link rel="canonical" href="https://rochano.github.io/chess/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#E07A3E">
+<meta name="author" content="Rochanapan">
+<meta name="copyright" content="© 2026 Rochanapan. All rights reserved.">
 <link rel="icon" href="img/logo.svg" type="image/svg+xml">
 <link rel="icon" href="img/icon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="img/icon-180.png">
@@ -735,7 +737,8 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-c</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-d</p>
+    <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -823,6 +826,19 @@ select {
 </div>
 
 <script>
+/* © 2026 Rochanapan. All rights reserved. This game runs only at https://rochano.github.io/chess/ */
+const HOME_URL = "https://rochano.github.io/chess/";
+function homeSite() { return location.hostname === "rochano.github.io" || !!window.__chessDev; }
+if (!homeSite()) {
+  // A saved or copied page: point people to the real game instead of running here (and posting scores to its sheet).
+  document.title = "Chess Game";
+  document.body.innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;background:#F3EDE0;color:#2F2620;font:700 18px/1.5 system-ui,sans-serif;text-align:center;padding:24px">'
+    + '<div><img src="' + HOME_URL + 'img/logo.svg" width="96" height="96" alt=""><h1 style="margin:12px 0 6px">Chess Game</h1>'
+    + '<p style="margin:0 0 18px">เกมนี้เล่นได้ที่เว็บไซต์ทางการเท่านั้น<br>This game is only available on its official site.</p>'
+    + '<a href="' + HOME_URL + '" style="display:inline-block;padding:10px 22px;border:3px solid #2F2620;border-radius:12px;background:#E07A3E;color:#FBF7EE;text-decoration:none">เล่นที่ rochano.github.io/chess</a>'
+    + '<p style="margin:18px 0 0;font-size:13px;color:#6E5E50">© 2026 Rochanapan. All rights reserved.</p></div></div>';
+  throw new Error("Chess Game runs only at " + HOME_URL);
+}
 /*ENGINE START*/
 const GLYPH = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟︎" };
 const VAL = { P: 100, N: 320, B: 330, R: 500, Q: 900, K: 0 };
@@ -3166,6 +3182,8 @@ initExtras();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+/* © 2026 Rochanapan. All rights reserved. */
+if (!homeSite()) throw new Error("Chess Game runs only at " + HOME_URL);
 /* ---------- Battle view: a 3D battlefield with a third-person camera ---------- */
 const Battle = (() => {
   const T = window.THREE;
