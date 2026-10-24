@@ -481,57 +481,16 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 #result.atmo-on .shop-txt small { color: #FFF7EC; opacity: .92; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
 #result.atmo-on .shop-item:hover .shop-go { filter: brightness(1.08); }
 #result.atmo-on .shop-go { background: var(--atmo-btn); }
-/* Result entrance: the card pieces arrive one after another instead of all at once */
-#result:not([hidden]) .card > * { animation: resIn 520ms cubic-bezier(.2,.9,.3,1.15) both; }
-#result:not([hidden]) .card > :nth-child(2) { animation-delay: 90ms; }
-#result:not([hidden]) .card > :nth-child(3) { animation-delay: 170ms; }
-#result:not([hidden]) .card > :nth-child(n+4) { animation-delay: 250ms; }
-#result:not([hidden]) .card > #shop { animation-delay: 380ms; }
-#result:not([hidden]) .result-badge { animation: badgeIn 700ms cubic-bezier(.2,1.6,.4,1) both; }
-@keyframes resIn { from { opacity: 0; transform: translateY(14px); } }
-@keyframes badgeIn { 0% { opacity: 0; transform: scale(.2) rotate(-25deg); } 70% { transform: scale(1.12) rotate(4deg); } 100% { opacity: 1; transform: none; } }
-/* The room's light comes up slowly, like walking into the product's space */
-#result:not([hidden]) > .atmo { animation: atmoLightsUp 1.4s ease-out both; }
-@keyframes atmoLightsUp { from { opacity: 0; filter: brightness(.3); } }
-/* Each product arrives the way that product moves in real life; then it keeps floating.
-   The arrival ends at transform:none so atmoFloat (delayed) takes over without a jump. */
-#result.atmo-on:not([hidden]) .shop-ic { animation: var(--enter-anim) both, atmoFloat 6s ease-in-out calc(var(--enter-t) + 400ms) infinite; }
-#result.atmo-on .shop-item::before { animation: tagStamp 420ms cubic-bezier(.2,1.8,.4,1) calc(var(--enter-t, 1s) + 200ms) both; }
-@keyframes tagStamp { from { opacity: 0; transform: scale(2.2) rotate(-14deg); } to { opacity: 1; transform: rotate(-4deg); } }
-#result.atmo-on .shop-txt, #result.atmo-on .shop-go { animation: resIn 500ms ease-out calc(var(--enter-t, 1s) - 100ms) both; }
-#result.atmo-on .shop-go { animation-delay: var(--enter-t, 1s); }
-/* stress ball: dropped, squashes on landing, bounces twice */
-@keyframes enSquish { 0% { opacity: 0; transform: translateY(-120%) scale(.9, 1.1); } 35% { opacity: 1; transform: translateY(0) scale(1.18, .78); } 50% { transform: translateY(-14%) scale(.94, 1.06); } 65% { transform: translateY(0) scale(1.08, .9); } 78% { transform: translateY(-4%) scale(.98, 1.02); } 90% { transform: scale(1.02, .98); } 100% { transform: none; } }
-/* aroma oil: appears out of mist, slowly coming into focus */
-@keyframes enMist { 0% { opacity: 0; filter: blur(18px) brightness(1.6); transform: scale(1.12); } 60% { opacity: 1; filter: blur(3px) brightness(1.15); } 100% { opacity: 1; filter: none; transform: none; } }
-/* tea: rises up warm like steam from the cup */
-@keyframes enRise { 0% { opacity: 0; transform: translateY(40%) scale(.92); filter: blur(6px) sepia(.4); } 70% { opacity: 1; filter: blur(0) sepia(.1); } 100% { transform: none; filter: none; } }
-/* neck massager: switches on, hums with a small vibration, then settles */
-@keyframes enHum { 0% { opacity: 0; transform: scale(.8); } 30% { opacity: 1; transform: scale(1.03); } 36% { transform: translate(-3px, 1px); } 42% { transform: translate(3px, -1px); } 48% { transform: translate(-2px, 1px); } 54% { transform: translate(2px, 0); } 60% { transform: translate(-1px, 0); } 66% { transform: translate(1px, 0); } 100% { transform: none; } }
-/* dark chocolate: the wrapper peels back from left to right, then a glint runs across */
-@keyframes enUnwrap { 0% { clip-path: inset(0 100% 0 0 round 14px); transform: rotate(-3deg); } 70% { clip-path: inset(0 0 0 0 round 14px); transform: rotate(1deg); } 100% { clip-path: inset(0 0 0 0 round 14px); transform: none; } }
-/* folding wooden board: unfolds on its hinge, lands with a solid knock */
-@keyframes enUnfold { 0% { opacity: 0; transform: perspective(700px) rotateY(-88deg); transform-origin: left center; } 60% { opacity: 1; transform: perspective(700px) rotateY(8deg); } 80% { transform: perspective(700px) rotateY(-2deg) translateY(-3px); } 100% { transform: none; } }
-/* magnetic set: pulled in fast from the side and snaps into place */
-@keyframes enSnap { 0% { opacity: 0; transform: translateX(-160%) rotate(-12deg) scale(.85); } 55% { opacity: 1; transform: translateX(6%) rotate(2deg) scale(1.04); } 63% { transform: translateX(-2%) scale(.99); } 70%, 100% { transform: none; } }
-/* book: the cover swings open from its spine */
-@keyframes enOpen { 0% { opacity: 0; transform: perspective(700px) rotateY(80deg) scale(.9); transform-origin: left center; filter: brightness(.5); } 65% { opacity: 1; transform: perspective(700px) rotateY(-6deg); filter: brightness(1.1); } 100% { transform: none; filter: none; } }
-/* chess clock: ticks into place step by step, then the button is pressed */
-@keyframes enTick { 0% { opacity: 0; transform: rotate(-30deg) scale(.85); animation-timing-function: steps(5, end); } 10% { opacity: 1; } 60% { transform: rotate(0) scale(1); } 72% { transform: translateY(5px) scale(1.04, .95); } 84% { transform: translateY(-2px); } 100% { transform: none; } }
-/* one-shot light that belongs to the product, fired as it lands */
+/* Result entrance: played from script (ResultFx) with the Web Animations API, so it runs the same in Safari.
+   One-shot light that belongs to the product, fired as it lands: */
 .atmo .burst { inset: 0; opacity: 0; pointer-events: none; }
-#result:not([hidden]) .atmo .burst { animation: burstFade 1.6s ease-out var(--enter-land, .5s) both; }
-@keyframes burstFade { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
 #result[data-enter="squish"] .atmo .burst { background: radial-gradient(circle at 50% 45%, rgba(255,210,225,.6), transparent 45%); }
 #result[data-enter="mist"] .atmo .burst { background: radial-gradient(ellipse at 50% 60%, rgba(230,215,255,.55), transparent 60%); filter: blur(20px); }
 #result[data-enter="rise"] .atmo .burst { background: radial-gradient(ellipse at 50% 80%, rgba(255,226,170,.55), transparent 60%); }
-#result[data-enter="hum"] .atmo .burst, #result[data-enter="snap"] .atmo .burst { background: radial-gradient(circle at 50% 45%, transparent 18%, var(--atmo-glow) 20%, transparent 26%); animation-name: burstRing; }
-@keyframes burstRing { 0% { opacity: 0; transform: scale(.4); } 15% { opacity: .9; } 100% { opacity: 0; transform: scale(2.4); } }
-#result[data-enter="unwrap"] .atmo .burst, #result[data-enter="tick"] .atmo .burst { background: linear-gradient(110deg, transparent 40%, rgba(255,240,220,.5) 50%, transparent 60%); animation-name: burstGlint; }
-@keyframes burstGlint { 0% { opacity: 1; transform: translateX(-80%); } 100% { opacity: 0; transform: translateX(80%); } }
+#result[data-enter="hum"] .atmo .burst, #result[data-enter="snap"] .atmo .burst { background: radial-gradient(circle at 50% 45%, transparent 18%, var(--atmo-glow) 20%, transparent 26%); }
+#result[data-enter="unwrap"] .atmo .burst, #result[data-enter="tick"] .atmo .burst { background: linear-gradient(110deg, transparent 40%, rgba(255,240,220,.5) 50%, transparent 60%); }
 #result[data-enter="unfold"] .atmo .burst, #result[data-enter="open"] .atmo .burst { background: radial-gradient(ellipse at 50% 40%, rgba(255,230,180,.55), transparent 55%); }
 #shop .atmo .burst { display: none; }
-@media (prefers-reduced-motion: reduce) { #result * , #result .atmo .burst { animation: none !important; } }
 .shop { display: grid; gap: 14px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
 .shop-say { margin: 0; font-weight: 800; font-size: 14px; }
 .shop-item { position: relative; display: grid; justify-items: center; gap: 10px; padding: 16px 14px 14px; text-align: center; background: #FFF4D2; border: 3.5px solid var(--ink); border-radius: 16px; color: var(--ink); text-decoration: none; box-shadow: 6px 6px 0 var(--ink); animation: shopPop 420ms cubic-bezier(.2,1.6,.4,1) both; }
@@ -1041,7 +1000,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zi</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zj</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2663,18 +2622,73 @@ const Share = {
 };
 /* ---------- Shop tips: after a game, Sergeant Somchai suggests something that fits how it went ----------
    Items live in shop.json. Each item has moods (tense, lost, won, learn) and a url; affiliate: true marks a paid link. */
+// Result entrance, played with element.animate() (CSS animations restarted by un-hiding were unreliable in Safari).
+// Each product arrives the way that thing moves in real life. With reduced motion everything just fades in.
+const ResultFx = {
+  K: {
+    // stress ball: dropped, squashes on landing, bounces twice
+    squish: [1100, [{ opacity: 0, transform: "translateY(-120%) scale(.9,1.1)" }, { opacity: 1, transform: "translateY(0) scale(1.18,.78)", offset: .35 }, { transform: "translateY(-14%) scale(.94,1.06)", offset: .5 }, { transform: "translateY(0) scale(1.08,.9)", offset: .65 }, { transform: "translateY(-4%) scale(.98,1.02)", offset: .78 }, { transform: "scale(1.02,.98)", offset: .9 }, { opacity: 1, transform: "none" }]],
+    // aroma oil: comes into focus out of mist
+    mist: [1600, [{ opacity: 0, filter: "blur(18px) brightness(1.6)", transform: "scale(1.12)" }, { opacity: 1, filter: "blur(3px) brightness(1.15)", offset: .6 }, { opacity: 1, filter: "blur(0px) brightness(1)", transform: "none" }]],
+    // tea: rises up warm like steam
+    rise: [1500, [{ opacity: 0, transform: "translateY(40%) scale(.92)", filter: "blur(6px) sepia(.4)" }, { opacity: 1, filter: "blur(0px) sepia(.1)", offset: .7 }, { opacity: 1, transform: "none", filter: "blur(0px) sepia(0)" }]],
+    // neck massager: switches on, hums with a small vibration, settles
+    hum: [1300, [{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "scale(1.03)", offset: .3 }, { transform: "translate(-4px,1px)", offset: .36 }, { transform: "translate(4px,-1px)", offset: .42 }, { transform: "translate(-3px,1px)", offset: .48 }, { transform: "translate(3px,0)", offset: .54 }, { transform: "translate(-2px,0)", offset: .6 }, { transform: "translate(1px,0)", offset: .66 }, { opacity: 1, transform: "none" }]],
+    // dark chocolate: the wrapper peels back left to right
+    unwrap: [1100, [{ clipPath: "inset(0 100% 0 0)", transform: "rotate(-3deg)" }, { clipPath: "inset(0 0% 0 0)", transform: "rotate(1deg)", offset: .7 }, { clipPath: "inset(0 0% 0 0)", transform: "none" }]],
+    // folding wooden board: unfolds on its hinge and lands with a knock
+    unfold: [1100, [{ opacity: 0, transform: "perspective(700px) rotateY(-88deg)", transformOrigin: "left center" }, { opacity: 1, transform: "perspective(700px) rotateY(8deg)", transformOrigin: "left center", offset: .6 }, { transform: "perspective(700px) rotateY(-2deg) translateY(-3px)", transformOrigin: "left center", offset: .8 }, { opacity: 1, transform: "perspective(700px) rotateY(0deg)", transformOrigin: "left center" }]],
+    // magnetic set: pulled in fast and snaps into place
+    snap: [900, [{ opacity: 0, transform: "translateX(-160%) rotate(-12deg) scale(.85)", easing: "cubic-bezier(.5,0,.9,.5)" }, { opacity: 1, transform: "translateX(6%) rotate(2deg) scale(1.04)", offset: .55 }, { transform: "translateX(-2%) scale(.99)", offset: .63 }, { opacity: 1, transform: "none", offset: .7 }, { opacity: 1, transform: "none" }]],
+    // book: the cover swings open from the spine
+    open: [1200, [{ opacity: 0, transform: "perspective(700px) rotateY(80deg) scale(.9)", transformOrigin: "left center", filter: "brightness(.5)" }, { opacity: 1, transform: "perspective(700px) rotateY(-6deg)", transformOrigin: "left center", filter: "brightness(1.1)", offset: .65 }, { opacity: 1, transform: "perspective(700px) rotateY(0deg)", transformOrigin: "left center", filter: "brightness(1)" }]],
+    // chess clock: ticks into place step by step, then its button is pressed
+    tick: [1200, [{ opacity: 0, transform: "rotate(-30deg) scale(.85)", easing: "steps(5,end)" }, { opacity: 1, transform: "rotate(0deg) scale(1)", offset: .6 }, { transform: "translateY(5px) scale(1.04,.95)", offset: .72 }, { transform: "translateY(-2px)", offset: .84 }, { opacity: 1, transform: "none" }]],
+  },
+  BURST: { hum: "ring", snap: "ring", unwrap: "glint", tick: "glint" },
+  soft() { return matchMedia("(prefers-reduced-motion: reduce)").matches; },
+  run(el, frames, o) { if (el && el.animate) try { return el.animate(frames, Object.assign({ fill: "backwards", easing: "ease-out" }, o)); } catch (e) {} },
+  card() {
+    const card = $("result").querySelector(".card"), soft = this.soft();
+    [...card.children].forEach((el, i) => {
+      if (el.hidden || el.id === "shop" && $("result").classList.contains("atmo-on")) return;
+      this.run(el, soft ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateY(16px)" }, { opacity: 1, transform: "none" }],
+        { duration: 520, delay: Math.min(i, 4) * 90 + (el.id === "shop" ? 120 : 0), easing: "cubic-bezier(.2,.9,.3,1.15)" });
+    });
+    if (!soft) this.run($("resBadge"), [{ opacity: 0, transform: "scale(.2) rotate(-25deg)" }, { transform: "scale(1.12) rotate(4deg)", offset: .7 }, { opacity: 1, transform: "none" }], { duration: 700, easing: "cubic-bezier(.2,1.6,.4,1)" });
+    this.product(380);
+  },
+  product(delay) {
+    const r = $("result"), tag = r.dataset.enter;
+    if (!tag || !this.K[tag]) return;
+    const soft = this.soft(), [ms, frames] = this.K[tag], start = delay + 120;
+    const bg = r.querySelector(":scope > .atmo"), shop = $("shop");
+    // the room's light comes up first, like walking into the product's space
+    this.run(bg, [{ opacity: 0, filter: "brightness(.3)" }, { opacity: 1, filter: "brightness(1)" }], { duration: 1400 });
+    this.run(shop, [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay });
+    if (soft) { this.run($("shopIc"), [{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: start }); return; }
+    this.run($("shopIc"), frames, { duration: ms, delay: start });
+    const end = start + ms;
+    shop.querySelectorAll(".shop-txt, .shop-go").forEach((el, i) => this.run(el, [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: 500, delay: end - 150 + i * 120 }));
+    this.run($("shopItem"), [{ opacity: 0, transform: "scale(2.2) rotate(-14deg)" }, { opacity: 1, transform: "rotate(-4deg)" }], { duration: 420, delay: end + 150, easing: "cubic-bezier(.2,1.8,.4,1)", pseudoElement: "::before" });
+    const burst = bg && bg.querySelector(".burst"), kind = this.BURST[tag];
+    this.run(burst, kind === "ring" ? [{ opacity: 0, transform: "scale(.4)" }, { opacity: .9, offset: .15 }, { opacity: 0, transform: "scale(2.4)" }]
+      : kind === "glint" ? [{ opacity: 1, transform: "translateX(-80%)" }, { opacity: 0, transform: "translateX(80%)" }]
+      : [{ opacity: 0 }, { opacity: 1, offset: .15 }, { opacity: 0 }], { duration: 1600, delay: start + ms * .45, fill: "none" });
+  },
+};
 const Atmo = {
   // fx: motes (sun and dust), steam, bokeh, breath, sweep. tint is laid over the blurred photo with soft-light.
   SETS: {
-    "stress-ball": { enter: ["enSquish", 1100, "squish"], fx: "bokeh", tint: "#FF9DB8", glow: "rgba(255,190,210,.9)", base: "#C8657F", btn: "#D9466F" },
-    "lavender": { enter: ["enMist", 1600, "mist"], fx: "bokeh", tint: "#9C7BE0", glow: "rgba(214,190,255,.9)", base: "#5E4A8C", btn: "#7A55C7" },
-    "chamomile": { enter: ["enRise", 1500, "rise"], fx: "steam", tint: "#F4C46A", glow: "rgba(255,224,160,.9)", base: "#9C7434", btn: "#B97A16" },
-    "neck-pillow": { enter: ["enHum", 1300, "hum"], fx: "breath", tint: "#7FC9C0", glow: "rgba(170,235,225,.85)", base: "#2F6F69", btn: "#2F8F86" },
-    "dark-choc": { enter: ["enUnwrap", 1100, "unwrap"], fx: "steam", tint: "#8A5232", glow: "rgba(255,200,150,.8)", base: "#3B2216", btn: "#7A4426" },
-    "wood-chess": { enter: ["enUnfold", 1100, "unfold"], fx: "motes", tint: "#E0A868", glow: "rgba(255,220,170,.9)", base: "#6B4524", btn: "#8A5328" },
-    "magnet-chess": { enter: ["enSnap", 900, "snap"], fx: "sweep", tint: "#8FB0F0", glow: "rgba(190,210,255,.9)", base: "#34508F", btn: "#3A5FC2" },
-    "chess-book": { enter: ["enOpen", 1200, "open"], fx: "motes", tint: "#E8C27A", glow: "rgba(255,230,180,.9)", base: "#5C4A2C", btn: "#8A5A1E" },
-    "chess-clock": { enter: ["enTick", 1200, "tick"], fx: "sweep", tint: "#FFA36A", glow: "rgba(255,200,160,.9)", base: "#7A3416", btn: "#D2552A" },
+    "stress-ball": { enter: "squish", fx: "bokeh", tint: "#FF9DB8", glow: "rgba(255,190,210,.9)", base: "#C8657F", btn: "#D9466F" },
+    "lavender": { enter: "mist", fx: "bokeh", tint: "#9C7BE0", glow: "rgba(214,190,255,.9)", base: "#5E4A8C", btn: "#7A55C7" },
+    "chamomile": { enter: "rise", fx: "steam", tint: "#F4C46A", glow: "rgba(255,224,160,.9)", base: "#9C7434", btn: "#B97A16" },
+    "neck-pillow": { enter: "hum", fx: "breath", tint: "#7FC9C0", glow: "rgba(170,235,225,.85)", base: "#2F6F69", btn: "#2F8F86" },
+    "dark-choc": { enter: "unwrap", fx: "steam", tint: "#8A5232", glow: "rgba(255,200,150,.8)", base: "#3B2216", btn: "#7A4426" },
+    "wood-chess": { enter: "unfold", fx: "motes", tint: "#E0A868", glow: "rgba(255,220,170,.9)", base: "#6B4524", btn: "#8A5328" },
+    "magnet-chess": { enter: "snap", fx: "sweep", tint: "#8FB0F0", glow: "rgba(190,210,255,.9)", base: "#34508F", btn: "#3A5FC2" },
+    "chess-book": { enter: "open", fx: "motes", tint: "#E8C27A", glow: "rgba(255,230,180,.9)", base: "#5C4A2C", btn: "#8A5A1E" },
+    "chess-clock": { enter: "tick", fx: "sweep", tint: "#FFA36A", glow: "rgba(255,200,160,.9)", base: "#7A3416", btn: "#D2552A" },
   },
   build(a, img, small) {
     const L = document.createElement("div"); L.className = "atmo"; L.setAttribute("aria-hidden", "true");
@@ -2696,14 +2710,10 @@ const Atmo = {
   set(it) {
     this.clear(); const a = this.SETS[it.id]; if (!a) return;
     const r = $("result"); r.classList.add("atmo-on"); r.style.setProperty("--atmo-btn", a.btn);
-    // The product's arrival starts after the card itself is in (380ms), and its light fires as it lands.
-    const [anim, ms, tag] = a.enter, start = 450;
-    r.dataset.enter = tag;
-    r.style.setProperty("--enter-anim", `${anim} ${ms}ms ease-out ${start}ms`);
-    r.style.setProperty("--enter-t", start + ms + "ms");
-    r.style.setProperty("--enter-land", start + ms * .45 + "ms");
+    r.dataset.enter = a.enter;
     r.prepend(this.build(a, it.img, false));
     $("shop").prepend(this.build(a, it.img, true));
+    if (!r.hidden) ResultFx.product(0);
   },
   clear() { const r = $("result"); r.classList.remove("atmo-on"); delete r.dataset.enter; r.querySelectorAll(".atmo").forEach(e => e.remove()); },
 };
@@ -2801,7 +2811,7 @@ function showResult() {
   $("resText").textContent = o.text;
   // The player stalemated the opponent: explain why a winning position became a draw.
   if (o.stalemate && o.stalemate === me) $("resText").textContent += " เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ";
-  setTimeout(() => show("result"), o.type === "mate" ? 650 : 200);
+  setTimeout(() => { show("result"); ResultFx.card(); }, o.type === "mate" ? 650 : 200);
 }
 
 function openMenu() {
