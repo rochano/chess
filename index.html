@@ -990,7 +990,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zg</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zh</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3502,18 +3502,27 @@ const Leader = {
   load() {
     $("segLeader").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === this.tab)));
     if (this.tab === "local") { drawBoard(lsGet("chess-history", []), "ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่", true); return; }
-    $("lbBody").innerHTML = '<p class="empty">กำลังโหลดคะแนน…</p>';
-    fetch(SHEET_URL + "?action=rows", { cache: "no-store" })
+    // Show the last copy at once; Google Apps Script often takes a few seconds to answer.
+    const empty = "ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม";
+    const cached = lsGet("chess-board-cache", null);
+    if (cached) drawBoard(cached, empty);
+    else $("lbBody").innerHTML = '<p class="empty">กำลังโหลดคะแนน…</p>';
+    this.fetchAll()
+      .then(rows => { if (this.tab === "all") drawBoard(rows, empty); })
+      .catch(() => { if (this.tab === "all" && !cached) $("lbBody").innerHTML = '<p class="empty">ยังโหลดคะแนนรวมไม่ได้ (สคริปต์ Google Sheet ต้องอัปเดตเวอร์ชันใหม่ หรือเน็ตมีปัญหา) ดูแท็บ This device ไปก่อนได้</p>'; });
+  },
+  // One request at a time; also started in the background when the page loads.
+  fetchAll() {
+    if (this.pending) return this.pending;
+    this.pending = fetch(SHEET_URL + "?action=rows", { cache: "no-store" })
       .then(r => r.text())
-      .then(t => {
-        if (this.tab !== "all") return;
-        const d = JSON.parse(t);
-        drawBoard(d.rows || [], "ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม");
-      })
-      .catch(() => { if (this.tab === "all") $("lbBody").innerHTML = '<p class="empty">ยังโหลดคะแนนรวมไม่ได้ (สคริปต์ Google Sheet ต้องอัปเดตเวอร์ชันใหม่ หรือเน็ตมีปัญหา) ดูแท็บ This device ไปก่อนได้</p>'; });
+      .then(t => { const rows = JSON.parse(t).rows || []; lsSet("chess-board-cache", rows); return rows; })
+      .finally(() => { this.pending = null; });
+    return this.pending;
   },
 };
 $("openLeader").addEventListener("click", () => Leader.open());
+setTimeout(() => { if (homeSite()) Leader.fetchAll().catch(() => {}); }, 3000);
 $("closeLeader").addEventListener("click", () => { hide("leader"); openMenu(); });
 $("segLeader").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { Leader.tab = b.dataset.v; Leader.load(); } });
 
