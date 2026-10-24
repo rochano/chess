@@ -908,6 +908,17 @@ select {
       <div class="slider"><span id="icNote"></span><input type="range" id="volMusic" min="0" max="100" value="40"><output id="volMusicOut" for="volMusic">40</output></div>
     </div>
     <div class="field">
+      <label class="lbl" for="track">Soundtrack</label>
+      <select id="track">
+        <option value="auto">Change every game</option>
+        <option value="classic">Classic · คลาสสิก</option>
+        <option value="garden">Garden · สวนยามเช้า</option>
+        <option value="nocturne">Nocturne · ราตรี</option>
+        <option value="waltz">Waltz · วอลทซ์</option>
+        <option value="journey">Journey · ออกเดินทาง</option>
+      </select>
+    </div>
+    <div class="field">
       <label class="lbl" for="volMove">Move sounds</label>
       <div class="slider"><span id="icVol"></span><input type="range" id="volMove" min="0" max="100" value="60"><output id="volMoveOut" for="volMove">60</output></div>
     </div>
@@ -979,7 +990,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zd</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-ze</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1391,7 +1402,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", voiceRate: "0.8", theme: "walnut", nameW: "", nameB: "", streamer: "off", shop: "on" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", voiceRate: "0.8", theme: "walnut", nameW: "", nameB: "", streamer: "off", shop: "on", track: "auto" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -1484,7 +1495,7 @@ const sfx = {
    after   a lone cello after a game ends
    Instruments are real samples (FluidR3 GM soundfont, CC BY 3.0) loaded on first
    play; until a sample arrives, a simple synth voice stands in. */
-const MUSIC = { timer: null, next: 0, bar: 0, theme: "menu", level: 0 };
+const MUSIC = { timer: null, next: 0, bar: 0, theme: "menu", level: 0, game: 0 };
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
 function musicLevel() { return prefs.music ? (prefs.volMusic / 100) * 1.5 : 0; }
 // The leitmotif: [midi note, start beat, length in beats] per bar.
@@ -1507,8 +1518,35 @@ const SONGS = {
   battle: { bpm: 88, chords: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], roots: [45, 41, 38, 40] },
   boss: { bpm: 120, chords: [[57, 60, 64], [58, 62, 65], [57, 60, 64], [52, 56, 59]], roots: [45, 46, 45, 40] },
   after: { bpm: 63, chords: [[57, 60, 64], [53, 57, 60]], roots: [45, 41] },
+  // Extra soundtracks for the menu and calm play (tension still brings in the battle music).
+  garden: { bpm: 84, chords: [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]], roots: [48, 45, 41, 43] },
+  nocturne: { bpm: 63, chords: [[50, 53, 57], [46, 50, 53], [53, 57, 60], [48, 52, 55]], roots: [38, 34, 41, 36] },
+  waltz: { bpm: 150, beats: 3, chords: [[55, 59, 62], [52, 55, 59], [48, 52, 55], [50, 54, 57]], roots: [43, 40, 36, 38] },
+  journey: { bpm: 104, chords: [[53, 57, 60], [50, 53, 57], [46, 50, 53], [48, 52, 55]], roots: [41, 38, 34, 36] },
 };
-function barLength() { const th = SONGS[MUSIC.theme]; return (60 / (th.bpm + (MUSIC.theme === "battle" ? MUSIC.level * 8 : 0))) * 4; }
+// Tunes for the extra soundtracks: [note, beat, length] per bar, two passes (A then B).
+const TUNES = {
+  garden: [
+    [[[76, 0, 1], [79, 1, 0.5], [76, 1.5, 0.5], [74, 2, 1], [72, 3, 1]], [[69, 0, 1.5], [72, 1.5, 0.5], [74, 2, 1], [76, 3, 1]], [[72, 0, 1], [69, 1, 1], [67, 2, 2]], [[74, 0, 1], [76, 1, 0.5], [74, 1.5, 0.5], [72, 2, 2]]],
+    [[[79, 0, 1], [81, 1, 1], [79, 2, 0.5], [76, 2.5, 0.5], [74, 3, 1]], [[72, 0, 1], [74, 1, 1], [76, 2, 2]], [[79, 0, 1], [76, 1, 1], [74, 2, 1], [72, 3, 1]], [[74, 0, 1.5], [76, 1.5, 0.5], [72, 2, 2]]],
+  ],
+  nocturne: [
+    [[[62, 0, 2], [65, 2, 1], [64, 3, 1]], [[62, 0, 1.5], [58, 1.5, 0.5], [57, 2, 2]], [[60, 0, 1], [65, 1, 1], [69, 2, 1.5], [67, 3.5, 0.5]], [[67, 0, 2], [64, 2, 2]]],
+    [[[69, 0, 1.5], [70, 1.5, 0.5], [69, 2, 1], [65, 3, 1]], [[65, 0, 1], [62, 1, 1], [58, 2, 2]], [[60, 0, 1], [65, 1, 1], [72, 2, 2]], [[70, 0, 1], [69, 1, 1], [67, 2, 2]]],
+  ],
+  waltz: [
+    [[[74, 0, 2], [71, 2, 1]], [[71, 0, 1], [67, 1, 1], [71, 2, 1]], [[72, 0, 2], [76, 2, 1]], [[74, 0, 1.5], [72, 1.5, 0.5], [69, 2, 1]]],
+    [[[79, 0, 2], [78, 2, 1]], [[76, 0, 1], [71, 1, 1], [74, 2, 1]], [[76, 0, 1], [72, 1, 1], [69, 2, 1]], [[74, 0, 3]]],
+  ],
+  journey: [
+    [[[65, 0, 1], [69, 1, 1], [72, 2, 1.5], [69, 3.5, 0.5]], [[67, 0, 1], [65, 1, 1], [62, 2, 2]], [[62, 0, 1], [65, 1, 1], [70, 2, 1], [69, 3, 1]], [[67, 0, 3], [72, 3, 1]]],
+    [[[72, 0, 1.5], [69, 1.5, 0.5], [65, 2, 1], [69, 3, 1]], [[69, 0, 1], [65, 1, 1], [62, 2, 2]], [[70, 0, 1], [69, 1, 1], [67, 2, 1], [65, 3, 1]], [[64, 0, 2], [67, 2, 1], [72, 3, 1]]],
+  ],
+};
+const TRACKS = ["classic", "garden", "nocturne", "waltz", "journey"];
+// The soundtrack for the menu and calm play: the one chosen in Settings, or a new one each game.
+function curTrack() { return prefs.track && prefs.track !== "auto" ? prefs.track : TRACKS[MUSIC.game % TRACKS.length]; }
+function barLength() { const th = SONGS[MUSIC.theme]; return (60 / (th.bpm + (MUSIC.theme === "battle" ? MUSIC.level * 8 : 0))) * (th.beats || 4); }
 
 /* --- samples --- */
 const INST = {
@@ -1528,6 +1566,10 @@ const ORCH = { buf: {}, asked: {}, out: null };
 const NEEDS = {
   menu: ["cello", "orchestral_harp", "string_ensemble_1", "contrabass"],
   lesson: ["flute", "pizzicato_strings", "orchestral_harp"],
+  garden: ["flute", "orchestral_harp", "pizzicato_strings", "string_ensemble_1"],
+  nocturne: ["orchestral_harp", "cello", "flute", "contrabass", "string_ensemble_1"],
+  waltz: ["flute", "pizzicato_strings", "contrabass", "orchestral_harp", "string_ensemble_1"],
+  journey: ["french_horn", "flute", "pizzicato_strings", "timpani", "string_ensemble_1"],
   battle: ["flute", "string_ensemble_1", "cello", "contrabass", "timpani", "french_horn", "tremolo_strings", "trumpet"],
 };
 function orchLoad(names) {
@@ -1586,8 +1628,36 @@ function timpRoll(t, n, len, vol) { const k = Math.round(len / 0.07); for (let i
 /* --- one bar of the current theme --- */
 function scheduleBar(t) {
   const name = MUSIC.theme, th = SONGS[name], lv = MUSIC.level, k = MUSIC.bar % th.chords.length;
-  const len = barLength(), beat = len / 4, chord = th.chords[k], root = th.roots[k], pass = Math.floor(MUSIC.bar / 4);
-  if (name === "menu") {
+  const len = barLength(), beat = len / (th.beats || 4), chord = th.chords[k], root = th.roots[k], pass = Math.floor(MUSIC.bar / 4);
+  const tune = TUNES[name] && TUNES[name][pass % 2][k];
+  if (name === "garden") {
+    // Light and Thai-tinged: pentatonic flute, a harp ostinato and a little "ching" on the off-beats.
+    for (let e = 0; e < 8; e++) play("orchestral_harp", t + e * beat / 2, [root + 12, chord[1], chord[2], root + 24][e % 4], beat, 0.12);
+    play("pizzicato_strings", t, root - 12, beat, 0.32); play("pizzicato_strings", t + 2 * beat, root - 5, beat, 0.26);
+    for (const b of [1, 3]) play("pizzicato_strings", t + b * beat, 84, beat * 0.3, 0.07);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.05);
+    line("flute", t, tune, beat, 0.3);
+  } else if (name === "nocturne") {
+    // Night-time: rolling harp arpeggios, cello melody, the flute takes it the second time.
+    const arp = [chord[0], chord[1], chord[2], chord[0] + 12, chord[1] + 12, chord[2] + 12, chord[0] + 12, chord[2]];
+    for (let e = 0; e < 8; e++) play("orchestral_harp", t + e * beat / 2, arp[e], beat * 1.5, 0.12);
+    play("contrabass", t, root - 12 + 12, len * 0.9, 0.16);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.05);
+    if (pass % 2 === 0) line("cello", t, tune, beat, 0.4); else line("flute", t, tune, beat, 0.24, 12);
+  } else if (name === "waltz") {
+    // Three in a bar: bass on one, plucked chords on two and three; flute, then strings.
+    play("contrabass", t, root - 12 + 12, beat * 0.9, 0.26);
+    for (const b of [1, 2]) chordOn("pizzicato_strings", t + b * beat, chord, beat * 0.5, 0.14);
+    play("orchestral_harp", t + 2.5 * beat, chord[2] + 12, beat, 0.08);
+    if (pass % 2 === 0) line("flute", t, tune, beat, 0.3); else line("string_ensemble_1", t, tune, beat, 0.22);
+  } else if (name === "journey") {
+    // Setting off: walking pizzicato bass, horn tune, flute answers, soft timpani.
+    const walk = [root - 12, root - 5, root, root - 5];
+    for (let e = 0; e < 8; e++) play("pizzicato_strings", t + e * beat / 2, walk[e % 4] + (e >= 4 ? 0 : 0), beat * 0.4, 0.24);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.06);
+    play("timpani", t, root, beat, 0.22);
+    if (pass % 2 === 0) line("french_horn", t, tune, beat, 0.32); else line("flute", t, tune, beat, 0.26, 12);
+  } else if (name === "menu") {
     chordOn("string_ensemble_1", t, chord, len * 0.95, 0.09);
     play("contrabass", t, root - 12, len * 0.9, 0.22);
     for (let e = 0; e < 8; e++) play("orchestral_harp", t + e * beat / 2, chord[e % 3] + (e < 4 ? 12 : 24), beat, 0.13);
@@ -1701,6 +1771,7 @@ function pressure(side) {
 function updateMusic() {
   if (!audio) return;
   const m = musicMood();
+  if ((m.theme === "menu" || (m.theme === "battle" && m.level === 0)) && curTrack() !== "classic") m.theme = curTrack();
   if (m.level > 3) m.level = 3;
   if (m.theme !== MUSIC.theme) { MUSIC.theme = m.theme; MUSIC.bar = 0; }
   orchLoad(NEEDS[m.theme] || NEEDS.battle);
@@ -1972,6 +2043,7 @@ function reportResult() {
 }
 
 function newGame() {
+  MUSIC.game++;
   G.mode = prefs.mode === "online" && !Net.live ? "friend" : prefs.mode; G.level = +prefs.level;
   G.look = null; G.arrows = null;
   const [base, inc] = prefs.clock === "0" ? [0, 0] : prefs.clock.split("+").map(Number);
@@ -2670,6 +2742,7 @@ function applyTheme() {
   $("volMove").value = prefs.volMove; $("volMoveOut").textContent = prefs.volMove;
   $("volAlert").value = prefs.volAlert; $("volAlertOut").textContent = prefs.volAlert;
   $("volMusic").value = prefs.volMusic; $("volMusicOut").textContent = prefs.volMusic;
+  $("track").value = prefs.track || "auto";
 }
 
 /* ---------- Modes: which side this device plays ---------- */
@@ -3699,6 +3772,7 @@ $("musicBtn").addEventListener("click", () => {
   prefs.music = !prefs.music; savePrefs(); syncMusicButton();
   if (prefs.music) startMusic(); else stopMusic();
 });
+$("track").addEventListener("change", e => { prefs.track = e.target.value; savePrefs(); if (e.target.value === "auto") MUSIC.game++; updateMusic(); });
 $("volMusic").addEventListener("input", e => {
   prefs.volMusic = +e.target.value; $("volMusicOut").textContent = e.target.value; savePrefs();
   if (prefs.volMusic > 0 && !prefs.music) { prefs.music = true; syncMusicButton(); }
