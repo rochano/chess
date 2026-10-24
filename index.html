@@ -427,6 +427,15 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .btn.danger { background: var(--flag); color: var(--card); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; padding-top: 4px; border-top: 2px dashed var(--paper-2); }
+/* Settings: Sound, Sergeant and Display groups; three columns on wide screens so the panel fits without scrolling */
+.set-group { display: grid; gap: 12px; align-content: start; }
+.set-group + .set-group { border-top: 2px dashed var(--paper-2); padding-top: 14px; }
+@media (min-width: 900px) {
+  #settings .card { width: min(100%, 1000px); grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 26px; }
+  #settings .card > h2, #settings .card > .btns { grid-column: 1 / -1; }
+  #settings .card > .btns { justify-self: end; width: 220px; }
+  #settings .set-group + .set-group { border-top: 0; padding-top: 0; border-left: 2px dashed var(--paper-2); padding-left: 26px; }
+}
 .shop { display: grid; gap: 14px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
 .shop-say { margin: 0; font-weight: 800; font-size: 14px; }
 .shop-item { position: relative; display: grid; justify-items: center; gap: 10px; padding: 16px 14px 14px; text-align: center; background: #FFF4D2; border: 3.5px solid var(--ink); border-radius: 16px; color: var(--ink); text-decoration: none; box-shadow: 6px 6px 0 var(--ink); animation: shopPop 420ms cubic-bezier(.2,1.6,.4,1) both; }
@@ -847,6 +856,8 @@ select {
 <div class="scrim" id="settings" hidden>
   <div class="card" role="dialog" aria-labelledby="setTitle">
     <h2 id="setTitle">Settings panel</h2>
+    <section class="set-group" aria-labelledby="setSound">
+    <h3 class="menu-hd" id="setSound">Sound</h3>
     <div class="field">
       <label class="lbl" for="volMusic">Music</label>
       <div class="slider"><span id="icNote"></span><input type="range" id="volMusic" min="0" max="100" value="40"><output id="volMusicOut" for="volMusic">40</output></div>
@@ -859,28 +870,34 @@ select {
       <label class="lbl" for="volAlert">Check and clock alerts</label>
       <div class="slider"><span id="icVol2"></span><input type="range" id="volAlert" min="0" max="100" value="60"><output id="volAlertOut" for="volAlert">60</output></div>
     </div>
+    </section>
+    <section class="set-group" aria-labelledby="setSarge">
+    <h3 class="menu-hd" id="setSarge">Sergeant</h3>
     <div class="field">
-      <span class="lbl">Sergeant comments</span>
+      <span class="lbl">Comments</span>
       <div class="seg" id="segTaunts">
         <button data-v="on" aria-pressed="true">On</button>
         <button data-v="off" aria-pressed="false">Off</button>
       </div>
     </div>
     <div class="field">
-      <span class="lbl">Sergeant voice</span>
+      <span class="lbl">Voice</span>
       <div class="seg" id="segVoice">
         <button data-v="speech" aria-pressed="true">Thai speech</button>
         <button data-v="mumble" aria-pressed="false">Mumble</button>
       </div>
     </div>
     <div class="field">
-      <span class="lbl">Sergeant speaking speed</span>
+      <span class="lbl">Speaking speed</span>
       <div class="seg" id="segRate">
         <button data-v="0.65" aria-pressed="false">Slow</button>
         <button data-v="0.8" aria-pressed="true">Medium</button>
         <button data-v="1" aria-pressed="false">Normal</button>
       </div>
     </div>
+    </section>
+    <section class="set-group" aria-labelledby="setLook">
+    <h3 class="menu-hd" id="setLook">Display</h3>
     <div class="field">
       <span class="lbl">Streamer character</span>
       <div class="seg" id="segStreamer">
@@ -897,7 +914,7 @@ select {
       </div>
     </div>
     <div class="field">
-      <label class="lbl" for="theme">Theme select</label>
+      <label class="lbl" for="theme">Board theme</label>
       <select id="theme">
         <option value="walnut">Walnut</option>
         <option value="sand">Sandstone</option>
@@ -905,6 +922,7 @@ select {
       </select>
       <div class="swatches" id="swatches" aria-hidden="true"></div>
     </div>
+    </section>
     <div class="btns"><button class="btn go" id="closeSettings">Done</button></div>
   </div>
 </div>
@@ -916,7 +934,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-y</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-z</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
