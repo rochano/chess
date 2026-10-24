@@ -351,6 +351,10 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .btn.go { background: var(--sun); }
 .btn.danger { background: var(--flag); color: var(--card); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; padding-top: 4px; border-top: 2px dashed var(--paper-2); }
+.share-lbl { width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); padding-top: 8px; }
+.chip.line { background: #06C755; color: #fff; }
+.chip.fb { background: #1877F2; color: #fff; }
 
 .slider { display: grid; grid-template-columns: 28px 1fr 40px; gap: 10px; align-items: center; }
 .slider svg { width: 24px; height: 24px; }
@@ -737,7 +741,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-d</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-e</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -822,12 +826,21 @@ select {
       <button class="btn" id="resView">View board</button>
       <button class="btn go" id="resAgain">Play again</button>
     </div>
+    <div class="share-row">
+      <span class="share-lbl">ชวนเพื่อนมาเล่น</span>
+      <button class="chip" id="shareGo">Share</button>
+      <button class="chip line" id="shareLine">LINE</button>
+      <button class="chip fb" id="shareFb">Facebook</button>
+      <button class="chip" id="shareCopy">Copy link</button>
+    </div>
   </div>
 </div>
 
 <script>
 /* © 2026 Rochanapan. All rights reserved. This game runs only at https://rochano.github.io/chess/ */
 const HOME_URL = "https://rochano.github.io/chess/";
+// Send a Google Analytics event. Shared links carry utm tags, so GA also records where each visitor came from.
+function track(name, params) { try { if (window.gtag) gtag("event", name, params || {}); } catch (e) {} }
 function homeSite() { return location.hostname === "rochano.github.io" || !!window.__chessDev; }
 if (!homeSite()) {
   // A saved or copied page: point people to the real game instead of running here (and posting scores to its sheet).
@@ -1701,7 +1714,7 @@ function reportResult() {
   if (G.reported || G.mode === "train") return;
   G.reported = true;
   const o = G.over;
-  if (window.gtag) gtag("event", "game_end", { opponent: G.mode, result: o.type, moves: Math.ceil(G.history.length / 2) });
+  { const me = myColor(); track("game_end", { opponent: G.mode, level: G.mode === "cpu" ? G.level : 0, result: o.type, outcome: o.type === "draw" ? "draw" : !me ? "local" : o.winner === me ? "win" : "loss", moves: Math.ceil(G.history.length / 2) }); }
   const row = {
     finishedAt: new Date().toISOString(),
     white: G.names.w,
@@ -2089,6 +2102,76 @@ function askPromotion(cands) {
   }
   show("promo");
 }
+
+/* ---------- Share a result ----------
+   The link carries utm tags, so Google Analytics shows how many players each share brings in. */
+const Share = {
+  link(method) { return HOME_URL + "?utm_source=" + method + "&utm_medium=share&utm_campaign=result"; },
+  text() {
+    const o = G.over, me = myColor(), moves = Math.ceil(G.history.length / 2);
+    const foe = G.mode === "cpu" ? "คอมระดับ " + ["", "Easy", "Normal", "Hard"][G.level] : G.mode === "online" ? "เพื่อนออนไลน์" : "เพื่อน";
+    if (!o) return "มาเล่นหมากรุก 3 มิติกัน ฟรี ไม่ต้องสมัคร";
+    if (o.type === "draw") return "เสมอกับ" + foe + " ใน " + moves + " ตา มาลองเล่นหมากรุก 3 มิติกัน";
+    if (me && o.winner === me) return "ชนะ" + foe + (o.type === "mate" ? "แบบรุกฆาต" : "") + " ใน " + moves + " ตา! มาท้าดวลหมากรุก 3 มิติกัน";
+    if (me) return "แพ้" + foe + " ใน " + moves + " ตา ใครเก่งมาช่วยแก้แค้นที! หมากรุก 3 มิติ เล่นฟรี";
+    return (o.winner === "w" ? G.names.w : G.names.b) + " ชนะใน " + moves + " ตา มาเล่นหมากรุก 3 มิติด้วยกัน";
+  },
+  // A 1080x1080 picture of the final position, for the phone share sheet.
+  async picture() {
+    const S = 1080, c = document.createElement("canvas"); c.width = c.height = S;
+    const g = c.getContext("2d"), dark = ["#F1E4C3", "#B58863"]; // lighter than the in-game wood so both colours of pieces stand out
+    g.fillStyle = "#F3EDE0"; g.fillRect(0, 0, S, S);
+    const ink = "#2F2620", font = "'Baloo 2', 'Nunito', system-ui, sans-serif";
+    try { const img = new Image(); img.src = "img/logo.svg"; await img.decode(); g.drawImage(img, 60, 48, 96, 96); } catch (e) {}
+    g.fillStyle = ink; g.font = "800 56px " + font; g.fillText("Chess Game", 176, 116);
+    g.font = "700 34px system-ui, sans-serif"; g.fillStyle = "#6E5E50";
+    const line = this.text().split(/!| มา| ใคร/)[0]; g.fillText(line, 60, 196);
+    const B = 760, x0 = (S - B) / 2, y0 = 236, q = B / 8, flip = myColor() === "b";
+    g.fillStyle = ink; g.fillRect(x0 - 14, y0 - 14, B + 28, B + 28);
+    for (let i = 0; i < 64; i++) {
+      const r = i >> 3, f = i & 7, vr = flip ? 7 - r : r, vf = flip ? 7 - f : f;
+      g.fillStyle = (r + f) % 2 ? dark[1] : dark[0];
+      if (G.last && (G.last.from === i || G.last.to === i)) g.fillStyle = (r + f) % 2 ? "#B8963A" : "#F2D77A";
+      g.fillRect(x0 + vf * q, y0 + vr * q, q, q);
+      const p = G.st.board[i]; if (!p) continue;
+      g.font = Math.round(q * 0.82) + "px 'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      const cx = x0 + vf * q + q / 2, cy = y0 + vr * q + q / 2 + q * 0.04;
+      g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? ink : "#F3EDE0"; g.strokeText(GLYPH[p[1]], cx, cy);
+      g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(GLYPH[p[1]], cx, cy);
+    }
+    g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 34px " + font;
+    g.fillText("เล่นฟรีที่ rochano.github.io/chess", S / 2, S - 36);
+    return new Promise(res => c.toBlob(b => res(b), "image/png"));
+  },
+  async go() {
+    const url = this.link("native"), text = this.text();
+    track("share", { method: "native", opponent: G.mode });
+    try {
+      const blob = await this.picture(), file = blob && new File([blob], "chess-result.png", { type: "image/png" });
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], text: text + " " + url }); return; }
+      if (navigator.share) { await navigator.share({ title: "Chess Game", text, url }); return; }
+      // Desktop without a share sheet: save the picture and copy the link.
+      if (blob) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "chess-result.png"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+      this.copy(true);
+    } catch (e) {}
+  },
+  open(method) {
+    const url = encodeURIComponent(this.link(method)), text = encodeURIComponent(this.text());
+    track("share", { method, opponent: G.mode });
+    const to = method === "line" ? "https://social-plugins.line.me/lineit/share?url=" + url + "&text=" + text : "https://www.facebook.com/sharer/sharer.php?u=" + url;
+    window.open(to, "_blank", "noopener,width=600,height=640");
+  },
+  copy(quiet) {
+    const t = this.text() + " " + this.link("copy"), b = $("shareCopy");
+    if (!quiet) track("share", { method: "copy", opponent: G.mode });
+    const done = () => { b.textContent = "Link copied"; setTimeout(() => { b.textContent = "Copy link"; }, 2000); };
+    try { navigator.clipboard.writeText(t).then(done, () => prompt("Copy this", t)); } catch (e) { prompt("Copy this", t); }
+  },
+};
+$("shareGo").addEventListener("click", () => Share.go());
+$("shareLine").addEventListener("click", () => Share.open("line"));
+$("shareFb").addEventListener("click", () => Share.open("facebook"));
+$("shareCopy").addEventListener("click", () => Share.copy());
 
 function showResult() {
   const o = G.over, badge = $("resBadge");
@@ -2658,7 +2741,7 @@ const Train = {
     const stars = Math.min(...L.drills.map((_, k) => this.results[k] || 1));
     const before = this.rank(), best = this.best();
     best[key] = Math.max(best[key] || 0, stars); lsSet("chess-road", best);
-    if (window.gtag) gtag("event", "road_lesson", { lesson: key, stars });
+    track("road_lesson", { lesson: key, stars });
     const next = this.li + 1 < this.chapter().lessons.length ? [this.ci, this.li + 1] : this.ci + 1 < COURSE.length && this.chapterDone(this.ci) ? [this.ci + 1, 0] : null;
     this.coach("จบบท: " + L.title, "ได้ " + STAR(stars) + (stars < 3 ? " ทำใหม่ได้ถ้าอยากได้ 3 ดาว" : " เต็ม!"), [
       ...(next ? [["บทต่อไป", () => this.start(...next), "go"]] : []),
@@ -2743,7 +2826,7 @@ const Tutorial = {
     $("tutBack").disabled = this.i === 0;
     $("tutNext").textContent = last ? "เริ่มเล่น" : "ถัดไป";
   },
-  close() { lsSet("chess-tut", 1); hide("tutorial"); if (G.mode !== "online" && G.mode !== "train" && !G.history.length) show("menu"); },
+  close() { if (!lsGet("chess-tut", 0)) track("tutorial_done", { step: this.i + 1 }); lsSet("chess-tut", 1); hide("tutorial"); if (G.mode !== "online" && G.mode !== "train" && !G.history.length) show("menu"); },
 };
 $("tutBack").addEventListener("click", () => { if (Tutorial.i > 0) { Tutorial.i--; Tutorial.draw(); } });
 $("tutNext").addEventListener("click", () => { if (Tutorial.i < TUT.length - 1) { Tutorial.i++; Tutorial.draw(); } else Tutorial.close(); });
@@ -2896,6 +2979,7 @@ function netHandlers(gen) {
 function roomCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let k = 0; k < 5; k++) c += a[Math.floor(Math.random() * a.length)]; return c; }
 function roomLink(code) { return location.origin + location.pathname + "?room=" + code; }
 Net.host = async function () {
+  track("online_room", { action: "create" });
   Net.leave(); const gen = ++Net.gen;
   Net.role = "host"; netMsg("Creating a room…");
   for (let tries = 0; tries < 3; tries++) {
@@ -2918,6 +3002,7 @@ Net.host = async function () {
   }
 };
 Net.join = async function (code) {
+  track("online_room", { action: "join" });
   code = String(code || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (!code) { netMsg("Type the room code your friend sent you.", true); return; }
   Net.leave(); const gen = ++Net.gen;
@@ -3013,6 +3098,7 @@ function goneTick() {
   goneBox(`<b>${name} ${what}</b><span>Clocks are paused. If they're not back in ${secs} s, you win.</span><span class="bar"><i style="transform:scaleX(${left / netGrace()})"></i></span>` + goneActs(true));
 }
 function startOnline(color, names, clock) {
+  track("game_start", { opponent: "online", role: Net.role || "", clock: String(clock) });
   Net.color = color; Net.live = true; Net.connected = true;
   Net.away = false; Net.goneAt = 0; Net.left = false; goneBox(null);
   const keep = [prefs.mode, prefs.clock];
@@ -3080,7 +3166,10 @@ $("openSettings").innerHTML = ICON.gear;
 $("icVol").innerHTML = ICON.vol; $("icVol2").innerHTML = ICON.bell; $("icNote").innerHTML = ICON.note;
 syncMusicButton();
 
-$("newGame").addEventListener("click", () => { if (Net.link) Net.leave(); hide("menu"); newGame(); sfx.move(); startMusic(); });
+$("newGame").addEventListener("click", () => {
+  if (Net.link) Net.leave(); hide("menu"); newGame(); sfx.move(); startMusic();
+  track("game_start", { opponent: G.mode, level: G.mode === "cpu" ? G.level : 0, clock: prefs.clock });
+});
 $("musicBtn").addEventListener("click", () => {
   prefs.music = !prefs.music; savePrefs(); syncMusicButton();
   if (prefs.music) startMusic(); else stopMusic();
