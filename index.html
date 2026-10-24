@@ -370,15 +370,22 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   color: var(--paper-2); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
   text-shadow: 4px 5px 0 rgba(47, 38, 32, 0.25);
 }
-/* Short, wide screens (laptops): lay the main menu out in two columns so it fits without scrolling */
+/* Main menu: "New game" section (its settings + start button), then "Practice & more" */
+.menu-play, .menu-more { display: grid; gap: 14px; align-content: start; }
+.menu-more { gap: 10px; border-top: 2px dashed var(--line, rgba(47,38,32,.25)); padding-top: 14px; }
+.menu-hd { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
 .scrim > .card { margin-block: auto; }
 .scrim { place-items: start center; }
+/* Short, wide screens (laptops): the two sections sit side by side so the menu fits without scrolling */
 @media (min-width: 760px) and (max-height: 820px) {
-  #menu .card { width: min(100%, 780px); grid-template-columns: 1fr 1fr; column-gap: 26px; row-gap: 12px; padding: 18px 22px; }
-  #menu .card > .logo { grid-column: 1 / -1; font-size: 46px; }
+  #menu .card { width: min(100%, 800px); grid-template-columns: 1.15fr 1fr; column-gap: 28px; row-gap: 8px; padding: 14px 24px 16px; }
+  #menu .card > .logo { grid-column: 1 / -1; }
   #menu .card > .logo br { display: none; }
-  #menu .card > .field { grid-column: 1; }
-  #menu .card > .btns { grid-column: 2; grid-row: 2 / span 6; align-content: start; }
+  #menu .card > .logo { font-size: 40px; }
+  #menu .menu-play { gap: 9px; }
+  #menu .menu-hd { font-size: 16px; }
+  #menu .menu-more .btn { font-size: 15px; padding: 10px 8px; }
+  #menu .menu-more { border-top: 0; padding-top: 0; border-left: 2px dashed var(--line, rgba(47,38,32,.25)); padding-left: 28px; margin-left: -2px; }
   #menu #levelNote { font-size: 13px; line-height: 1.35; }
 }
 .field { display: grid; gap: 6px; }
@@ -742,6 +749,8 @@ select {
 <div class="scrim" id="menu">
   <div class="card" role="dialog" aria-labelledby="menuTitle">
     <h2 class="logo" id="menuTitle">CHESS<br> GAME</h2>
+    <section class="menu-play" aria-labelledby="playHd">
+    <h3 class="menu-hd" id="playHd">New game</h3>
     <div class="field">
       <span class="lbl">Opponent</span>
       <div class="seg" id="segMode">
@@ -782,7 +791,12 @@ select {
       </div>
     </div>
     <div class="btns">
-      <button class="btn go" id="newGame">New game</button>
+      <button class="btn go" id="newGame">Start game</button>
+      <button class="btn" id="closeMenu" hidden>Back to game</button>
+    </div>
+    </section>
+    <nav class="menu-more" aria-labelledby="moreHd">
+      <h3 class="menu-hd" id="moreHd">Practice &amp; more</h3>
       <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
       <div class="row2">
         <button class="btn" id="openTrain">Road to master</button>
@@ -792,9 +806,8 @@ select {
         <button class="btn" id="openTut">How to play</button>
         <button class="btn" id="menuSettings">Settings</button>
       </div>
-      <button class="btn" id="closeMenu" hidden>Back to game</button>
       <button class="linkbtn" id="openCredits">Credits</button>
-    </div>
+    </nav>
   </div>
 </div>
 
@@ -871,7 +884,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-k</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-l</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
