@@ -2,7 +2,7 @@
 // and appends one row per game to a "Scores" tab.
 // Setup: paste this file into Apps Script, then Deploy > New deployment > Web app
 // (Execute as: Me, Who has access: Anyone). Open the web app URL in a browser
-// to check it: it shows a link to the sheet the scores go to.
+// to check it: it shows how many games are recorded.
 
 const HEADERS = ["Finished at", "White", "Black", "Opponent", "Winner", "Result", "Reason", "Moves", "Clock", "Minutes"];
 
@@ -31,20 +31,38 @@ function getScores() {
   return sheet;
 }
 
+// The web app URL is public (the game page has to call it), so every row is checked
+// before it is written and the number of rows per minute is capped.
+const OPPONENTS = ["Computer (Easy)", "Computer (Normal)", "Computer (Hard)", "Online", "Friend"];
+const RESULTS = ["1-0", "0-1", "1/2-1/2"];
+const MAX_ROWS_PER_MINUTE = 30;
+
 function doPost(e) {
+  let d;
+  try { d = JSON.parse(e.postData.contents); } catch (err) { return reply("bad"); }
+  if (!d || OPPONENTS.indexOf(d.opponent) < 0 || RESULTS.indexOf(d.result) < 0) return reply("bad");
+  const moves = Math.floor(Number(d.moves)), minutes = Number(d.minutes);
+  if (!(moves >= 0 && moves <= 600) || !(minutes >= 0 && minutes <= 600)) return reply("bad");
+  const cache = CacheService.getScriptCache(), slot = "n" + Math.floor(Date.now() / 60000);
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    const d = JSON.parse(e.postData.contents);
+    const n = Number(cache.get(slot) || 0);
+    if (n >= MAX_ROWS_PER_MINUTE) return reply("busy");
+    cache.put(slot, String(n + 1), 120);
+    // Use the server's clock when the game's clock looks wrong.
+    let at = new Date(d.finishedAt);
+    if (isNaN(at) || Math.abs(at - Date.now()) > 86400000) at = new Date();
     getScores().appendRow([
-      new Date(d.finishedAt), clean(d.white), clean(d.black), clean(d.opponent), clean(d.winner),
-      clean(d.result), clean(d.reason), Number(d.moves) || 0, clean(d.clock), Number(d.minutes) || 0,
+      at, clean(d.white), clean(d.black), d.opponent, clean(d.winner),
+      d.result, clean(d.reason), moves, clean(d.clock), minutes,
     ]);
-    return ContentService.createTextOutput("ok");
+    return reply("ok");
   } finally {
     lock.releaseLock();
   }
 }
+function reply(text) { return ContentService.createTextOutput(text); }
 
 function doGet(e) {
   const sheet = getScores();
@@ -58,10 +76,9 @@ function doGet(e) {
     }));
     return ContentService.createTextOutput(JSON.stringify({ rows: rows })).setMimeType(ContentService.MimeType.JSON);
   }
-  const url = sheet.getParent().getUrl();
+  // Anyone can open this URL, so it does not show where the sheet is.
   return HtmlService.createHtmlOutput(
-    '<p style="font:16px sans-serif">Score sheet is ready. Games recorded: ' + Math.max(0, sheet.getLastRow() - 1) +
-    '</p><p style="font:16px sans-serif"><a target="_blank" href="' + url + '">Open the score sheet</a></p>'
+    '<p style="font:16px sans-serif">Score sheet is ready. Games recorded: ' + Math.max(0, sheet.getLastRow() - 1) + '</p>'
   );
 }
 
