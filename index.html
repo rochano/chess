@@ -420,15 +420,24 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .btn.danger { background: var(--flag); color: var(--card); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; padding-top: 4px; border-top: 2px dashed var(--paper-2); }
-.shop { display: grid; gap: 6px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
+.shop { display: grid; gap: 14px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
 .shop-say { margin: 0; font-weight: 800; font-size: 14px; }
-.shop-item { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: #FFF9E8; border: 2.5px solid var(--ink); border-radius: 12px; color: var(--ink); text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
-.shop-item:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
-.shop-ic { font-size: 30px; text-align: center; width: 56px; height: 56px; display: grid; place-items: center; }
-.shop-ic img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
-.shop-txt b { display: block; font-size: 15px; }
-.shop-txt small { display: block; font-size: 12.5px; color: var(--ink-soft); font-weight: 700; }
-.shop-go { font-weight: 800; font-size: 13px; padding: 4px 10px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sun); white-space: nowrap; }
+.shop-item { position: relative; display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "ic txt" "ic go"; column-gap: 14px; row-gap: 10px; align-items: center; padding: 12px; background: #FFF4D2; border: 3px solid var(--ink); border-radius: 14px; color: var(--ink); text-decoration: none; box-shadow: 5px 5px 0 var(--ink); }
+.shop-item:hover { background: #FFEDB8; }
+.shop-item:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--ink); }
+.shop-item::before { content: "แนะนำ"; position: absolute; top: -12px; left: 12px; padding: 1px 10px; font-size: 12px; font-weight: 800; background: #EE4D2D; color: #fff; border: 2px solid var(--ink); border-radius: 999px; }
+.shop-ic { grid-area: ic; font-size: 56px; width: 112px; height: 112px; display: grid; place-items: center; background: #fff; border: 2.5px solid var(--ink); border-radius: 10px; overflow: hidden; }
+.shop-ic img { width: 100%; height: 100%; object-fit: cover; }
+.shop-txt { grid-area: txt; align-self: end; }
+.shop-txt b { display: block; font-size: 18px; line-height: 1.25; }
+.shop-txt small { display: block; margin-top: 3px; font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
+.shop-go { grid-area: go; align-self: start; justify-self: stretch; text-align: center; font-weight: 800; font-size: 16px; padding: 8px 12px; border: 2.5px solid var(--ink); border-radius: 10px; background: #EE4D2D; color: #fff; box-shadow: 0 3px 0 var(--ink); white-space: nowrap; }
+@media (max-width: 440px) {
+  .shop-item { grid-template-columns: 88px minmax(0, 1fr); column-gap: 12px; }
+  .shop-ic { width: 88px; height: 88px; font-size: 44px; }
+  .shop-txt b { font-size: 16px; }
+  .shop-go { font-size: 14px; padding: 7px 8px; white-space: normal; }
+}
 .shop-fine { margin: 0; font-size: 11.5px; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 8px; }
 .shop-fine .linkbtn { font-size: 11.5px; }
 .share-lbl { width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); padding-top: 8px; }
@@ -898,7 +907,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-r</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-s</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -995,7 +1004,7 @@ select {
       <a class="shop-item" id="shopItem" target="_blank" rel="noopener sponsored">
         <span class="shop-ic" id="shopIc"></span>
         <span class="shop-txt"><b id="shopTitle"></b><small id="shopNote"></small></span>
-        <span class="shop-go">ดูสินค้า</span>
+        <span class="shop-go">ดูสินค้าใน Shopee →</span>
       </a>
       <p class="shop-fine"><span id="shopAd"></span> <button class="linkbtn" id="shopOff">ไม่ต้องแนะนำอีก</button></p>
     </div>
