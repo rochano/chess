@@ -990,7 +990,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-ze</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zf</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1518,6 +1518,10 @@ const SONGS = {
   battle: { bpm: 88, chords: [[57, 60, 64], [53, 57, 60], [50, 53, 57], [52, 56, 59]], roots: [45, 41, 38, 40] },
   boss: { bpm: 120, chords: [[57, 60, 64], [58, 62, 65], [57, 60, 64], [52, 56, 59]], roots: [45, 46, 45, 40] },
   after: { bpm: 63, chords: [[57, 60, 64], [53, 57, 60]], roots: [45, 41] },
+  // After the game: eight bars that suit the result, with melodies that change every pass.
+  afterWin: { bpm: 72, chords: [[60, 64, 67], [59, 62, 67], [57, 60, 64], [53, 57, 60], [50, 53, 57], [55, 59, 62], [52, 55, 60], [55, 59, 62]], roots: [48, 47, 45, 41, 38, 43, 40, 43] },
+  afterLose: { bpm: 60, chords: [[57, 60, 64], [53, 57, 60], [55, 60, 64], [55, 59, 62], [57, 60, 64], [50, 53, 57], [53, 57, 60], [52, 56, 59]], roots: [45, 41, 48, 43, 45, 38, 41, 40] },
+  afterDraw: { bpm: 66, chords: [[50, 53, 57], [55, 59, 62], [50, 53, 57], [55, 59, 62], [53, 57, 60], [48, 52, 55], [46, 50, 53], [57, 61, 64]], roots: [38, 43, 38, 43, 41, 36, 34, 45] },
   // Extra soundtracks for the menu and calm play (tension still brings in the battle music).
   garden: { bpm: 84, chords: [[60, 64, 67], [57, 60, 64], [53, 57, 60], [55, 59, 62]], roots: [48, 45, 41, 43] },
   nocturne: { bpm: 63, chords: [[50, 53, 57], [46, 50, 53], [53, 57, 60], [48, 52, 55]], roots: [38, 34, 41, 36] },
@@ -1543,6 +1547,17 @@ const TUNES = {
     [[[72, 0, 1.5], [69, 1.5, 0.5], [65, 2, 1], [69, 3, 1]], [[69, 0, 1], [65, 1, 1], [62, 2, 2]], [[70, 0, 1], [69, 1, 1], [67, 2, 1], [65, 3, 1]], [[64, 0, 2], [67, 2, 1], [72, 3, 1]]],
   ],
 };
+// After-game melodies are built from the chord tones: [tone, beat, length], tone 0-2 = chord, 3-4 = an octave up.
+const AFTER_SHAPES = [
+  [[2, 0, 1.5], [1, 1.5, 0.5], [0, 2, 2]],
+  [[0, 0, 1], [1, 1, 1], [2, 2, 1], [3, 3, 1]],
+  [[3, 0, 2], [2, 2, 1], [4, 3, 1]],
+  [[1, 0, 1], [2, 1, 0.5], [1, 1.5, 0.5], [0, 2, 2]],
+  [[2, 0, 0.5], [3, 0.5, 0.5], [2, 1, 1], [1, 2, 1.5], [0, 3.5, 0.5]],
+  [[4, 0, 1.5], [3, 1.5, 0.5], [2, 2, 1], [3, 3, 1]],
+];
+// Who sings the tune in each half of the eight bars, and how many octaves up from the chord.
+const AFTER_VOICES = [[["flute", 12], ["french_horn", 0]], [["cello", 0], ["flute", 12]], [["string_ensemble_1", 12], ["orchestral_harp", 12]]];
 const TRACKS = ["classic", "garden", "nocturne", "waltz", "journey"];
 // The soundtrack for the menu and calm play: the one chosen in Settings, or a new one each game.
 function curTrack() { return prefs.track && prefs.track !== "auto" ? prefs.track : TRACKS[MUSIC.game % TRACKS.length]; }
@@ -1567,6 +1582,9 @@ const NEEDS = {
   menu: ["cello", "orchestral_harp", "string_ensemble_1", "contrabass"],
   lesson: ["flute", "pizzicato_strings", "orchestral_harp"],
   garden: ["flute", "orchestral_harp", "pizzicato_strings", "string_ensemble_1"],
+  afterWin: ["flute", "french_horn", "cello", "orchestral_harp", "string_ensemble_1", "contrabass", "timpani"],
+  afterLose: ["cello", "flute", "string_ensemble_1", "contrabass", "pizzicato_strings", "orchestral_harp", "french_horn"],
+  afterDraw: ["flute", "french_horn", "cello", "orchestral_harp", "string_ensemble_1", "contrabass"],
   nocturne: ["orchestral_harp", "cello", "flute", "contrabass", "string_ensemble_1"],
   waltz: ["flute", "pizzicato_strings", "contrabass", "orchestral_harp", "string_ensemble_1"],
   journey: ["french_horn", "flute", "pizzicato_strings", "timpani", "string_ensemble_1"],
@@ -1712,6 +1730,16 @@ function scheduleBar(t) {
     play("trumpet", t + 3.5 * beat, chord[2] + 12, beat * 0.5, 0.36);
     if (k === 0) mCrash(t, 0.16);
     if (k === 3) timpRoll(t + 2 * beat, root, beat * 2, 0.6);
+  } else if (name.startsWith("after") && name !== "after") {
+    const loop = Math.floor(MUSIC.bar / 8), v = (MUSIC.game + loop) % AFTER_VOICES.length;
+    const [inst, oct] = AFTER_VOICES[v][k < 4 ? 0 : 1], tones = [chord[0], chord[1], chord[2], chord[0] + 12, chord[1] + 12];
+    const shape = AFTER_SHAPES[(k + loop * 3 + MUSIC.game) % AFTER_SHAPES.length];
+    line(inst, t, shape.map(([i, b, d]) => [tones[i], b, d]), beat, inst === "orchestral_harp" ? 0.22 : inst === "cello" ? 0.42 : 0.28, oct);
+    chordOn("string_ensemble_1", t, chord, len * 0.95, 0.06);
+    play("contrabass", t, root - 12 + 12, len * 0.9, 0.18);
+    if (name === "afterLose") for (const b of [0, 2]) play("pizzicato_strings", t + b * beat, root, beat, 0.14);
+    else for (let e = 0; e < 8; e++) play("orchestral_harp", t + e * beat / 2, tones[[0, 1, 2, 3, 2, 1, 2, 3][e]] + 12, beat, inst === "orchestral_harp" ? 0.06 : 0.1);
+    if (k === 7 && name === "afterWin") play("timpani", t + 3 * beat, root, beat, 0.2);
   } else {
     chordOn("string_ensemble_1", t, chord, len * 0.95, 0.07);
     if (k === 0) line("cello", t, [[64, 0, 2], [60, 2, 1], [62, 3, 1]], beat, 0.5);
@@ -1747,7 +1775,7 @@ function musicSting(kind) {
 function musicMood() {
   const menuUp = ["menu", "train", "tutorial", "leader", "credits"].some(id => !$(id).hidden);
   if (menuUp && !(G.mode === "train" && Train.phase)) return { theme: "menu", level: 0 };
-  if (G.over) return { theme: "after", level: 0 };
+  if (G.over) { const me = myColor(), o = G.over; return { theme: o.type === "draw" ? "afterDraw" : me && o.winner !== me ? "afterLose" : "afterWin", level: 0 }; }
   if (G.mode === "train") {
     const L = Train.lesson(), d = Train.drill();
     if (!L || Train.phase === "teach") return { theme: "lesson", level: 0 };
