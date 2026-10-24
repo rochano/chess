@@ -397,7 +397,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .shop-say { margin: 0; font-weight: 800; font-size: 14px; }
 .shop-item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: #FFF9E8; border: 2.5px solid var(--ink); border-radius: 12px; color: var(--ink); text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
 .shop-item:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
-.shop-ic { font-size: 30px; text-align: center; }
+.shop-ic { font-size: 30px; text-align: center; width: 44px; height: 44px; display: grid; place-items: center; }
+.shop-ic img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 2px solid var(--ink); }
 .shop-txt b { display: block; font-size: 15px; }
 .shop-txt small { display: block; font-size: 12.5px; color: var(--ink-soft); font-weight: 700; }
 .shop-go { font-weight: 800; font-size: 13px; padding: 4px 10px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sun); white-space: nowrap; }
@@ -2452,7 +2453,8 @@ const Shop = {
     const it = pool[Math.floor(Math.random() * pool.length)], lines = this.LINES[mood];
     this.lastShown = this.games;
     $("shopSay").textContent = lines[Math.floor(Math.random() * lines.length)];
-    $("shopIc").textContent = it.icon || "🛍️";
+    const ic = $("shopIc"); ic.textContent = it.icon || "🛍️";
+    if (it.img) { const im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer"; im.onload = () => { ic.textContent = ""; ic.appendChild(im); }; im.src = it.img; }
     $("shopTitle").textContent = it.title;
     $("shopNote").textContent = it.note || "";
     $("shopItem").href = it.url;
