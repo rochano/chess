@@ -978,7 +978,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zb</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zc</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1415,6 +1415,7 @@ function ctx() {
     noiseBuf = audio.createBuffer(1, audio.sampleRate * 0.5, audio.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    orchLoad(SFX_INST); // sound effects use real instrument samples, so fetch them as soon as sound starts
   }
   // Safari can also leave it "interrupted" (another tab played sound, or the Mac slept).
   if (audio.state !== "running" && audio.state !== "closed") { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
@@ -1425,17 +1426,7 @@ function env(g, t, peak, attack, dur) {
   g.gain.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + attack);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 }
-function tone(freq, dur, vol, type = "triangle", when = 0, out) {
-  if (vol <= 0) return;
-  try {
-    const a = ctx(), t = a.currentTime + when;
-    const o = a.createOscillator(), g = a.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t);
-    env(g, t, 0.35 * vol, 0.008, dur);
-    o.connect(g).connect(out || sfxBus); o.start(t); o.stop(t + dur + 0.05);
-  } catch (e) {}
-}
-// A wooden "clack": a filtered noise burst over a short low thump.
+// A wooden "clack": a filtered noise burst over a short, low, muffled knock.
 function clack(vol, when = 0, pitch = 1) {
   if (vol <= 0) return;
   try {
@@ -1444,32 +1435,39 @@ function clack(vol, when = 0, pitch = 1) {
     const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200 * pitch; bp.Q.value = 3;
     const ng = a.createGain(); env(ng, t, 0.9 * vol, 0.002, 0.05);
     n.connect(bp).connect(ng).connect(sfxBus); n.start(t); n.stop(t + 0.08);
-    const o = a.createOscillator(), og = a.createGain();
-    o.type = "sine"; o.frequency.setValueAtTime(230 * pitch, t); o.frequency.exponentialRampToValueAtTime(110 * pitch, t + 0.08);
-    env(og, t, 0.6 * vol, 0.003, 0.1);
-    o.connect(og).connect(sfxBus); o.start(t); o.stop(t + 0.12);
+    const body = a.createBufferSource(); body.buffer = noiseBuf;
+    const lp = a.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 380 * pitch; lp.Q.value = 4;
+    const og = a.createGain(); env(og, t, 1.4 * vol, 0.003, 0.1);
+    body.connect(lp).connect(og).connect(sfxBus); body.start(t); body.stop(t + 0.12);
   } catch (e) {}
 }
 const mv = () => prefs.volMove / 100, al = () => prefs.volAlert / 100;
+// Sound effects: wooden clacks for the pieces and real instrument samples (harp, pizzicato, horn,
+// timpani, cello) for everything else. No synth beeps.
+const SFX_INST = ["orchestral_harp", "pizzicato_strings", "timpani", "french_horn", "cello"];
+function splay(name, n, dur, vol, when = 0) {
+  if (vol <= 0) return;
+  try { const a = ctx(); play(name, a.currentTime + when, n, dur, vol, sfxBus); } catch (e) {}
+}
 const sfx = {
-  select: () => tone(880, 0.06, mv() * 0.35, "sine"),
+  select: () => clack(mv() * 0.35, 0, 1.6),
   move: () => clack(mv()),
-  capture: () => { clack(mv(), 0, 0.8); clack(mv() * 0.8, 0.07, 1.15); tone(98, 0.22, mv() * 0.6, "sine"); },
+  capture: () => { clack(mv(), 0, 0.8); clack(mv() * 0.8, 0.07, 1.15); splay("timpani", 40, 0.5, mv() * 0.35); },
   castle: () => { clack(mv()); clack(mv(), 0.11, 1.1); },
-  promote: () => { clack(mv()); [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.25, mv() * 0.4, "sine", 0.05 + i * 0.06)); },
-  check: () => { tone(988, 0.5, al() * 0.7, "sine"); tone(1482, 0.35, al() * 0.25, "sine"); tone(740, 0.5, al() * 0.4, "triangle", 0.12); },
-  tick: () => tone(1500, 0.03, al() * 0.4, "square"),
+  promote: () => { clack(mv()); [72, 76, 79, 84].forEach((n, i) => splay("orchestral_harp", n, 0.6, mv() * 0.45, 0.05 + i * 0.07)); },
+  check: () => { splay("french_horn", 67, 0.35, al() * 0.5); splay("french_horn", 72, 0.6, al() * 0.55, 0.18); splay("pizzicato_strings", 48, 0.3, al() * 0.5); },
+  tick: () => clack(al() * 0.45, 0, 2.4),
   grumble: (level = 1) => {
-    const v = al() * (0.35 + level * 0.15);
-    for (let k = 0; k < level + 1; k++) tone(160 - k * 12 + level * 10, 0.16, v, "sawtooth", k * 0.14);
+    const v = al() * (0.3 + level * 0.12);
+    for (let k = 0; k < level + 1; k++) splay("cello", 43 - k * 2 + level, 0.18, v, k * 0.14);
   },
-  click: () => tone(520, 0.04, mv() * 0.3, "triangle"),
+  click: () => clack(mv() * 0.22, 0, 1.9),
   end: () => {
     const o = G.over; if (!o) return;
     const lost = G.mode === "cpu" && o.winner === "b";
-    if (o.type === "draw") [523, 659, 587].forEach((f, i) => tone(f, 0.45, al() * 0.6, "triangle", i * 0.18));
-    else if (lost) [523, 466, 392, 311].forEach((f, i) => tone(f, 0.5, al() * 0.6, "triangle", i * 0.2));
-    else [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i === 4 ? 0.9 : 0.35, al() * 0.6, "triangle", i * 0.1));
+    if (o.type === "draw") [72, 76, 74].forEach((n, i) => splay("orchestral_harp", n, 0.8, al() * 0.5, i * 0.18));
+    else if (lost) [69, 65, 64, 57].forEach((n, i) => splay("pizzicato_strings", n, 0.5, al() * 0.55, i * 0.2));
+    else [60, 64, 67, 72, 76].forEach((n, i) => splay("orchestral_harp", n, i === 4 ? 1.2 : 0.5, al() * 0.5, i * 0.1));
   },
 };
 
@@ -1555,15 +1553,11 @@ function orchOut() {
   ORCH.out = dry;
   return dry;
 }
-function play(name, t, n, dur, vol) {
-  const cfg = INST[name], set = ORCH.buf[name], out = orchOut();
+function play(name, t, n, dur, vol, out = orchOut()) {
+  const cfg = INST[name], set = ORCH.buf[name];
   let best = null;
   if (set) for (const k in set) if (best === null || Math.abs(k - n) < Math.abs(best - n)) best = +k;
-  if (best === null || Math.abs(best - n) > 4) {
-    // Stand-in voice until the sample has loaded.
-    if (name === "timpani") return mTom(t, n, vol * 0.4);
-    return mOsc(cfg.perc ? "triangle" : "sawtooth", midi(n), t, cfg.perc ? Math.min(dur, 0.5) : dur, vol * (cfg.perc ? 0.12 : 0.04), out, cfg.perc ? 0.005 : cfg.attack);
-  }
+  if (best === null || Math.abs(best - n) > 4) return; // stay silent until the real sample has loaded
   const src = audio.createBufferSource(), g = audio.createGain(), rate = Math.pow(2, (n - best) / 12);
   src.buffer = set[best]; src.playbackRate.value = rate;
   const room = set[best].duration / rate - 0.05;
@@ -1578,13 +1572,7 @@ function play(name, t, n, dur, vol) {
 function line(name, t, bar, beat, vol, oct = 0) { for (const [n, b, d] of bar) play(name, t + b * beat, n + oct, d * beat * 0.97, vol); }
 function chordOn(name, t, notes, dur, vol, oct = 0) { for (const n of notes) play(name, t, n + oct, dur, vol); }
 
-/* --- synth helpers (stand-ins and percussion) --- */
-function mOsc(type, f, t, dur, peak, out, attack = 0.01, det = 0) {
-  const o = audio.createOscillator(), g = audio.createGain();
-  o.type = type; o.frequency.value = f; o.detune.value = det;
-  env(g, t, peak, attack, dur); o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.05);
-  return o;
-}
+/* --- percussion helpers (filtered noise for cymbals) --- */
 function mNoise(t, dur, vol, type, freq, out) {
   const n = audio.createBufferSource(); n.buffer = noiseBuf; n.loop = true;
   const f = audio.createBiquadFilter(); f.type = type; f.frequency.value = freq;
@@ -1592,11 +1580,6 @@ function mNoise(t, dur, vol, type, freq, out) {
   n.connect(f).connect(g).connect(out || orchOut()); n.start(t); n.stop(t + dur + 0.05);
 }
 function mCrash(t, vol) { mNoise(t, 2.2, vol, "highpass", 4200); mNoise(t, 0.6, vol * 0.6, "bandpass", 2500); }
-function mTom(t, n, vol) {
-  const o = audio.createOscillator(), g = audio.createGain();
-  o.frequency.setValueAtTime(midi(n) * 1.5, t); o.frequency.exponentialRampToValueAtTime(midi(n), t + 0.12);
-  env(g, t, vol, 0.004, 0.5); o.connect(g).connect(orchOut()); o.start(t); o.stop(t + 0.55);
-}
 function timpRoll(t, n, len, vol) { const k = Math.round(len / 0.07); for (let i = 0; i < k; i++) play("timpani", t + i * 0.07, n, 0.3, vol * (0.35 + 0.65 * i / k)); }
 
 /* --- one bar of the current theme --- */
@@ -4294,7 +4277,7 @@ sfx.boom = () => {
     const lp = a.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(120, t + 0.6);
     const g = a.createGain(); env(g, t, 1.1 * v, 0.005, 0.7);
     n.connect(lp).connect(g).connect(sfxBus); n.start(t); n.stop(t + 0.5);
-    tone(55, 0.6, v, "sine");
+    splay("timpani", 36, 1, v);
   } catch (e) {}
 };
 
