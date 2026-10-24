@@ -373,6 +373,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 /* Main menu: "New game" section (its settings + start button), then "Practice & more" */
 .menu-play, .menu-more { display: grid; gap: 14px; align-content: start; }
 .menu-more { gap: 10px; border-top: 2px dashed var(--line, rgba(47,38,32,.25)); padding-top: 14px; }
+.menu-more > .field { grid-template-columns: minmax(0, 1fr); }
 .menu-hd { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
 .scrim > .card { margin-block: auto; }
 .scrim { place-items: start center; }
@@ -382,7 +383,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   #menu .card > .logo { grid-column: 1 / -1; }
   #menu .card > .logo br { display: none; }
   #menu .card > .logo { font-size: 40px; }
-  #menu .menu-play { gap: 9px; }
+  #menu .menu-play, #menu .menu-more { gap: 9px; }
   #menu .menu-hd { font-size: 16px; }
   #menu .menu-more .btn { font-size: 15px; padding: 10px 8px; }
   #menu .menu-more { border-top: 0; padding-top: 0; border-left: 2px dashed var(--line, rgba(47,38,32,.25)); padding-left: 28px; margin-left: -2px; }
@@ -797,14 +798,20 @@ select {
     </section>
     <nav class="menu-more" aria-labelledby="moreHd">
       <h3 class="menu-hd" id="moreHd">Practice &amp; more</h3>
-      <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
-      <div class="row2">
-        <button class="btn" id="openTrain">Road to master</button>
-        <button class="btn" id="openLeader">Leaderboard</button>
+      <div class="field">
+        <span class="lbl">Practice</span>
+        <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
+        <div class="row2">
+          <button class="btn" id="openTrain">Road to master</button>
+          <button class="btn" id="openTut">How to play</button>
+        </div>
       </div>
-      <div class="row2">
-        <button class="btn" id="openTut">How to play</button>
-        <button class="btn" id="menuSettings">Settings</button>
+      <div class="field">
+        <span class="lbl">More</span>
+        <div class="row2">
+          <button class="btn" id="openLeader">Leaderboard</button>
+          <button class="btn" id="menuSettings">Settings</button>
+        </div>
       </div>
       <button class="linkbtn" id="openCredits">Credits</button>
     </nav>
@@ -884,7 +891,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-l</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-m</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
