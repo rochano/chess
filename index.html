@@ -934,7 +934,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-z</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-za</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2793,13 +2793,13 @@ const COURSE = [
         { goal: "pick", ok: ["g1f3", "b1c3", "f1c4", "f1b5"], fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", text: "ออกหมากรอง 1 ตัว", hint: "g1f3" },
         { goal: "pick", ok: ["e1g1"], fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", text: "เข้าป้อม", hint: "e1g1" },
       ] },
-    { title: "กับดักเปิดเกม", look: ["f7 (หรือ f2 ของเรา) มีแค่คิงคุ้มกัน เป็นจุดอ่อน", "ควีนที่ออกมาเร็ว ไล่ด้วยการออกหมากได้"], warn: ["ม้า f6 ดูดี แต่ถ้าควีนกับบิชอปรุม f7 อยู่ จะโดนรุกฆาต"],
+    { title: "กับดักเปิดเกม", look: ["ช่อง f7 ของดำ (และ f2 ของขาว) มีแค่คิงคอยคุ้มกัน จึงเป็นจุดที่โดนโจมตีง่าย", "ถ้าอีกฝ่ายเอาควีนออกมาเร็ว ให้ออกม้าหรือบิชอปไปโจมตีควีน ได้ทั้งไล่ควีนและพัฒนาหมากในตาเดียว"], warn: ["ตอนเล่นดำ ถ้าควีนขาวอยู่ h5 และบิชอปอยู่ c4 อย่าเพิ่งออกม้าไป f6 เพราะควีนจะกิน f7 รุกฆาตทันที ต้องกัน f7 ก่อน"],
       teach: [
         { fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", arrows: ["h5f7", "c4f7"], marks: ["f7"], text: "กลลวง 4 ตา: ควีนกับบิชอปขาวรุมช่อง f7 ถ้าดำไม่กัน จะโดน Qxf7 รุกฆาต" },
       ],
       drills: [
         { goal: "defend", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", text: "คุณเล่นฝ่ายดำ กันรุกฆาตให้ได้ โดยไม่เสียหมาก", hint: "g7g6" },
-        { goal: "pick", ok: ["g1f3", "b1c3"], fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3", text: "ควีนดำออกมาเร็ว ไล่มันด้วยการออกหมาก (ไม่ใช่ใช้ควีนเรา)", hint: "b1c3" },
+        { goal: "pick", ok: ["g1f3"], fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3", text: "ควีนดำรีบออกมาที่ h4 เร็วเกินไป เดินม้าออกไปโจมตีควีน จะได้ไล่ควีนและออกหมากไปพร้อมกัน", hint: "g1f3" },
       ] },
     { title: "ด่านบอส: เปิดเกมจริง", boss: true, look: ["ยึดกลาง ออกม้าบิชอป 3 ตัว แล้วเข้าป้อม"], warn: ["ห้ามเสียหมาก", "ด่านบอสไม่มีคำใบ้"],
       teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ด่านบอส! เล่นจริงกับคอมพิวเตอร์ ภายใน 10 ตา ต้องออกม้าหรือบิชอป 3 ตัว และเข้าป้อม โดยไม่เสียหมาก" }],
