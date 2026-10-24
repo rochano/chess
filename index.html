@@ -605,6 +605,7 @@ select {
         <button data-v="2" aria-pressed="true">Normal</button>
         <button data-v="3" aria-pressed="false">Hard</button>
       </div>
+      <p class="fine" id="levelNote" style="margin:6px 0 0"></p>
     </div>
     <div class="field" id="onlineField" hidden>
       <span class="lbl">Play on two devices</span>
@@ -702,7 +703,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-a</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-b</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -993,7 +994,9 @@ function quiesce(st, alpha, beta, qd) {
   }
   return alpha;
 }
+let stopAt = 0, nodes = 0; // optional time limit for a search
 function negamax(st, depth, alpha, beta, ply) {
+  if (stopAt && (++nodes & 255) === 0 && Date.now() > stopAt) throw "time";
   const moves = legalMoves(st);
   if (!moves.length) return inCheck(st.board, st.turn) ? -(100000 - ply) : 0;
   if (st.half >= 100) return 0;
@@ -1017,6 +1020,31 @@ function bestMove(st, depth, noise, avoidKeys) {
     if (noise) v += (Math.random() - 0.5) * noise;
     if (v > bestV) { bestV = v; best = m; }
   }
+  return best;
+}
+// The computer opponent. Each level plays in a different way, not just a little better:
+// 1 Easy   looks one move ahead only, so it grabs pieces without seeing the recapture, and now and then plays on a whim.
+// 2 Normal sees two moves ahead plus every capture sequence, with a little randomness so games vary.
+// 3 Hard   searches four moves ahead (when there is time) and plays the best move it finds.
+function cpuMove(st, level, avoidKeys) {
+  const moves = legalMoves(st);
+  if (!moves.length) return null;
+  if (level === 1) {
+    const sign = st.turn === "w" ? 1 : -1;
+    const mate = moves.find(m => { const c = applyMove(st, m); return inCheck(c.board, c.turn) && !legalMoves(c).length; });
+    if (mate && Math.random() < 0.5) return mate;
+    if (Math.random() < 0.2) return moves[Math.floor(Math.random() * moves.length)];
+    let best = null, bestV = -Infinity;
+    for (const m of moves) {
+      const v = evaluate(applyMove(st, m).board) * sign + (Math.random() - 0.5) * 220;
+      if (v > bestV) { bestV = v; best = m; }
+    }
+    return best;
+  }
+  if (level === 2) return bestMove(st, 2, 60, avoidKeys);
+  let best = bestMove(st, 3, 0, avoidKeys);
+  stopAt = Date.now() + 1500;
+  try { best = bestMove(st, 4, 0, avoidKeys); } catch (e) { if (e !== "time") throw e; } finally { stopAt = 0; }
   return best;
 }
 /*ENGINE END*/
@@ -1933,9 +1961,7 @@ function maybeComputer() {
   if (G.mode !== "cpu" || G.st.turn !== "b" || G.over) return;
   G.thinking = true; render();
   setTimeout(() => {
-    const noise = G.level === 1 ? 140 : 0;
-    const depth = G.level === 1 ? 1 : G.level === 2 ? 2 : 3;
-    const m = bestMove(G.st, depth, noise, new Set(G.keys));
+    const m = cpuMove(G.st, G.level, new Set(G.keys));
     G.thinking = false;
     if (m && !G.over) doMove(m); else render();
   }, 380);
@@ -2040,6 +2066,11 @@ function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
     $(seg).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs[key]))));
   $("levelField").hidden = prefs.mode !== "cpu";
+  $("levelNote").textContent = {
+    1: "Easy: looks one move ahead. It grabs pieces without checking if they are protected, and sometimes plays a random move.",
+    2: "Normal: looks two moves ahead and works out every exchange, so it keeps its pieces safe and punishes loose ones.",
+    3: "Hard: looks four moves ahead and always plays the best move it finds. It thinks for up to two seconds.",
+  }[prefs.level] || "";
   $("onlineField").hidden = prefs.mode !== "online";
   $("newGame").hidden = prefs.mode === "online";
   $("inNameB").hidden = prefs.mode !== "friend";
