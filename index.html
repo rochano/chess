@@ -49,6 +49,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&text=%E2%99%9A%E2%99%9B%E2%99%9C%E2%99%9D%E2%99%9E%E2%99%9F&display=block">
+<style>
+/* First paint: stay hidden until the web fonts and the board are ready, then fade in once (no two-step jump) */
+html.booting body { opacity: 0; }
+html.booting .card { animation: none; }
+body { transition: opacity 260ms ease-out; }
+</style>
+<script>document.documentElement.classList.add("booting"); setTimeout(function () { document.documentElement.classList.remove("booting"); }, 2500);</script>
 </head>
 <body>
 <noscript><p>Chess Game: เล่นหมากรุกฟรีบนเบราว์เซอร์ ไม่ต้องสมัคร มีกระดาน 3 มิติ เล่นกับคอม 3 ระดับ เล่นกับเพื่อนเครื่องเดียวหรือออนไลน์ และบทเรียนเส้นทางสู่เทพหมากรุกตั้งแต่มือใหม่ Free 3D chess in your browser. เปิด JavaScript เพื่อเล่น</p></noscript>
@@ -909,7 +916,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-v</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-w</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -4209,6 +4216,9 @@ Battle.follow = prefs.follow !== false;
 if (Battle.ok && prefs.view !== "2d") Battle.setActive(true);
 syncViewButton();
 render();
+// Reveal the page once fonts are in (or after 0.8s at most), so the first paint is the final layout.
+Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 800))])
+  .then(() => requestAnimationFrame(() => document.documentElement.classList.remove("booting")));
 </script>
 
 
