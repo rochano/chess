@@ -916,7 +916,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-w</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-x</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2477,7 +2477,7 @@ const Shop = {
   },
   async load() {
     if (this.items) return this.items;
-    try { const d = await (await fetch("shop.json", { cache: "no-cache" })).json(); this.items = d.items.filter(i => i.url); } catch (e) { this.items = []; }
+    try { const d = await (await fetch("shop.json", { cache: "no-cache" })).json(); this.items = d.items.filter(i => i.url && i.affiliate); } catch (e) { this.items = []; }
     return this.items;
   },
   // How the game felt for this player: stress built up during the game, the result, and recent losses.
