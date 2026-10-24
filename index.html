@@ -990,7 +990,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zf</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zg</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3466,11 +3466,12 @@ function saveLocalResult(row) {
   lsSet("chess-history", list.slice(-500));
 }
 const DEFAULT_NAMES = new Set(["", "you", "player", "player 1", "player 2", "computer", "white", "black"]);
-function tally(rows) {
+// local: this device's own history, so unnamed players still count ("You", "Player 1").
+function tally(rows, local = false) {
   const t = new Map();
   const add = (name, res, pts) => {
-    name = String(name || "").trim();
-    if (DEFAULT_NAMES.has(name.toLowerCase())) return;
+    name = String(name || "").trim() || "You";
+    if (local ? /^computer$/i.test(name) : DEFAULT_NAMES.has(name.toLowerCase())) return;
     const k = name.toLowerCase();
     const e = t.get(k) || { name, p: 0, w: 0, d: 0, l: 0, pts: 0 };
     e.p++; e[res]++; e.pts += pts; t.set(k, e);
@@ -3488,8 +3489,8 @@ function tally(rows) {
   }
   return [...t.values()].sort((a, b) => b.pts - a.pts || b.w - a.w || a.p - b.p || a.name.localeCompare(b.name));
 }
-function drawBoard(rows, emptyText) {
-  const list = tally(rows).slice(0, 50);
+function drawBoard(rows, emptyText, local = false) {
+  const list = tally(rows, local).slice(0, 50);
   $("lbBody").innerHTML = list.length
     ? `<table><thead><tr><th>#</th><th>Name</th><th>Games</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead><tbody>${list.map((e, k) =>
         `<tr class="${k === 0 ? "top1" : ""}"><td>${k + 1}</td><td>${esc(e.name)}</td><td>${e.p}</td><td>${e.w}</td><td>${e.d}</td><td>${e.l}</td><td>${e.pts}</td></tr>`).join("")}</tbody></table>`
@@ -3500,7 +3501,7 @@ const Leader = {
   open() { closeAll(); show("leader"); this.load(); },
   load() {
     $("segLeader").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === this.tab)));
-    if (this.tab === "local") { drawBoard(lsGet("chess-history", []), "ยังไม่มีเกมที่จบบนเครื่องนี้ ใส่ชื่อในเมนูแล้วลองเล่นสักเกม"); return; }
+    if (this.tab === "local") { drawBoard(lsGet("chess-history", []), "ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่", true); return; }
     $("lbBody").innerHTML = '<p class="empty">กำลังโหลดคะแนน…</p>';
     fetch(SHEET_URL + "?action=rows", { cache: "no-store" })
       .then(r => r.text())
