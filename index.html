@@ -741,7 +741,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-e</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-f</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1084,7 +1084,8 @@ function bestMove(st, depth, noise, avoidKeys) {
   return best;
 }
 // The computer opponent. Each level plays in a different way, not just a little better:
-// 1 Easy   looks one move ahead only, so it grabs pieces without seeing the recapture, and now and then plays on a whim.
+// 1 Easy   plays like a beginner: half its moves are on a whim, it often misses pieces it could take,
+//          and it never thinks about what you can take back.
 // 2 Normal sees two moves ahead plus every capture sequence, with a little randomness so games vary.
 // 3 Hard   searches four moves ahead (when there is time) and plays the best move it finds.
 function cpuMove(st, level, avoidKeys) {
@@ -1093,11 +1094,14 @@ function cpuMove(st, level, avoidKeys) {
   if (level === 1) {
     const sign = st.turn === "w" ? 1 : -1;
     const mate = moves.find(m => { const c = applyMove(st, m); return inCheck(c.board, c.turn) && !legalMoves(c).length; });
-    if (mate && Math.random() < 0.5) return mate;
-    if (Math.random() < 0.2) return moves[Math.floor(Math.random() * moves.length)];
+    if (mate && Math.random() < 0.25) return mate;
+    if (Math.random() < 0.5) return moves[Math.floor(Math.random() * moves.length)];
+    const base = evaluate(st.board) * sign;
     let best = null, bestV = -Infinity;
     for (const m of moves) {
-      const v = evaluate(applyMove(st, m).board) * sign + (Math.random() - 0.5) * 220;
+      // Like a beginner, it only notices about half of the pieces it could take.
+      const takes = st.board[m.to] || m.ep;
+      const v = (takes && Math.random() < 0.5 ? base : evaluate(applyMove(st, m).board) * sign) + (Math.random() - 0.5) * 400;
       if (v > bestV) { bestV = v; best = m; }
     }
     return best;
@@ -2018,13 +2022,25 @@ function sergeant(m, prev, next, mover) {
   if (worst) showTaunt("risky", worst, mover, raiseStress(mover, worst, "risky"));
 }
 
+// How long the computer seems to think: longer in busy positions, a little random, never instant.
+function thinkTime(st) {
+  const busy = Math.min(1, legalMoves(st).length / 35);
+  return 900 + busy * 900 + Math.random() * 900;
+}
 function maybeComputer() {
   if (G.mode !== "cpu" || G.st.turn !== "b" || G.over) return;
   G.thinking = true; render();
+  const st = G.st;
   setTimeout(() => {
-    const m = cpuMove(G.st, G.level, new Set(G.keys));
-    G.thinking = false;
-    if (m && !G.over) doMove(m); else render();
+    if (G.st !== st) return;
+    const t0 = Date.now();
+    const m = cpuMove(st, G.level, new Set(G.keys));
+    // Take a human-looking pause before moving, so the player can follow what happened.
+    setTimeout(() => {
+      if (G.st !== st) return;
+      G.thinking = false;
+      if (m && !G.over) doMove(m); else render();
+    }, Math.max(0, thinkTime(st) - 380 - (Date.now() - t0)));
   }, 380);
 }
 
@@ -2198,7 +2214,7 @@ function syncMenu() {
     $(seg).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs[key]))));
   $("levelField").hidden = prefs.mode !== "cpu";
   $("levelNote").textContent = {
-    1: "Easy: looks one move ahead. It grabs pieces without checking if they are protected, and sometimes plays a random move.",
+    1: "Easy: plays like a beginner. Half its moves are random, it often misses pieces it could take, and it never checks what you can take back.",
     2: "Normal: looks two moves ahead and works out every exchange, so it keeps its pieces safe and punishes loose ones.",
     3: "Hard: looks four moves ahead and always plays the best move it finds. It thinks for up to two seconds.",
   }[prefs.level] || "";
