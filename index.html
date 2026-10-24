@@ -291,6 +291,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .caps .none { font-family: var(--font-body); font-size: 12px; color: var(--ink-soft); }
 
 .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.btn.daily { background: #CFE0D6; }
+.btn.daily small { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
 /* Streamer character: a player at a desk who reacts to the game, for recording videos */
 .streamer { display: none; position: relative; background: #EADFC6; border: 2.5px solid var(--ink); border-radius: 14px; overflow: hidden; }
 .app.streaming .streamer { display: block; }
@@ -759,6 +761,7 @@ select {
     </div>
     <div class="btns">
       <button class="btn go" id="newGame">New game</button>
+      <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
       <div class="row2">
         <button class="btn" id="openTrain">Road to master</button>
         <button class="btn" id="openLeader">Leaderboard</button>
@@ -839,7 +842,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-g</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-h</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2402,7 +2405,7 @@ function showResult() {
 
 function openMenu() {
   $("closeMenu").hidden = !G.history.length || !!G.over;
-  syncMenu(); show("menu");
+  syncMenu(); if (typeof Daily !== "undefined") Daily.syncButton(); show("menu");
 }
 function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
@@ -2772,9 +2775,9 @@ const TJ = {
 /* ---------- Road to chess master: the lesson runner ---------- */
 const STAR = n => "★".repeat(n) + "☆".repeat(3 - n);
 const Train = {
-  ci: -1, li: -1, phase: "", step: 0, di: 0, c: null, wait: false, done: false, mistakes: 0, hinted: false, timer: 0, results: [], fb: null,
-  chapter() { return COURSE[this.ci]; },
-  lesson() { return COURSE[this.ci] && COURSE[this.ci].lessons[this.li]; },
+  ci: -1, li: -1, custom: null, phase: "", step: 0, di: 0, c: null, wait: false, done: false, mistakes: 0, hinted: false, timer: 0, results: [], fb: null,
+  chapter() { return this.custom ? this.custom.chapter : COURSE[this.ci]; },
+  lesson() { return this.custom ? this.custom.lesson : COURSE[this.ci] && COURSE[this.ci].lessons[this.li]; },
   drill() { const L = this.lesson(); return L && L.drills[this.di]; },
   side() { return this.phase === "drill" && this.c ? this.c.side : "w"; },
   passTurn() { return this.phase === "drill" && this.drill().goal === "collect"; },
@@ -2844,7 +2847,7 @@ const Train = {
   },
   card() {
     const ch = this.chapter(), L = this.lesson();
-    $("lsNum").textContent = "บทที่ " + (this.ci + 1) + ": " + ch.title;
+    $("lsNum").textContent = this.custom ? ch.title : "บทที่ " + (this.ci + 1) + ": " + ch.title;
     $("lsRank").textContent = RANKS[this.rank()];
     $("lsTitle").textContent = (L.boss ? "👑 " : "") + L.title;
     $("lsLook").innerHTML = L.look.map(t => `<li>${esc(t)}</li>`).join("");
@@ -2857,7 +2860,7 @@ const Train = {
   start(ci, li) {
     clearTimeout(this.timer);
     if (Net.link) Net.leave();
-    this.ci = ci; this.li = li; this.results = []; this.step = 0;
+    this.ci = ci; this.li = li; this.custom = null; this.results = []; this.step = 0;
     this.teach();
     startMusic();
   },
@@ -2892,7 +2895,7 @@ const Train = {
     if (!L.boss) acts.push(["คำใบ้", () => this.hint()]);
     acts.push(["เริ่มใหม่", () => this.startDrill(this.di, false)]);
     const extra = d.goal === "collect" ? " (เหลือ " + d.n + " ตา)" : d.goal === "mate" && d.n > 1 ? "" : "";
-    this.coach((L.boss ? "👑 ด่านบอส " : "โจทย์ ") + (di + 1) + "/" + L.drills.length + (this.c.side === "b" ? " · คุณเล่นฝ่ายดำ" : ""), d.text + extra, acts);
+    this.coach((this.custom ? "โจทย์ประจำวัน" : (L.boss ? "👑 ด่านบอส " : "โจทย์ ") + (di + 1) + "/" + L.drills.length) + (this.c.side === "b" ? " · คุณเล่นฝ่ายดำ" : ""), d.text + extra, acts);
     this.card(); closeAll();
     if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
     render();
@@ -2926,7 +2929,8 @@ const Train = {
     const L = this.lesson(), last = this.di === L.drills.length - 1;
     this.feedback("ผ่าน! " + STAR(stars) + (stars === 3 ? " สุดยอด ไม่พลาดเลย" : this.hinted ? " (ใช้คำใบ้)" : ""), true);
     sfx.promote();
-    if (last) this.lessonDone();
+    if (this.custom) this.custom.done(stars);
+    else if (last) this.lessonDone();
     else this.coach($("coachStep").textContent, "เก่งมาก ไปโจทย์ต่อไปกัน", [["โจทย์ถัดไป", () => this.startDrill(this.di + 1), "go"]]);
     this.card(); render();
   },
@@ -2981,9 +2985,84 @@ const Train = {
     this.hinted = true;
     G.hint = m; G.selected = m.from; G.stuck = null; render();
   },
-  exit() { clearTimeout(this.timer); this.phase = ""; this.ci = -1; $("coach").hidden = true; newGame(); openMenu(); },
+  exit() { clearTimeout(this.timer); this.phase = ""; this.ci = -1; this.custom = null; $("coach").hidden = true; newGame(); openMenu(); },
 };
 $("openTrain").addEventListener("click", () => Train.openList());
+/* ---------- Daily puzzle: one mate-in-1 or mate-in-2 a day, the same for everyone ---------- */
+const Daily = {
+  START: Date.UTC(2026, 9, 24), list: null,
+  // Dates are counted in Thailand time, so the puzzle changes at midnight there.
+  today() { return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10); },
+  dayNo(key) { return Math.round((Date.parse(key) - this.START) / 864e5); },
+  async load() {
+    if (!this.list) this.list = await (await fetch("puzzles.json")).json();
+    return this.list;
+  },
+  pick(key) { const n = this.list.length, d = this.dayNo(key); return this.list[((d % n) + n) % n]; },
+  solved() { return lsGet("chess-daily", {}); },
+  streak() {
+    const done = this.solved(); let k = 0, t = Date.parse(this.today());
+    if (!done[this.today()]) t -= 864e5; // today not solved yet: count from yesterday
+    while (done[new Date(t - k * 864e5).toISOString().slice(0, 10)]) k++;
+    return k;
+  },
+  thaiDate(key) {
+    const [y, m, d] = key.split("-").map(Number);
+    return d + " " + ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."][m - 1] + " " + (y + 543 - 2500);
+  },
+  title(p) { return (p[0].split(" ")[1] === "w" ? "ขาว" : "ดำ") + "เดิน รุกฆาต" + (p[1] === 1 ? "ในตาเดียว" : "ใน " + p[1] + " ตา"); },
+  link(key, method) { return HOME_URL + "?puzzle=" + key + "&utm_source=" + method + "&utm_medium=share&utm_campaign=puzzle"; },
+  async open(key) {
+    key = /^\d{4}-\d\d-\d\d$/.test(key || "") && key <= this.today() ? key : this.today();
+    try { await this.load(); } catch (e) { $("status").textContent = "โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง"; return; }
+    const p = this.pick(key), no = this.dayNo(key) + 1;
+    if (Net.link) Net.leave();
+    clearTimeout(Train.timer);
+    Train.ci = -1; Train.li = 0; Train.results = [];
+    Train.custom = {
+      key,
+      chapter: { title: "โจทย์ประจำวัน #" + no + " · " + this.thaiDate(key) },
+      lesson: {
+        title: this.title(p),
+        look: ["หาตาที่รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินตัวที่รุกไม่ได้", p[1] > 1 ? "ตาแรกไม่จำเป็นต้องรุก แต่ต้องทำให้ตาต่อไปรุกฆาตได้แน่ๆ ไม่ว่าอีกฝ่ายจะตอบยังไง" : "ลองดูทุกตาที่รุกได้ทีละตา"],
+        warn: ["รุกแล้วคิงยังหนีได้ ไม่นับ", "ใช้คำใบ้ได้ แต่จะได้ 1 ดาว"],
+        drills: [{ goal: "mate", n: p[1], fen: p[0], text: this.title(p), hint: p[2].split(" ")[0] }],
+      },
+      done: stars => this.done(key, stars),
+    };
+    track("puzzle_start", { day: no });
+    Train.startDrill(0);
+    startMusic();
+  },
+  done(key, stars) {
+    const all = this.solved(), first = !all[key];
+    all[key] = Math.max(all[key] || 0, stars); lsSet("chess-daily", all);
+    const streak = this.streak();
+    if (first) track("puzzle_solved", { day: this.dayNo(key) + 1, stars, streak });
+    Train.coach("โจทย์ประจำวัน", "แก้ได้แล้ว! " + STAR(stars) + (streak > 1 ? " · แก้ติดต่อกัน " + streak + " วัน" : "") + " พรุ่งนี้มีโจทย์ใหม่นะ", [
+      ["ชวนเพื่อนมาแก้", () => this.share(key, stars), "go"],
+      ["ลองใหม่", () => this.open(key)],
+      ["เมนู", () => Train.exit()],
+    ]);
+  },
+  async share(key, stars) {
+    const text = "แก้โจทย์หมากรุกประจำวัน " + this.thaiDate(key) + " ได้ " + STAR(stars) + " คุณแก้ได้ไหม?";
+    track("share", { method: "puzzle" });
+    try {
+      if (navigator.share) { await navigator.share({ title: "โจทย์หมากรุกประจำวัน", text, url: this.link(key, "native") }); return; }
+      await navigator.clipboard.writeText(text + " " + this.link(key, "copy"));
+      $("coachText").textContent = "คัดลอกลิงก์แล้ว เอาไปวางให้เพื่อนได้เลย";
+    } catch (e) {}
+  },
+  syncButton() {
+    const b = $("openDaily"); if (!b) return;
+    const ok = !!this.solved()[this.today()], k = this.streak();
+    b.innerHTML = "Daily puzzle · โจทย์ประจำวัน" + (ok ? " ✓" : "") + (k > 1 ? `<small>ติดต่อกัน ${k} วัน</small>` : "");
+  },
+};
+$("openDaily").addEventListener("click", () => Daily.open());
+Daily.syncButton();
+
 $("closeTrain").addEventListener("click", () => { hide("train"); if (G.mode === "train") return; openMenu(); });
 $("lessonList").addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b && !b.disabled) Train.start(+b.dataset.c, +b.dataset.l); });
 $("lsList").addEventListener("click", () => Train.openList());
@@ -3359,8 +3438,9 @@ function initExtras() {
     else if (!$("train").hidden) $("closeTrain").click();
     else if (!$("leader").hidden) $("closeLeader").click();
   });
-  const room = new URLSearchParams(location.search).get("room");
-  if (room) {
+  const q = new URLSearchParams(location.search), room = q.get("room");
+  if (q.has("puzzle")) { lsSet("chess-tut", 1); Daily.open(q.get("puzzle")); }
+  else if (room) {
     prefs.mode = "online"; syncMenu(); show("menu");
     $("netCode").value = room.toUpperCase();
     Net.join(room);
