@@ -72,7 +72,10 @@
    "note": "ชนะในจอแล้ว ลองชนะบนโต๊ะจริง",
    "url": "https://s.shopee.co.th/9V2UkAoR0i",
    "affiliate": true,
-   "img": "https://down-th.img.susercontent.com/file/sg-11134253-825zy-mkb9qj2ltamcb5_tn"
+   "img": "https://down-th.img.susercontent.com/file/sg-11134253-825zy-mkb9qj2ltamcb5_tn",
+   "notes": {
+    "learn": "ฝึกบนกระดานจริง เห็นภาพทั้งกระดานชัดกว่าในจอ"
+   }
   },
   {
    "id": "magnet-chess",
@@ -110,7 +113,10 @@
    "note": "เล่นกับเพื่อนแบบจับเวลาเหมือนในเกม",
    "url": "https://s.shopee.co.th/9fLuwTnnfn",
    "affiliate": true,
-   "img": "https://down-th.img.susercontent.com/file/sg-11134201-82580-mt8wvz32xjplb1_tn"
+   "img": "https://down-th.img.susercontent.com/file/sg-11134201-82580-mt8wvz32xjplb1_tn",
+   "notes": {
+    "learn": "ฝึกจับเวลากับเพื่อน ให้คิดเร็วขึ้น"
+   }
   }
  ]
 }

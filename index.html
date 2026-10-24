@@ -898,7 +898,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-q</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-r</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1980,7 +1980,7 @@ function doMove(m) {
   else if (!G.moves.length) {
     G.over = check
       ? { type: "mate", winner: mover, text: "Checkmate. " + (mover === "w" ? "White" : "Black") + " wins." }
-      : { type: "draw", text: "Stalemate. The game is a draw." };
+      : { type: "draw", stalemate: mover, text: "Stalemate. The game is a draw." };
   } else if (next.half >= 100) G.over = { type: "draw", text: "Draw by the fifty-move rule." };
   else if (G.keys.filter(k => k === key).length >= 3) G.over = { type: "draw", text: "Draw by threefold repetition." };
   else if (insufficient(next.board)) G.over = { type: "draw", text: "Draw. Neither side can force mate." };
@@ -2455,6 +2455,7 @@ const Shop = {
     lost: ["แพ้ไม่เป็นไรครับท่าน ชาร์จพลังก่อนแล้วค่อยแก้มือ", "ทหารยังต้องพัก ท่านก็เหมือนกันครับ"],
     won: ["ชนะสวยครับท่าน! ลองไปโชว์ฝีมือบนกระดานจริงไหม", "เก่งขนาดนี้ ต้องมีกระดานจริงไว้ท้าเพื่อนแล้วครับ"],
     learn: ["อยากเก่งขึ้นอีก ผมมีของแนะนำครับท่าน"],
+    stalemate: ["เกือบชนะแล้วครับท่าน! ฝึกปิดเกมอีกนิดนะครับ"],
   },
   async load() {
     if (this.items) return this.items;
@@ -2472,6 +2473,7 @@ const Shop = {
     if (lost) return "lost";
     if (stress >= 60) return "tense";
     if (o.type !== "draw") return "won";
+    if (o.stalemate === me) return "stalemate";
     return "learn";
   },
   async after() {
@@ -2486,7 +2488,8 @@ const Shop = {
     // Not every game: tense or lost moods can show every other game, good moods one game in four.
     const gap = mood === "tense" || mood === "lost" ? 2 : 4;
     if (this.games - this.lastShown < gap) return;
-    const pool = (await this.load()).filter(i => i.moods.includes(mood));
+    const want = mood === "stalemate" ? "learn" : mood;
+    const pool = (await this.load()).filter(i => i.moods.includes(want));
     if (!pool.length) return;
     const it = pool[Math.floor(Math.random() * pool.length)], lines = this.LINES[mood];
     this.lastShown = this.games;
@@ -2494,7 +2497,7 @@ const Shop = {
     const ic = $("shopIc"); ic.textContent = it.icon || "🛍️";
     if (it.img) { const im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer"; im.onload = () => { ic.textContent = ""; ic.appendChild(im); }; im.src = it.img; }
     $("shopTitle").textContent = it.title;
-    $("shopNote").textContent = it.note || "";
+    $("shopNote").textContent = (it.notes && it.notes[want]) || it.note || "";
     $("shopItem").href = it.url;
     $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
     $("shopAd").textContent = it.affiliate ? "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ" : "";
@@ -2526,6 +2529,8 @@ function showResult() {
     if (me) $("resTitle").textContent += youLost ? (G.mode === "cpu" ? ". The computer wins" : ". You lose") : ". You win";
   }
   $("resText").textContent = o.text;
+  // The player stalemated the opponent: explain why a winning position became a draw.
+  if (o.stalemate && o.stalemate === me) $("resText").textContent += " เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ";
   setTimeout(() => show("result"), o.type === "mate" ? 650 : 200);
 }
 
