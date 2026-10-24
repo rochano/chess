@@ -468,6 +468,22 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .pc.lift, .card { animation: none; }
 }
+/* Hover card: what a piece is, how it moves and what it is worth */
+.ptip { position: fixed; z-index: 70; pointer-events: none; display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 10px; align-items: start;
+  width: 300px; box-sizing: border-box; padding: 10px 12px; background: var(--card); border: 2.5px solid var(--ink); border-radius: 12px; box-shadow: 3px 3px 0 var(--ink); font-size: 13px; line-height: 1.4; }
+.ptip h4 { margin: 0; font-family: var(--font-display); font-size: 17px; line-height: 1.2; }
+.ptip h4 small { font-family: var(--font-body, inherit); font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+.ptip p { margin: 3px 0 0; }
+.ptip .pts { display: inline-block; margin-top: 5px; padding: 1px 8px; border-radius: 999px; border: 2px solid var(--ink); background: var(--sun); font-weight: 800; font-size: 12px; }
+.ptip .now { color: var(--ink-soft); font-weight: 700; font-size: 12px; }
+.ptip .mini { width: max-content; display: grid; grid-template-columns: repeat(5, 14px); gap: 1px; padding: 2px; border: 2px solid var(--ink); border-radius: 6px; background: var(--ink); }
+.ptip .mini i { width: 14px; height: 14px; background: #F3E6CC; display: grid; place-items: center; font-style: normal; font-size: 10px; line-height: 1; }
+.ptip .mini i:nth-child(even) { background: #C99E72; }
+.ptip .mini i.go::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #2E7EA0; }
+.ptip .mini i.far::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #2E7EA0; box-shadow: 0 0 0 2px rgba(46, 126, 160, 0.35); }
+.ptip .mini i.cap::after { content: "×"; color: var(--flag); font-weight: 900; font-size: 13px; }
+.ptip .mini i.me { font-size: 13px; }
+@media (hover: none) { .ptip { display: none !important; } }
 .netgone { position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 60; width: min(440px, calc(100% - 32px)); box-sizing: border-box;
   display: grid; gap: 8px; padding: 12px 14px; background: var(--card); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); }
 .netgone b { font-size: 15px; }
@@ -686,7 +702,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.23-i</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-a</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
   </div>
@@ -1444,13 +1460,72 @@ function buildBoard() {
     b.className = "sq" + ((r + c) % 2 ? " dark" : "");
     b.dataset.i = i;
     b.setAttribute("role", "gridcell");
-    b.addEventListener("click", () => onSquare(i));
+    b.addEventListener("click", () => { PieceTip.hide(); onSquare(i); });
+    b.addEventListener("pointermove", e => { if (e.pointerType === "mouse") PieceTip.show(i, e.clientX, e.clientY); });
+    b.addEventListener("pointerleave", () => PieceTip.hide());
     boardEl.appendChild(b);
     squares.push(b);
   }
   document.querySelectorAll(".files").forEach(el => { el.innerHTML = [..."abcdefgh"].map(f => `<span>${f}</span>`).join(""); });
   document.querySelectorAll(".ranks").forEach(el => { el.innerHTML = [8,7,6,5,4,3,2,1].map(n => `<span>${n}</span>`).join(""); });
 }
+
+/* ---------- Hover card ----------
+   Pointing at a piece with a mouse explains it: name, how it moves, its points, and how many moves it has now. */
+const PieceTip = (() => {
+  const INFO = {
+    K: { th: "คิง (ราชา)", pts: "ประเมินค่าไม่ได้", how: "เดินได้ 1 ช่องทุกทิศทาง ห้ามเดินเข้าช่องที่โดนโจมตี โดนรุกฆาตคือแพ้", extra: "เข้าป้อม (castling) ได้ถ้ายังไม่เคยเดิน" },
+    Q: { th: "ควีน (ราชินี)", pts: "9 แต้ม", how: "เดินตรงและเฉียงกี่ช่องก็ได้ ทั้ง 8 ทิศ จนกว่าจะชนตัวอื่น", extra: "ตัวที่แรงที่สุดบนกระดาน" },
+    R: { th: "เรือ", pts: "5 แต้ม", how: "เดินตรง หน้า หลัง ซ้าย ขวา กี่ช่องก็ได้ จนกว่าจะชนตัวอื่น", extra: "แรงมากตอนท้ายเกมและบนแถวที่โล่ง" },
+    B: { th: "บิชอป (โคน)", pts: "3 แต้ม", how: "เดินเฉียงกี่ช่องก็ได้ จนกว่าจะชนตัวอื่น", extra: "อยู่บนช่องสีเดิมตลอดเกม" },
+    N: { th: "ไนท์ (ม้า)", pts: "3 แต้ม", how: "เดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1 ช่อง", extra: "ตัวเดียวที่กระโดดข้ามตัวอื่นได้" },
+    P: { th: "เบี้ย", pts: "1 แต้ม", how: "เดินหน้า 1 ช่อง (ก้าวแรกเดินได้ 2 ช่อง) กินเฉียงไปข้างหน้า 1 ช่อง", extra: "เดินถึงแถวสุดท้ายแล้วเลื่อนขั้นเป็นตัวอื่นได้ (ส่วนใหญ่เป็นควีน)" },
+  };
+  const DIRS = { K: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]], Q: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]], R: [[-1,0],[1,0],[0,-1],[0,1]], B: [[-1,-1],[-1,1],[1,-1],[1,1]] };
+  // A 5x5 picture of the move pattern, with the piece in the middle and "forward" pointing up.
+  function mini(t, color) {
+    const cell = {};
+    if (t === "N") for (const [r, c] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]]) cell[r + "," + c] = "go";
+    else if (t === "P") { cell["-1,0"] = "go"; cell["-2,0"] = "go"; cell["-1,-1"] = "cap"; cell["-1,1"] = "cap"; }
+    else for (const [dr, dc] of DIRS[t]) for (let k = 1; k <= (t === "K" ? 1 : 2); k++) cell[dr * k + "," + dc * k] = t === "K" ? "go" : "far";
+    let h = "";
+    for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++)
+      h += !r && !c ? `<i class="me"><span class="pc ${color}" style="font-size:13px">${GLYPH[t]}</span></i>` : `<i class="${cell[r + "," + c] || ""}"></i>`;
+    return `<div class="mini" aria-hidden="true">${h}</div>`;
+  }
+  let el = null, at = -1, timer = 0;
+  function body(sq) {
+    const p = G.st.board[sq], t = p[1], info = INFO[t];
+    let now = "";
+    if (G.st.turn === p[0] && !G.over) {
+      const n = G.moves.filter(m => m.from === sq), caps = n.filter(m => G.st.board[m.to] || m.ep).length;
+      now = n.length ? "ตอนนี้เดินได้ " + n.length + " ทาง" + (caps ? " (กินได้ " + caps + ")" : "") : "ตอนนี้ยังเดินไม่ได้";
+    }
+    return `<div>${mini(t, p[0])}</div><div><h4>${info.th} <small>${NAME[t][0].toUpperCase() + NAME[t].slice(1)} · ${p[0] === "w" ? "ขาว" : "ดำ"} · ${sqName(sq)}</small></h4>
+      <p>${info.how}</p><p>${info.extra}</p><span class="pts">${info.pts}</span>${now ? `<p class="now">${now}</p>` : ""}</div>`;
+  }
+  function place(x, y) {
+    const w = el.offsetWidth, h = el.offsetHeight, pad = 14;
+    let left = x + pad, top = y + pad;
+    if (left + w > innerWidth - 8) left = x - w - pad;
+    if (top + h > innerHeight - 8) top = y - h - pad;
+    el.style.left = Math.max(8, left) + "px"; el.style.top = Math.max(8, top) + "px";
+  }
+  function show(sq, x, y) {
+    if (sq < 0 || !G.st.board[sq] || anyOverlay()) return hide();
+    if (!el) { el = document.createElement("div"); el.className = "ptip"; el.setAttribute("role", "tooltip"); el.hidden = true; document.body.appendChild(el); }
+    if (sq !== at) {
+      at = sq; clearTimeout(timer);
+      el.hidden = true;
+      // A short pause, so sweeping the mouse across the board does not flash cards.
+      timer = setTimeout(() => { if (at !== sq) return; el.innerHTML = body(sq); el.hidden = false; place(x, y); }, 250);
+      return;
+    }
+    if (!el.hidden) place(x, y);
+  }
+  function hide() { at = -1; clearTimeout(timer); if (el) el.hidden = true; }
+  return { show, hide };
+})();
 
 function pieceHTML(p, extra = "") { return `<span class="pc ${p[0]} ${extra}">${GLYPH[p[1]]}</span>`; }
 
@@ -3326,8 +3401,10 @@ const Battle = (() => {
       if (ptrs.size === 1) { down = { x: e.clientX, y: e.clientY, yaw: orbit.targetYaw, pitch: orbit.pitch }; moved = false; }
       if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = orbit.dist; moved = true; }
     });
+    canvas.addEventListener("pointerleave", () => PieceTip.hide());
     canvas.addEventListener("pointermove", e => {
-      if (!ptrs.has(e.pointerId)) return;
+      if (!ptrs.has(e.pointerId)) { if (e.pointerType === "mouse") PieceTip.show(hoverSq(e), e.clientX, e.clientY); return; }
+      PieceTip.hide();
       ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (ptrs.size === 2) {
         const [a, b] = [...ptrs.values()];
@@ -3353,7 +3430,16 @@ const Battle = (() => {
     canvas.addEventListener("wheel", e => { e.preventDefault(); orbit.dist = Math.min(14, Math.max(5.5, orbit.dist + e.deltaY * 0.01)); }, { passive: false });
   }
   const ray = new T.Raycaster(), ndc = new T.Vector2();
+  function hoverSq(e) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects([...pieces.values(), ...tiles], true)[0];
+    let o = hit && hit.object; while (o && o.userData.sq === undefined) o = o.parent;
+    return o ? o.userData.sq : -1;
+  }
   function pick(e) {
+    PieceTip.hide();
     const r = canvas.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
