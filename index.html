@@ -436,6 +436,50 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   #settings .card > .btns { justify-self: end; width: 220px; }
   #settings .set-group + .set-group { border-top: 0; padding-top: 0; border-left: 2px dashed var(--paper-2); padding-left: 26px; }
 }
+/* Atmosphere: when a product is suggested, the screen takes on its feeling: the real product photo, blurred and
+   slowly drifting, under light that suits it (sun and dust, steam, soft bokeh, a breathing glow, a sweep of light). */
+.atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #1c140e; }
+#shop .atmo { position: absolute; border-radius: 13px; }
+.atmo > * { position: absolute; }
+.atmo .ph { inset: -12%; background: var(--atmo-img) center / cover, var(--atmo-base); filter: blur(var(--atmo-blur, 26px)) saturate(1.2) brightness(.78); animation: atmoKB 26s ease-in-out infinite alternate; }
+@keyframes atmoKB { from { transform: scale(1.04) translate(-1.5%, -1%); } to { transform: scale(1.2) translate(2%, 1.5%); } }
+.atmo .tint { inset: 0; background: var(--atmo-tint); mix-blend-mode: soft-light; }
+.atmo .vig { inset: 0; background: radial-gradient(ellipse at 50% 42%, transparent 30%, rgba(12, 8, 4, .7) 100%); }
+.atmo .grain { inset: -50%; opacity: .13; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); animation: atmoGrain 1.2s steps(6) infinite; }
+@keyframes atmoGrain { 0% { transform: translate(0, 0); } 33% { transform: translate(-4%, 3%); } 66% { transform: translate(3%, -5%); } 100% { transform: translate(-2%, 2%); } }
+/* sun beam + dust motes */
+.atmo .beam { inset: -20% -10% auto auto; width: 70%; height: 140%; background: linear-gradient(105deg, transparent 20%, rgba(255, 226, 170, .32) 45%, transparent 70%); transform: rotate(18deg); filter: blur(10px); animation: atmoBeam 9s ease-in-out infinite alternate; }
+@keyframes atmoBeam { from { opacity: .55; } to { opacity: 1; } }
+.atmo .mote { width: var(--s); height: var(--s); border-radius: 50%; background: rgba(255, 236, 200, .9); box-shadow: 0 0 6px rgba(255, 220, 160, .9); left: var(--x); top: var(--y); animation: atmoMote var(--d) ease-in-out var(--dl) infinite alternate; }
+@keyframes atmoMote { 0% { transform: translate(0, 0); opacity: .15; } 50% { opacity: .95; } 100% { transform: translate(var(--dx), var(--dy)); opacity: .2; } }
+/* steam */
+.atmo .steam { bottom: -30%; left: var(--x); width: 160px; height: 70%; border-radius: 50%; background: radial-gradient(ellipse, rgba(255, 255, 255, .55), transparent 65%); filter: blur(24px); animation: atmoSteam var(--d) ease-in var(--dl) infinite; }
+@keyframes atmoSteam { 0% { transform: translate(0, 0) scale(.6); opacity: 0; } 25% { opacity: .7; } 100% { transform: translate(var(--dx), -90%) scale(1.5, 1.2); opacity: 0; } }
+/* bokeh */
+.atmo .bokeh { width: var(--s); height: var(--s); border-radius: 50%; left: var(--x); top: var(--y); background: radial-gradient(circle, var(--atmo-glow) 0%, transparent 70%); filter: blur(3px); animation: atmoBokeh var(--d) ease-in-out var(--dl) infinite alternate; }
+@keyframes atmoBokeh { from { transform: translate(0, 0) scale(.9); opacity: .25; } to { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: .75; } }
+/* breathing glow (in 4s, out 6s) */
+.atmo .breath { left: 50%; top: 50%; width: 90vmin; height: 90vmin; margin: -45vmin 0 0 -45vmin; border-radius: 50%; background: radial-gradient(circle, var(--atmo-glow) 0%, transparent 62%); animation: atmoBreath 10s ease-in-out infinite; }
+@keyframes atmoBreath { 0%, 100% { transform: scale(.7); opacity: .35; } 40% { transform: scale(1.05); opacity: .85; } }
+/* light sweep */
+.atmo .sweep { inset: -30% auto -30% -60%; width: 40%; background: linear-gradient(90deg, transparent, rgba(255, 240, 220, .35), transparent); transform: skewX(-20deg); animation: atmoSweep 5.5s cubic-bezier(.6, 0, .3, 1) infinite; }
+@keyframes atmoSweep { 0% { left: -60%; } 60%, 100% { left: 130%; } }
+@media (prefers-reduced-motion: reduce) { .atmo * { animation: none !important; } }
+#result.atmo-on { background: transparent; }
+#result > .card { position: relative; z-index: 1; }
+#result.atmo-on #shop { position: relative; isolation: isolate; border: 3px solid var(--ink); border-radius: 16px; padding: 14px 16px 12px !important; box-shadow: inset 0 0 40px rgba(0,0,0,.35); }
+#result.atmo-on #shop > :not(.atmo) { position: relative; z-index: 1; }
+#result.atmo-on #shop .shop-say { color: #FFF7EC; text-shadow: 0 2px 6px rgba(0,0,0,.6); font-size: 17px !important; }
+#result.atmo-on #shop .shop-fine, #result.atmo-on #shop .shop-fine .linkbtn { color: #FFF7EC; text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+/* the product floats in its atmosphere: no box, light text, photo with a soft shadow */
+#result.atmo-on .shop-item { margin-top: 6px; background: none; border: 0; box-shadow: none; padding: 0 0 4px; color: #FFF7EC; animation: none; }
+#result.atmo-on .shop-item::before { top: -6px; left: 4px; }
+#result.atmo-on .shop-ic { border: 0; background: rgba(255,255,255,.15); box-shadow: 0 18px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.25); animation: atmoFloat 6s ease-in-out infinite; }
+@keyframes atmoFloat { 50% { transform: translateY(-6px); } }
+#result.atmo-on .shop-txt b { text-shadow: 0 2px 10px rgba(0,0,0,.6); }
+#result.atmo-on .shop-txt small { color: #FFF7EC; opacity: .92; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+#result.atmo-on .shop-item:hover .shop-go { filter: brightness(1.08); }
+#result.atmo-on .shop-go { background: var(--atmo-btn); }
 .shop { display: grid; gap: 14px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
 .shop-say { margin: 0; font-weight: 800; font-size: 14px; }
 .shop-item { position: relative; display: grid; justify-items: center; gap: 10px; padding: 16px 14px 14px; text-align: center; background: #FFF4D2; border: 3.5px solid var(--ink); border-radius: 16px; color: var(--ink); text-decoration: none; box-shadow: 6px 6px 0 var(--ink); animation: shopPop 420ms cubic-bezier(.2,1.6,.4,1) both; }
@@ -934,7 +978,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-za</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zb</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2484,6 +2528,44 @@ const Share = {
 };
 /* ---------- Shop tips: after a game, Sergeant Somchai suggests something that fits how it went ----------
    Items live in shop.json. Each item has moods (tense, lost, won, learn) and a url; affiliate: true marks a paid link. */
+const Atmo = {
+  // fx: motes (sun and dust), steam, bokeh, breath, sweep. tint is laid over the blurred photo with soft-light.
+  SETS: {
+    "stress-ball": { fx: "bokeh", tint: "#FF9DB8", glow: "rgba(255,190,210,.9)", base: "#C8657F", btn: "#D9466F" },
+    "lavender": { fx: "bokeh", tint: "#9C7BE0", glow: "rgba(214,190,255,.9)", base: "#5E4A8C", btn: "#7A55C7" },
+    "chamomile": { fx: "steam", tint: "#F4C46A", glow: "rgba(255,224,160,.9)", base: "#9C7434", btn: "#B97A16" },
+    "neck-pillow": { fx: "breath", tint: "#7FC9C0", glow: "rgba(170,235,225,.85)", base: "#2F6F69", btn: "#2F8F86" },
+    "dark-choc": { fx: "steam", tint: "#8A5232", glow: "rgba(255,200,150,.8)", base: "#3B2216", btn: "#7A4426" },
+    "wood-chess": { fx: "motes", tint: "#E0A868", glow: "rgba(255,220,170,.9)", base: "#6B4524", btn: "#8A5328" },
+    "magnet-chess": { fx: "sweep", tint: "#8FB0F0", glow: "rgba(190,210,255,.9)", base: "#34508F", btn: "#3A5FC2" },
+    "chess-book": { fx: "motes", tint: "#E8C27A", glow: "rgba(255,230,180,.9)", base: "#5C4A2C", btn: "#8A5A1E" },
+    "chess-clock": { fx: "sweep", tint: "#FFA36A", glow: "rgba(255,200,160,.9)", base: "#7A3416", btn: "#D2552A" },
+  },
+  build(a, img, small) {
+    const L = document.createElement("div"); L.className = "atmo"; L.setAttribute("aria-hidden", "true");
+    L.style.setProperty("--atmo-img", img ? `url("${img}")` : "none");
+    L.style.setProperty("--atmo-base", `radial-gradient(circle at 40% 35%, ${a.tint}, ${a.base})`);
+    L.style.setProperty("--atmo-tint", a.tint); L.style.setProperty("--atmo-glow", a.glow);
+    if (small) L.style.setProperty("--atmo-blur", "14px");
+    const add = (cls, vars) => { const e = document.createElement("i"); e.className = cls; for (const k in vars || {}) e.style.setProperty(k, vars[k]); L.appendChild(e); return e; };
+    const R = (a, b) => a + Math.random() * (b - a);
+    add("ph"); add("tint");
+    if (a.fx === "motes") { add("beam"); for (let i = 0; i < (small ? 14 : 34); i++) add("mote", { "--s": R(2, 5) + "px", "--x": R(0, 100) + "%", "--y": R(0, 100) + "%", "--dx": R(-40, 40) + "px", "--dy": R(-60, 20) + "px", "--d": R(5, 11) + "s", "--dl": -R(0, 10) + "s" }); }
+    if (a.fx === "steam") for (let i = 0; i < (small ? 3 : 6); i++) add("steam", { "--x": R(5, 85) + "%", "--dx": R(-80, 80) + "px", "--d": R(6, 10) + "s", "--dl": -R(0, 9) + "s" });
+    if (a.fx === "bokeh") for (let i = 0; i < (small ? 7 : 16); i++) add("bokeh", { "--s": R(40, small ? 110 : 220) + "px", "--x": R(-5, 95) + "%", "--y": R(-5, 95) + "%", "--dx": R(-50, 50) + "px", "--dy": R(-50, 50) + "px", "--d": R(6, 12) + "s", "--dl": -R(0, 10) + "s" });
+    if (a.fx === "breath") add("breath");
+    if (a.fx === "sweep") add("sweep");
+    add("vig"); add("grain");
+    return L;
+  },
+  set(it) {
+    this.clear(); const a = this.SETS[it.id]; if (!a) return;
+    const r = $("result"); r.classList.add("atmo-on"); r.style.setProperty("--atmo-btn", a.btn);
+    r.prepend(this.build(a, it.img, false));
+    $("shop").prepend(this.build(a, it.img, true));
+  },
+  clear() { const r = $("result"); r.classList.remove("atmo-on"); r.querySelectorAll(".atmo").forEach(e => e.remove()); },
+};
 const Shop = {
   items: null, games: 0, lastShown: -9,
   LINES: {
@@ -2513,7 +2595,7 @@ const Shop = {
     return "learn";
   },
   async after() {
-    $("shop").hidden = true;
+    $("shop").hidden = true; Atmo.clear();
     const me = myColor(), o = G.over;
     if (!me || !o || G.mode === "train") return;
     const lost = o.type !== "draw" && o.winner !== me;
@@ -2538,6 +2620,7 @@ const Shop = {
     $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
     $("shopAd").textContent = it.affiliate ? "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ" : "";
     $("shop").hidden = false;
+    Atmo.set(it);
     track("shop_view", { item: it.id, mood });
   },
 };
