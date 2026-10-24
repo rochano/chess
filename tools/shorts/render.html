@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><title>Shorts renderer</title>
+<style>body{margin:0;background:#222}canvas{display:block}</style></head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Draws one YouTube Short for a daily puzzle, frame by frame. render.js drives it and pipes the frames to ffmpeg.
+const W = 1080, H = 1920, c = document.getElementById("c"), g = c.getContext("2d");
+const INK = "#2F2620", PAPER = "#F3EDE0", CARD = "#FBF7EE", SOFT = "#6E5E50", LIGHT = "#F1E4C3", DARK = "#B58863";
+const FONT = "'Baloo 2', 'Nunito', system-ui, sans-serif";
+const GL = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟︎" };
+let E, P, moods = {}, logo;
+
+async function boot() {
+  // Reuse the game's own engine and streamer character so the video matches the game.
+  const html = await (await fetch("../../index.html")).text();
+  const eng = html.slice(html.indexOf("/*ENGINE START*/"), html.indexOf("/*ENGINE END*/"));
+  E = new Function(eng + "\nreturn { legalMoves, applyMove, inCheck, sqName };")();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const svg = doc.querySelector("#streamer svg");
+  const MOODS = {
+    think: ["e-down", "m-flat", "a-chin", "hands-chin", "think"],
+    wait: ["e-side", "m-smile", "a-desk", "hands-desk"],
+    happy: ["e-happy", "m-big", "cheeks", "a-up", "stars"],
+  };
+  for (const [name, parts] of Object.entries(MOODS)) {
+    const s = svg.cloneNode(true);
+    s.setAttribute("xmlns", "http://www.w3.org/2000/svg"); s.setAttribute("width", 640); s.setAttribute("height", 560);
+    s.querySelectorAll("[data-part]").forEach(n => { if (!parts.includes(n.dataset.part)) n.remove(); });
+    const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s.outerHTML);
+    await img.decode(); moods[name] = img;
+  }
+  logo = new Image(); logo.src = "../../img/logo.svg"; await logo.decode();
+}
+const ready = boot();
+
+function fromFEN(fen) {
+  const [pl, turn, cs, ep] = fen.split(" "); const board = new Array(64).fill(null); let i = 0;
+  for (const ch of pl) { if (ch === "/") continue; if (/\d/.test(ch)) i += +ch; else board[i++] = (ch === ch.toUpperCase() ? "w" : "b") + ch.toUpperCase(); }
+  const sq = s => (8 - +s[1]) * 8 + "abcdefgh".indexOf(s[0]);
+  return { board, turn, castle: { wK: cs.includes("K"), wQ: cs.includes("Q"), bK: cs.includes("k"), bQ: cs.includes("q") }, ep: ep === "-" ? -1 : sq(ep), half: 0, captured: null };
+}
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+// Timeline, in seconds.
+const T = { count: 1.2, countLen: 10, reveal: 11.2, firstMove: 12.6, step: 1.7, slide: 0.45 };
+
+window.setup = async (puzzle, no, date) => {
+  await ready;
+  const [fen, n, sol] = puzzle;
+  const st0 = fromFEN(fen), plies = [], states = [st0];
+  for (const u of sol.split(" ")) {
+    const s = states[states.length - 1];
+    const m = E.legalMoves(s).find(x => E.sqName(x.from) + E.sqName(x.to) + (x.promo ? x.promo.toLowerCase() : "") === u);
+    plies.push(m); states.push(E.applyMove(s, m));
+  }
+  const side = st0.turn;
+  const mateAt = T.firstMove + (plies.length - 1) * T.step + T.slide;
+  const endAt = mateAt + 3;
+  P = { n, no, date, side, plies, states, mateAt, endAt, dur: endAt + 3.6, flip: side === "b",
+        title: (side === "w" ? "ขาว" : "ดำ") + "เดิน รุกฆาต" + (n === 1 ? "ในตาเดียว" : "ใน " + n + " ตา") };
+  const events = [{ t: 0.2, k: "intro" }];
+  for (let s = 0; s < T.countLen; s++) events.push({ t: T.count + s, k: "tick", n: T.countLen - s });
+  events.push({ t: T.reveal, k: "reveal" });
+  plies.forEach((m, i) => events.push({ t: T.firstMove + i * T.step + T.slide, k: m && states[i].board[m.to] ? "capture" : "move" }));
+  events.push({ t: mateAt + 0.1, k: "mate" }, { t: endAt, k: "end" });
+  return { dur: P.dur, events };
+};
+
+function rr(x, y, w, h, r, fill, stroke, lw) {
+  g.beginPath(); g.roundRect(x, y, w, h, r);
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.lineWidth = lw || 6; g.strokeStyle = stroke; g.stroke(); }
+}
+function text(s, x, y, size, color, align, weight) {
+  g.font = (weight || 800) + " " + size + "px " + FONT; g.fillStyle = color; g.textAlign = align || "left"; g.textBaseline = "middle"; g.fillText(s, x, y);
+}
+function bubble(s, x, y, size) {
+  g.font = "800 " + size + "px " + FONT; const w = g.measureText(s).width + 44, h = size + 34;
+  rr(x - w / 2 + 6, y - h / 2 + 6, w, h, 22, INK); rr(x - w / 2, y - h / 2, w, h, 22, CARD, INK, 5);
+  text(s, x, y + 2, size, INK, "center");
+}
+
+const BX = 110, BY = 730, BS = 860, Q = BS / 8;
+function sqXY(i) { let r = i >> 3, f = i & 7; if (P.flip) { r = 7 - r; f = 7 - f; } return [BX + f * Q, BY + r * Q]; }
+function piece(p, x, y, scale) {
+  const s = Q * 0.84 * (scale || 1);
+  g.font = s + "px 'Noto Sans Symbols 2', 'DejaVu Sans', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
+  const cx = x + Q / 2, cy = y + Q / 2 + Q * 0.04;
+  g.lineWidth = 7; g.strokeStyle = p[0] === "w" ? INK : PAPER; g.strokeText(GL[p[1]], cx, cy);
+  g.fillStyle = p[0] === "w" ? "#FBF7EE" : INK; g.fillText(GL[p[1]], cx, cy);
+}
+function arrow(from, to, a) {
+  const [x1, y1] = sqXY(from), [x2, y2] = sqXY(to), sx = x1 + Q / 2, sy = y1 + Q / 2, ex = x2 + Q / 2, ey = y2 + Q / 2;
+  const ang = Math.atan2(ey - sy, ex - sx), hl = Q * 0.42, ox = ex - Math.cos(ang) * hl * 0.8, oy = ey - Math.sin(ang) * hl * 0.8;
+  g.save(); g.globalAlpha = a; g.strokeStyle = "#E07A3E"; g.fillStyle = "#E07A3E"; g.lineWidth = Q * 0.2; g.lineCap = "round";
+  g.beginPath(); g.moveTo(sx, sy); g.lineTo(ox, oy); g.stroke();
+  g.beginPath(); g.moveTo(ex, ey);
+  g.lineTo(ex - Math.cos(ang - 0.5) * hl, ey - Math.sin(ang - 0.5) * hl); g.lineTo(ex - Math.cos(ang + 0.5) * hl, ey - Math.sin(ang + 0.5) * hl); g.fill();
+  g.restore();
+}
+function drawBoard(t) {
+  rr(BX - 26, BY - 26, BS + 52, BS + 52, 22, "#8F6A47", INK, 6);
+  // which ply is moving now
+  let k = 0; while (k < P.plies.length && t >= T.firstMove + k * T.step + T.slide) k++;
+  const st = P.states[k], moving = k < P.plies.length && t >= T.firstMove + k * T.step ? P.plies[k] : null;
+  const last = k > 0 ? P.plies[k - 1] : null;
+  for (let i = 0; i < 64; i++) {
+    const [x, y] = sqXY(i), r = i >> 3, f = i & 7;
+    g.fillStyle = (r + f) % 2 ? DARK : LIGHT;
+    if (last && (last.from === i || last.to === i)) g.fillStyle = (r + f) % 2 ? "#B8963A" : "#F2D77A";
+    g.fillRect(x, y, Q, Q);
+  }
+  // coordinates
+  for (let j = 0; j < 8; j++) {
+    const file = "abcdefgh"[P.flip ? 7 - j : j], rank = P.flip ? j + 1 : 8 - j;
+    text(file, BX + j * Q + Q / 2, BY + BS + 14, 20, "#F3EDE0", "center", 800);
+    text(String(rank), BX - 14, BY + j * Q + Q / 2, 20, "#F3EDE0", "center", 800);
+  }
+  // check glow on the mated king
+  if (t >= P.mateAt) {
+    const fin = P.states[P.states.length - 1], kq = fin.board.findIndex(p => p === fin.turn + "K"), [x, y] = sqXY(kq);
+    const gr = g.createRadialGradient(x + Q / 2, y + Q / 2, 4, x + Q / 2, y + Q / 2, Q * 0.7);
+    gr.addColorStop(0, "rgba(210,74,64,0.9)"); gr.addColorStop(1, "rgba(210,74,64,0)"); g.fillStyle = gr; g.fillRect(x - Q / 2, y - Q / 2, Q * 2, Q * 2);
+  }
+  for (let i = 0; i < 64; i++) { const p = st.board[i]; if (!p || (moving && i === moving.from)) continue; const [x, y] = sqXY(i); piece(p, x, y); }
+  if (moving) {
+    const a = ease((t - (T.firstMove + k * T.step)) / T.slide), [x1, y1] = sqXY(moving.from), [x2, y2] = sqXY(moving.to);
+    piece(st.board[moving.from], x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, 1 + 0.12 * Math.sin(a * Math.PI));
+  }
+  // arrow before the attacker's moves
+  for (let i = 0; i < P.plies.length; i += 2) {
+    const s0 = T.firstMove + i * T.step - 0.55;
+    if (t >= s0 && t < T.firstMove + i * T.step + T.slide) arrow(P.plies[i].from, P.plies[i].to, clamp((t - s0) / 0.25, 0, 0.85));
+  }
+}
+function confetti(t, t0) {
+  const cols = ["#F5C344", "#E5574A", "#6E8B4E", "#3D5A80", "#E07A3E"];
+  for (let i = 0; i < 70; i++) {
+    const sx = (i * 997) % W, sp = 500 + (i * 131) % 500, y = -40 + (t - t0) * sp - ((i * 71) % 400);
+    if (y < -40 || y > H) continue;
+    g.save(); g.translate(sx + Math.sin((t - t0) * 3 + i) * 30, y); g.rotate((t - t0) * (2 + i % 4) + i);
+    g.fillStyle = cols[i % 5]; g.fillRect(-9, -14, 18, 28); g.restore();
+  }
+}
+
+window.frame = t => {
+  g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+  const intro = ease(t / 0.8);
+  g.save(); g.globalAlpha = intro;
+  // header
+  g.drawImage(logo, 70, 96, 96, 96);
+  text("โจทย์หมากรุกประจำวัน", 186, 128, 52, INK);
+  text("#" + P.no + " · " + P.date, 188, 182, 34, SOFT, "left", 700);
+  // title and timer
+  rr(70, 262, 560, 120, 26, P.side === "w" ? CARD : "#2A2C31", INK, 6);
+  const [who, ...goal] = P.title.split(" ");
+  text(who, 350, 322, 58, P.side === "w" ? INK : "#FBF7EE", "center");
+  text(goal.join(" "), 350, 450, 60, INK, "center");
+  g.restore();
+  // countdown ring
+  if (t >= T.count && t < T.reveal + 0.4) {
+    const left = clamp(T.countLen - (t - T.count), 0, T.countLen), a = t > T.reveal ? 1 - (t - T.reveal) / 0.4 : 1;
+    g.save(); g.globalAlpha = a;
+    const cx = 350, cy = 600, R = 82;
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fillStyle = CARD; g.fill(); g.lineWidth = 6; g.strokeStyle = INK; g.stroke();
+    g.beginPath(); g.arc(cx, cy, R - 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * left / T.countLen); g.lineWidth = 18; g.strokeStyle = left < 3.5 ? "#D24A40" : "#F5C344"; g.lineCap = "round"; g.stroke();
+    text(String(Math.ceil(left)), cx, cy + 4, 70, INK, "center");
+    g.restore();
+  } else if (t >= T.reveal) {
+    const a = ease((t - T.reveal) / 0.4);
+    g.save(); g.globalAlpha = a; text(t >= P.mateAt ? "รุกฆาต!" : "เฉลย", 350, 600, 78, t >= P.mateAt ? "#D24A40" : "#E07A3E", "center"); g.restore();
+  }
+  // streamer character
+  const mood = t < T.reveal ? "think" : t >= P.mateAt ? "happy" : "wait";
+  const bob = mood === "happy" ? Math.abs(Math.sin(t * 6)) * -10 : Math.sin(t * 2) * 2;
+  g.save(); g.beginPath(); g.roundRect(660, 240, 360, 315, 24); g.fillStyle = "#EADFC6"; g.fill(); g.clip();
+  g.drawImage(moods[mood], 660, 240 + bob, 360, 315); g.restore();
+  rr(660, 240, 360, 315, 24, null, INK, 6);
+  const say = t < T.count ? "มาลองกัน!" : t < T.reveal ? (t < T.count + 5 ? "อืม..." : "หาเจอไหม?") : t < P.mateAt ? "ดูเฉลยกัน" : "เย้! ชนะ";
+  if (t > 0.6) bubble(say, 840, 600, 40);
+  drawBoard(t);
+  // prompt under the board
+  if (t < T.reveal) text("คิดออกแล้วพิมพ์คำตอบในคอมเมนต์!", W / 2, 1650, 42, INK, "center");
+  else text("เล่นฟรีที่ rochano.github.io/chess", W / 2, 1650, 42, INK, "center");
+  // reveal banner
+  if (t >= T.reveal && t < T.firstMove) {
+    const a = Math.sin(clamp((t - T.reveal) / (T.firstMove - T.reveal), 0, 1) * Math.PI);
+    g.save(); g.globalAlpha = a; g.translate(W / 2, BY + BS / 2); g.rotate(-0.06); g.scale(0.8 + 0.2 * a, 0.8 + 0.2 * a);
+    rr(-260, -90, 520, 180, 30, "#F5C344", INK, 8); text("เฉลย!", 0, 6, 110, INK, "center"); g.restore();
+  }
+  // mate stamp and confetti
+  if (t >= P.mateAt && t < P.endAt + 0.5) {
+    const a = clamp((t - P.mateAt) / 0.25, 0, 1), s = 1.6 - 0.6 * ease(a);
+    g.save(); g.globalAlpha = a * clamp((P.endAt + 0.5 - t) / 0.5, 0, 1); g.translate(W / 2, BY + BS / 2); g.rotate(-0.12); g.scale(s, s);
+    rr(-300, -95, 600, 190, 30, "rgba(251,247,238,0.92)", "#D24A40", 12); text("รุกฆาต!", 0, 8, 120, "#D24A40", "center"); g.restore();
+    confetti(t, P.mateAt);
+  }
+  // end card
+  if (t >= P.endAt) {
+    const a = ease((t - P.endAt) / 0.5);
+    g.save(); g.globalAlpha = a; g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+    g.drawImage(logo, W / 2 - 110, 360, 220, 220);
+    text("โจทย์ใหม่ทุกวัน", W / 2, 700, 92, INK, "center");
+    text("ลองแก้เองในเกม เล่นฟรี ไม่ต้องสมัคร", W / 2, 810, 46, SOFT, "center", 700);
+    rr(150, 900, 780, 130, 30, "#F5C344", INK, 8); text("rochano.github.io/chess", W / 2, 968, 54, INK, "center");
+    g.drawImage(moods.happy, W / 2 - 240, 1100, 480, 420);
+    text("กดติดตามไว้ พรุ่งนี้มาแก้ด้วยกัน", W / 2, 1580, 46, INK, "center");
+    g.restore();
+  }
+};
+window.grab = () => c.toDataURL("image/jpeg", 0.9).split(",")[1];
+</script></body></html>
