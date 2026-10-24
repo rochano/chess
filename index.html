@@ -441,6 +441,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #1c140e; }
 #shop .atmo { position: absolute; border-radius: 13px; }
 .atmo > * { position: absolute; }
+.atmo > :not(.mote) { will-change: transform, opacity; }
+#shopIc, #shopItem, #result > .card > * { will-change: transform, opacity; }
 .atmo .ph { inset: -12%; background: var(--atmo-img) center / cover, var(--atmo-base); filter: blur(var(--atmo-blur, 26px)) saturate(1.2) brightness(.78); animation: atmoKB 26s ease-in-out infinite alternate; }
 @keyframes atmoKB { from { transform: scale(1.04) translate(-1.5%, -1%); } to { transform: scale(1.2) translate(2%, 1.5%); } }
 .atmo .tint { inset: 0; background: var(--atmo-tint); mix-blend-mode: soft-light; }
@@ -1000,7 +1002,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zj</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zk</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2629,9 +2631,9 @@ const ResultFx = {
     // stress ball: dropped, squashes on landing, bounces twice
     squish: [1100, [{ opacity: 0, transform: "translateY(-120%) scale(.9,1.1)" }, { opacity: 1, transform: "translateY(0) scale(1.18,.78)", offset: .35 }, { transform: "translateY(-14%) scale(.94,1.06)", offset: .5 }, { transform: "translateY(0) scale(1.08,.9)", offset: .65 }, { transform: "translateY(-4%) scale(.98,1.02)", offset: .78 }, { transform: "scale(1.02,.98)", offset: .9 }, { opacity: 1, transform: "none" }]],
     // aroma oil: comes into focus out of mist
-    mist: [1600, [{ opacity: 0, filter: "blur(18px) brightness(1.6)", transform: "scale(1.12)" }, { opacity: 1, filter: "blur(3px) brightness(1.15)", offset: .6 }, { opacity: 1, filter: "blur(0px) brightness(1)", transform: "none" }]],
+    mist: [1700, [{ opacity: 0, transform: "scale(1.15)" }, { opacity: .7, transform: "scale(1.05)", offset: .5 }, { opacity: 1, transform: "none" }]],
     // tea: rises up warm like steam
-    rise: [1500, [{ opacity: 0, transform: "translateY(40%) scale(.92)", filter: "blur(6px) sepia(.4)" }, { opacity: 1, filter: "blur(0px) sepia(.1)", offset: .7 }, { opacity: 1, transform: "none", filter: "blur(0px) sepia(0)" }]],
+    rise: [1500, [{ opacity: 0, transform: "translateY(40%) scale(.92)" }, { opacity: 1, offset: .7 }, { opacity: 1, transform: "none" }]],
     // neck massager: switches on, hums with a small vibration, settles
     hum: [1300, [{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "scale(1.03)", offset: .3 }, { transform: "translate(-4px,1px)", offset: .36 }, { transform: "translate(4px,-1px)", offset: .42 }, { transform: "translate(-3px,1px)", offset: .48 }, { transform: "translate(3px,0)", offset: .54 }, { transform: "translate(-2px,0)", offset: .6 }, { transform: "translate(1px,0)", offset: .66 }, { opacity: 1, transform: "none" }]],
     // dark chocolate: the wrapper peels back left to right
@@ -2641,7 +2643,7 @@ const ResultFx = {
     // magnetic set: pulled in fast and snaps into place
     snap: [900, [{ opacity: 0, transform: "translateX(-160%) rotate(-12deg) scale(.85)", easing: "cubic-bezier(.5,0,.9,.5)" }, { opacity: 1, transform: "translateX(6%) rotate(2deg) scale(1.04)", offset: .55 }, { transform: "translateX(-2%) scale(.99)", offset: .63 }, { opacity: 1, transform: "none", offset: .7 }, { opacity: 1, transform: "none" }]],
     // book: the cover swings open from the spine
-    open: [1200, [{ opacity: 0, transform: "perspective(700px) rotateY(80deg) scale(.9)", transformOrigin: "left center", filter: "brightness(.5)" }, { opacity: 1, transform: "perspective(700px) rotateY(-6deg)", transformOrigin: "left center", filter: "brightness(1.1)", offset: .65 }, { opacity: 1, transform: "perspective(700px) rotateY(0deg)", transformOrigin: "left center", filter: "brightness(1)" }]],
+    open: [1200, [{ opacity: 0, transform: "perspective(700px) rotateY(80deg) scale(.9)", transformOrigin: "left center" }, { opacity: 1, transform: "perspective(700px) rotateY(-6deg)", transformOrigin: "left center", offset: .65 }, { opacity: 1, transform: "perspective(700px) rotateY(0deg)", transformOrigin: "left center" }]],
     // chess clock: ticks into place step by step, then its button is pressed
     tick: [1200, [{ opacity: 0, transform: "rotate(-30deg) scale(.85)", easing: "steps(5,end)" }, { opacity: 1, transform: "rotate(0deg) scale(1)", offset: .6 }, { transform: "translateY(5px) scale(1.04,.95)", offset: .72 }, { transform: "translateY(-2px)", offset: .84 }, { opacity: 1, transform: "none" }]],
   },
@@ -2664,7 +2666,7 @@ const ResultFx = {
     const soft = this.soft(), [ms, frames] = this.K[tag], start = delay + 120;
     const bg = r.querySelector(":scope > .atmo"), shop = $("shop");
     // the room's light comes up first, like walking into the product's space
-    this.run(bg, [{ opacity: 0, filter: "brightness(.3)" }, { opacity: 1, filter: "brightness(1)" }], { duration: 1400 });
+    this.run(bg, [{ opacity: 0 }, { opacity: 1 }], { duration: 1200 });
     this.run(shop, [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay });
     if (soft) { this.run($("shopIc"), [{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: start }); return; }
     this.run($("shopIc"), frames, { duration: ms, delay: start });
@@ -2707,12 +2709,12 @@ const Atmo = {
     add("vig"); add("burst"); add("grain");
     return L;
   },
-  set(it) {
+  set(it, img) {
     this.clear(); const a = this.SETS[it.id]; if (!a) return;
     const r = $("result"); r.classList.add("atmo-on"); r.style.setProperty("--atmo-btn", a.btn);
     r.dataset.enter = a.enter;
-    r.prepend(this.build(a, it.img, false));
-    $("shop").prepend(this.build(a, it.img, true));
+    r.prepend(this.build(a, img, false));
+    $("shop").prepend(this.build(a, img, true));
     if (!r.hidden) ResultFx.product(0);
   },
   clear() { const r = $("result"); r.classList.remove("atmo-on"); delete r.dataset.enter; r.querySelectorAll(".atmo").forEach(e => e.remove()); },
@@ -2762,21 +2764,28 @@ const Shop = {
     const pool = (await this.load()).filter(i => i.moods.includes(want));
     if (!pool.length) return;
     this.lastShown = this.games;
-    this.showItem(pool[Math.floor(Math.random() * pool.length)], mood);
+    return this.showItem(pool[Math.floor(Math.random() * pool.length)], mood);
   },
-  showItem(it, mood, preview = false) {
+  async showItem(it, mood, preview = false) {
     if (!it) return;
+    // Wait for the photo (up to 4s) so the product never arrives as a placeholder and then jumps to the picture.
+    let photo = null;
+    if (it.img) {
+      const im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer"; im.src = it.img;
+      const ok = await Promise.race([im.decode().then(() => true, () => false), new Promise(r => setTimeout(r, 4000, false))]);
+      if (ok) photo = im;
+    }
     const want = mood === "stalemate" ? "learn" : mood, lines = this.LINES[mood];
     $("shopSay").textContent = lines[Math.floor(Math.random() * lines.length)];
-    const ic = $("shopIc"); ic.textContent = it.icon || "🛍️";
-    if (it.img) { const im = new Image(); im.alt = ""; im.referrerPolicy = "no-referrer"; im.onload = () => { ic.textContent = ""; ic.appendChild(im); }; im.src = it.img; }
+    const ic = $("shopIc"); ic.textContent = photo ? "" : it.icon || "🛍️";
+    if (photo) ic.appendChild(photo);
     $("shopTitle").textContent = it.title;
     $("shopNote").textContent = (it.notes && it.notes[want]) || it.note || "";
     $("shopItem").href = it.url;
     $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
     $("shopAd").textContent = it.affiliate ? "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ" : "";
     $("shop").hidden = false;
-    Atmo.set(it);
+    Atmo.set(it, photo ? it.img : "");
     if (!preview) track("shop_view", { item: it.id, mood });
   },
   // ?preview=<item id> shows the result screen with that product, to check how it looks. Nothing is recorded.
@@ -2797,7 +2806,7 @@ $("shareCopy").addEventListener("click", () => Share.copy());
 function showResult() {
   const o = G.over, badge = $("resBadge");
   Streamer.end();
-  Shop.after();
+  const shopReady = Shop.after();
   { const me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win"); }
   reportResult();
   const me = myColor(), youLost = !!me && o.winner !== me;
@@ -2811,7 +2820,11 @@ function showResult() {
   $("resText").textContent = o.text;
   // The player stalemated the opponent: explain why a winning position became a draw.
   if (o.stalemate && o.stalemate === me) $("resText").textContent += " เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ";
-  setTimeout(() => { show("result"); ResultFx.card(); }, o.type === "mate" ? 650 : 200);
+  // Open once the suggested product (if any) is ready, so everything arrives in one smooth sequence;
+  // a slow photo gets 1.8s, after that the product follows on its own.
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  Promise.all([wait(o.type === "mate" ? 650 : 200), Promise.race([Promise.resolve(shopReady).catch(() => {}), wait(1800)])])
+    .then(() => { if (G.over !== o) return; show("result"); ResultFx.card(); });
 }
 
 function openMenu() {
