@@ -1,0 +1,109 @@
+{
+ "note": "แก้ url เป็นลิงก์ affiliate ของคุณ แล้วตั้ง affiliate เป็น true",
+ "items": [
+  {
+   "id": "stress-ball",
+   "moods": [
+    "tense",
+    "lost"
+   ],
+   "icon": "🟡",
+   "title": "ลูกบอลบีบคลายเครียด",
+   "note": "บีบแทนการทุบโต๊ะ ราคาไม่ถึงร้อย",
+   "url": "https://shopee.co.th/search?keyword=ลูกบอลบีบคลายเครียด",
+   "affiliate": false
+  },
+  {
+   "id": "chamomile",
+   "moods": [
+    "tense",
+    "lost"
+   ],
+   "icon": "🍵",
+   "title": "ชาคาโมมายล์",
+   "note": "จิบอุ่นๆ ใจเย็นลง ก่อนตาต่อไป",
+   "url": "https://shopee.co.th/search?keyword=ชาคาโมมายล์",
+   "affiliate": false
+  },
+  {
+   "id": "lavender",
+   "moods": [
+    "tense"
+   ],
+   "icon": "🌿",
+   "title": "น้ำมันหอมระเหยลาเวนเดอร์",
+   "note": "กลิ่นช่วยให้ผ่อนคลาย ใช้กับเครื่องพ่นไอน้ำ",
+   "url": "https://shopee.co.th/search?keyword=น้ำมันหอมระเหย ลาเวนเดอร์",
+   "affiliate": false
+  },
+  {
+   "id": "neck-pillow",
+   "moods": [
+    "tense"
+   ],
+   "icon": "💆",
+   "title": "หมอนนวดคอ",
+   "note": "นั่งก้มดูกระดานนานๆ คอเมื่อยแน่",
+   "url": "https://shopee.co.th/search?keyword=หมอนนวดคอ",
+   "affiliate": false
+  },
+  {
+   "id": "dark-choc",
+   "moods": [
+    "lost"
+   ],
+   "icon": "🍫",
+   "title": "ดาร์กช็อกโกแลต",
+   "note": "ของหวานปลอบใจหลังแพ้",
+   "url": "https://shopee.co.th/search?keyword=ดาร์กช็อกโกแลต",
+   "affiliate": false
+  },
+  {
+   "id": "wood-chess",
+   "moods": [
+    "won",
+    "learn"
+   ],
+   "icon": "♟️",
+   "title": "ชุดหมากรุกไม้ของจริง",
+   "note": "ชนะในจอแล้ว ลองชนะบนโต๊ะจริง",
+   "url": "https://shopee.co.th/search?keyword=หมากรุกสากล ไม้",
+   "affiliate": false
+  },
+  {
+   "id": "magnet-chess",
+   "moods": [
+    "won"
+   ],
+   "icon": "🧲",
+   "title": "หมากรุกแม่เหล็กพกพา",
+   "note": "พกไปท้าเพื่อนได้ทุกที่",
+   "url": "https://shopee.co.th/search?keyword=หมากรุกแม่เหล็ก",
+   "affiliate": false
+  },
+  {
+   "id": "chess-book",
+   "moods": [
+    "learn",
+    "lost"
+   ],
+   "icon": "📘",
+   "title": "หนังสือหมากรุกสำหรับมือใหม่",
+   "note": "เรียนกลยุทธ์ต่อจากบทฝึกในเกม",
+   "url": "https://shopee.co.th/search?keyword=หนังสือ หมากรุกสากล",
+   "affiliate": false
+  },
+  {
+   "id": "chess-clock",
+   "moods": [
+    "won",
+    "learn"
+   ],
+   "icon": "⏱️",
+   "title": "นาฬิกาหมากรุก",
+   "note": "เล่นกับเพื่อนแบบจับเวลาเหมือนในเกม",
+   "url": "https://shopee.co.th/search?keyword=นาฬิกาหมากรุก",
+   "affiliate": false
+  }
+ ]
+}

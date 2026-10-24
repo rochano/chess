@@ -393,6 +393,16 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 .btn.danger { background: var(--flag); color: var(--card); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; padding-top: 4px; border-top: 2px dashed var(--paper-2); }
+.shop { display: grid; gap: 6px; padding-top: 10px; border-top: 2px dashed var(--paper-2); text-align: left; }
+.shop-say { margin: 0; font-weight: 800; font-size: 14px; }
+.shop-item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: #FFF9E8; border: 2.5px solid var(--ink); border-radius: 12px; color: var(--ink); text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
+.shop-item:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.shop-ic { font-size: 30px; text-align: center; }
+.shop-txt b { display: block; font-size: 15px; }
+.shop-txt small { display: block; font-size: 12.5px; color: var(--ink-soft); font-weight: 700; }
+.shop-go { font-weight: 800; font-size: 13px; padding: 4px 10px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sun); white-space: nowrap; }
+.shop-fine { margin: 0; font-size: 11.5px; color: var(--ink-soft); display: flex; justify-content: space-between; gap: 8px; }
+.shop-fine .linkbtn { font-size: 11.5px; }
 .share-lbl { width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); padding-top: 8px; }
 .chip.line { background: #06C755; color: #fff; }
 .chip.fb { background: #1877F2; color: #fff; }
@@ -823,6 +833,13 @@ select {
       <p class="fine" style="margin:6px 0 0">A player at a desk who reacts to your game against the computer or online. Handy for recording videos.</p>
     </div>
     <div class="field">
+      <span class="lbl">Product tips after a game</span>
+      <div class="seg" id="segShop">
+        <button data-v="on" aria-pressed="true">On</button>
+        <button data-v="off" aria-pressed="false">Off</button>
+      </div>
+    </div>
+    <div class="field">
       <label class="lbl" for="theme">Theme select</label>
       <select id="theme">
         <option value="walnut">Walnut</option>
@@ -842,7 +859,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-h</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-i</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -933,6 +950,15 @@ select {
       <button class="chip line" id="shareLine">LINE</button>
       <button class="chip fb" id="shareFb">Facebook</button>
       <button class="chip" id="shareCopy">Copy link</button>
+    </div>
+    <div class="shop" id="shop" hidden>
+      <p class="shop-say" id="shopSay"></p>
+      <a class="shop-item" id="shopItem" target="_blank" rel="noopener sponsored">
+        <span class="shop-ic" id="shopIc"></span>
+        <span class="shop-txt"><b id="shopTitle"></b><small id="shopNote"></small></span>
+        <span class="shop-go">ดูสินค้า</span>
+      </a>
+      <p class="shop-fine"><span id="shopAd"></span> <button class="linkbtn" id="shopOff">ไม่ต้องแนะนำอีก</button></p>
     </div>
   </div>
 </div>
@@ -1245,7 +1271,7 @@ const THEMES = {
 // Paste the Apps Script web app URL here to log every finished game to Google Sheets (see apps-script/Code.gs).
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbzR5Edv4-nxiu8JTiFFI6XN2dKPWkdO5pv2VUbx501zWHC3-KgDLwC8R9IN8wdZ8YkfwA/exec";
 
-const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", voiceRate: "0.8", theme: "walnut", nameW: "", nameB: "", streamer: "off" };
+const prefs = { mode: "friend", level: 2, clock: "5+0", volMove: 60, volAlert: 60, volMusic: 40, music: true, view: "3d", follow: true, taunts: "on", voice: "speech", voiceRate: "0.8", theme: "walnut", nameW: "", nameB: "", streamer: "off", shop: "on" };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem("chess-prefs") || "{}")); } catch (e) {}
 function savePrefs() { try { localStorage.setItem("chess-prefs", JSON.stringify(prefs)); } catch (e) {} }
 
@@ -2381,6 +2407,65 @@ const Share = {
     try { navigator.clipboard.writeText(t).then(done, () => prompt("Copy this", t)); } catch (e) { prompt("Copy this", t); }
   },
 };
+/* ---------- Shop tips: after a game, Sergeant Somchai suggests something that fits how it went ----------
+   Items live in shop.json. Each item has moods (tense, lost, won, learn) and a url; affiliate: true marks a paid link. */
+const Shop = {
+  items: null, games: 0, lastShown: -9,
+  LINES: {
+    tense: ["ท่านครับ เกมนี้เครียดจัด พักแป๊บนึงก่อนดีไหมครับ", "ผมเห็นท่านกำหมัดแน่นเลย ผ่อนคลายหน่อยครับ"],
+    lost: ["แพ้ไม่เป็นไรครับท่าน ชาร์จพลังก่อนแล้วค่อยแก้มือ", "ทหารยังต้องพัก ท่านก็เหมือนกันครับ"],
+    won: ["ชนะสวยครับท่าน! ลองไปโชว์ฝีมือบนกระดานจริงไหม", "เก่งขนาดนี้ ต้องมีกระดานจริงไว้ท้าเพื่อนแล้วครับ"],
+    learn: ["อยากเก่งขึ้นอีก ผมมีของแนะนำครับท่าน"],
+  },
+  async load() {
+    if (this.items) return this.items;
+    try { const d = await (await fetch("shop.json")).json(); this.items = d.items.filter(i => i.url); } catch (e) { this.items = []; }
+    return this.items;
+  },
+  // How the game felt for this player: stress built up during the game, the result, and recent losses.
+  mood() {
+    const me = myColor(), o = G.over;
+    if (!me || !o) return null;
+    const stress = (G.stress && G.stress[me]) || 0;
+    const lost = o.type !== "draw" && o.winner !== me;
+    const streak = lsGet("chess-losses", 0);
+    if (lost && (stress >= 40 || streak >= 2)) return "tense";
+    if (lost) return "lost";
+    if (stress >= 60) return "tense";
+    if (o.type !== "draw") return "won";
+    return "learn";
+  },
+  async after() {
+    $("shop").hidden = true;
+    const me = myColor(), o = G.over;
+    if (!me || !o || G.mode === "train") return;
+    const lost = o.type !== "draw" && o.winner !== me;
+    lsSet("chess-losses", lost ? lsGet("chess-losses", 0) + 1 : 0);
+    this.games++;
+    if (prefs.shop === "off") return;
+    const mood = this.mood();
+    // Not every game: tense or lost moods can show every other game, good moods one game in four.
+    const gap = mood === "tense" || mood === "lost" ? 2 : 4;
+    if (this.games - this.lastShown < gap) return;
+    const pool = (await this.load()).filter(i => i.moods.includes(mood));
+    if (!pool.length) return;
+    const it = pool[Math.floor(Math.random() * pool.length)], lines = this.LINES[mood];
+    this.lastShown = this.games;
+    $("shopSay").textContent = lines[Math.floor(Math.random() * lines.length)];
+    $("shopIc").textContent = it.icon || "🛍️";
+    $("shopTitle").textContent = it.title;
+    $("shopNote").textContent = it.note || "";
+    $("shopItem").href = it.url;
+    $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
+    $("shopAd").textContent = it.affiliate ? "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ" : "";
+    $("shop").hidden = false;
+    track("shop_view", { item: it.id, mood });
+  },
+};
+$("shopOff").addEventListener("click", () => { prefs.shop = "off"; savePrefs(); syncShop(); $("shop").hidden = true; });
+$("segShop").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; prefs.shop = b.dataset.v; savePrefs(); syncShop(); });
+function syncShop() { $("segShop").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.shop))); }
+syncShop();
 $("shareGo").addEventListener("click", () => Share.go());
 $("shareLine").addEventListener("click", () => Share.open("line"));
 $("shareFb").addEventListener("click", () => Share.open("facebook"));
@@ -2389,6 +2474,7 @@ $("shareCopy").addEventListener("click", () => Share.copy());
 function showResult() {
   const o = G.over, badge = $("resBadge");
   Streamer.end();
+  Shop.after();
   { const me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win"); }
   reportResult();
   const me = myColor(), youLost = !!me && o.winner !== me;
