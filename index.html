@@ -385,7 +385,16 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   #menu .card > .logo { font-size: 40px; }
   #menu .menu-play, #menu .menu-more { gap: 9px; }
   #menu .menu-hd { font-size: 16px; }
-  #menu .menu-more .btn { font-size: 15px; padding: 10px 8px; }
+  #menu .menu-more .btn { font-size: 15px; padding: 6px 8px; }
+  /* Right column fills the same height as the left: rows share it equally, Credits sits beside the heading */
+  #menu .menu-more { display: flex; flex-direction: column; position: relative; }
+  #menu .menu-more > .field { display: flex; flex-direction: column; gap: 9px; }
+  #menu .menu-more > .field:nth-of-type(1) { flex: 2 1 0; }
+  #menu .menu-more > .field:nth-of-type(2) { flex: 1 1 0; }
+  #menu .menu-more > .field > .lbl { margin-bottom: -3px; }
+  #menu .menu-more > .field > .btn, #menu .menu-more > .field > .row2 { flex: 1 1 0; min-height: 44px; }
+  #menu .menu-more .row2 > .btn { height: 100%; }
+  #menu .menu-more > .linkbtn { position: absolute; top: -4px; right: 0; }
   #menu .menu-more { border-top: 0; padding-top: 0; border-left: 2px dashed var(--line, rgba(47,38,32,.25)); padding-left: 28px; margin-left: -2px; }
   #menu #levelNote { font-size: 13px; line-height: 1.35; }
 }
@@ -891,7 +900,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-m</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-n</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
