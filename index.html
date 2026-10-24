@@ -370,6 +370,17 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
   color: var(--paper-2); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill;
   text-shadow: 4px 5px 0 rgba(47, 38, 32, 0.25);
 }
+/* Short, wide screens (laptops): lay the main menu out in two columns so it fits without scrolling */
+.scrim > .card { margin-block: auto; }
+.scrim { place-items: start center; }
+@media (min-width: 760px) and (max-height: 820px) {
+  #menu .card { width: min(100%, 780px); grid-template-columns: 1fr 1fr; column-gap: 26px; row-gap: 12px; padding: 18px 22px; }
+  #menu .card > .logo { grid-column: 1 / -1; font-size: 46px; }
+  #menu .card > .logo br { display: none; }
+  #menu .card > .field { grid-column: 1; }
+  #menu .card > .btns { grid-column: 2; grid-row: 2 / span 6; align-content: start; }
+  #menu #levelNote { font-size: 13px; line-height: 1.35; }
+}
 .field { display: grid; gap: 6px; }
 .field > .lbl { font-weight: 800; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 2.5px solid var(--ink); border-radius: 10px; overflow: hidden; }
@@ -730,7 +741,7 @@ select {
 <!-- Main menu -->
 <div class="scrim" id="menu">
   <div class="card" role="dialog" aria-labelledby="menuTitle">
-    <h2 class="logo" id="menuTitle">CHESS<br>GAME</h2>
+    <h2 class="logo" id="menuTitle">CHESS<br> GAME</h2>
     <div class="field">
       <span class="lbl">Opponent</span>
       <div class="seg" id="segMode">
@@ -860,7 +871,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-j</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-k</p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
