@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><title>Product Short renderer</title>
+<style>body{margin:0;background:#222}canvas{display:block}</style></head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Draws a product Short frame by frame: the streamer has a rough game, then the product arrives in its own
+// atmosphere (blurred real photo, light, dust or steam), then a call to action. product.js drives it.
+const W = 1080, H = 1920, c = document.getElementById("c"), g = c.getContext("2d");
+const INK = "#2F2620", PAPER = "#F3EDE0", CARD = "#FBF7EE", SOFT = "#6E5E50";
+const FONT = "'Baloo 2', 'Nunito', system-ui, sans-serif";
+let S, moods = {}, logo, photo, motes = [], steam = [];
+const ease = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(1 - x, 3);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const fade = (t, a, b, k = 0.5) => clamp(Math.min((t - a) / k, (b - t) / k), 0, 1);
+
+async function boot() {
+  const html = await (await fetch("../../index.html")).text();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const svg = doc.querySelector("#streamer svg");
+  const MOODS = {
+    think: ["e-down", "m-flat", "a-chin", "hands-chin", "think"],
+    shock: ["e-wide", "m-o", "a-cheeks", "sweat"],
+    lose: ["e-sad", "m-frown", "a-desk", "hands-desk", "tear"],
+    happy: ["e-happy", "m-big", "cheeks", "a-up", "stars"],
+    idle: ["e-normal", "m-smile", "a-desk", "hands-desk"],
+  };
+  for (const [name, parts] of Object.entries(MOODS)) {
+    const s = svg.cloneNode(true);
+    s.setAttribute("xmlns", "http://www.w3.org/2000/svg"); s.setAttribute("width", 640); s.setAttribute("height", 560);
+    s.querySelectorAll("[data-part]").forEach(n => { if (!parts.includes(n.dataset.part)) n.remove(); });
+    const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s.outerHTML);
+    await img.decode(); moods[name] = img;
+  }
+  logo = new Image(); logo.src = "../../img/logo.svg"; await logo.decode();
+}
+const ready = boot();
+
+// Timeline, in seconds: the rough game, the product, the call to action.
+const T = { story: 0, product: 4.6, cta: 11.4, end: 16 };
+
+window.setup = async spec => {
+  await ready;
+  S = spec;
+  photo = new Image(); photo.src = spec.img; await photo.decode();
+  let r = 7;
+  const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647;
+  motes = Array.from({ length: 70 }, () => ({ x: rnd() * W, y: rnd() * H, s: 2 + rnd() * 5, p: rnd() * 6.28, sp: 0.2 + rnd() * 0.6 }));
+  steam = Array.from({ length: 7 }, () => ({ x: 120 + rnd() * 840, p: rnd() * 9, d: 6 + rnd() * 4 }));
+  return { dur: T.end, events: [{ t: 0.2, k: "sad" }, { t: 1.9, k: "hit" }, { t: T.product, k: "arrive" }, { t: T.cta, k: "cta" }] };
+};
+
+function rr(x, y, w, h, r, fill, stroke, lw) {
+  g.beginPath(); g.roundRect(x, y, w, h, r);
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.lineWidth = lw || 6; g.strokeStyle = stroke; g.stroke(); }
+}
+function text(s, x, y, size, color, align = "left", weight = 800, shadow) {
+  g.font = `${weight} ${size}px ${FONT}`; g.fillStyle = color; g.textAlign = align; g.textBaseline = "middle";
+  if (shadow) { g.shadowColor = "rgba(0,0,0,.6)"; g.shadowBlur = 18; g.shadowOffsetY = 4; }
+  g.fillText(s, x, y); g.shadowColor = "transparent"; g.shadowBlur = 0; g.shadowOffsetY = 0;
+}
+function bubble(s, x, y, size) {
+  g.font = `800 ${size}px ${FONT}`; const w = g.measureText(s).width + 56, h = size + 44;
+  rr(x - w / 2, y - h / 2, w, h, h / 2, CARD, INK, 5);
+  g.beginPath(); g.moveTo(x - 22, y + h / 2 - 3); g.lineTo(x, y + h / 2 + 26); g.lineTo(x + 22, y + h / 2 - 3); g.fillStyle = CARD; g.fill();
+  text(s, x, y + 2, size, INK, "center");
+}
+function cover(img, x, y, w, h, zoom, dx = 0, dy = 0) {
+  const k = Math.max(w / img.width, h / img.height) * zoom, iw = img.width * k, ih = img.height * k;
+  g.drawImage(img, x + (w - iw) / 2 + dx, y + (h - ih) / 2 + dy, iw, ih);
+}
+
+// The atmosphere: blurred, slowly drifting photo, warm tint, light and particles, vignette.
+function atmosphere(t, a) {
+  g.save(); g.globalAlpha = a;
+  g.filter = "blur(38px) saturate(1.2) brightness(0.72)";
+  cover(photo, -80, -80, W + 160, H + 160, 1.15 + 0.08 * Math.sin(t / 5), Math.sin(t / 4) * 40, Math.cos(t / 5) * 30);
+  g.filter = "none";
+  g.globalCompositeOperation = "soft-light"; g.fillStyle = S.tint; g.fillRect(0, 0, W, H); g.globalCompositeOperation = "source-over";
+  if (S.fx === "motes") {
+    // a sun beam from the top right, dust drifting through it
+    g.save(); g.translate(W * 0.75, -200); g.rotate(0.42);
+    const gr = g.createLinearGradient(-300, 0, 300, 0);
+    gr.addColorStop(0, "rgba(255,226,170,0)"); gr.addColorStop(0.5, `rgba(255,226,170,${0.22 + 0.08 * Math.sin(t)})`); gr.addColorStop(1, "rgba(255,226,170,0)");
+    g.fillStyle = gr; g.fillRect(-300, 0, 600, 2600); g.restore();
+    for (const m of motes) {
+      const x = m.x + Math.sin(t * m.sp + m.p) * 40, y = (m.y - t * 18 * m.sp + H) % H, o = 0.35 + 0.6 * Math.abs(Math.sin(t * 0.8 + m.p));
+      g.beginPath(); g.arc(x, y, m.s, 0, 7); g.fillStyle = `rgba(255,236,200,${o})`; g.shadowColor = "rgba(255,220,160,.9)"; g.shadowBlur = 10; g.fill();
+    }
+    g.shadowBlur = 0;
+  } else if (S.fx === "steam") {
+    g.filter = "blur(40px)";
+    for (const s of steam) {
+      const p = ((t + s.p) % s.d) / s.d, y = H + 200 - p * (H + 600), x = s.x + Math.sin(p * 6 + s.p) * 90;
+      g.globalAlpha = a * Math.sin(p * Math.PI) * 0.5; g.beginPath(); g.ellipse(x, y, 110 + p * 120, 260, 0, 0, 7); g.fillStyle = "#fff"; g.fill();
+    }
+    g.filter = "none"; g.globalAlpha = a;
+  }
+  const vg = g.createRadialGradient(W / 2, H * 0.42, H * 0.2, W / 2, H * 0.45, H * 0.75);
+  vg.addColorStop(0, "rgba(12,8,4,0)"); vg.addColorStop(1, "rgba(12,8,4,0.75)");
+  g.fillStyle = vg; g.fillRect(0, 0, W, H);
+  g.restore();
+}
+
+window.frame = t => {
+  // 1. The rough game
+  g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+  if (t < T.product + 0.8) {
+    const mood = t < 1.9 ? "think" : t < 3.1 ? "shock" : "lose";
+    const shake = t > 1.9 && t < 2.3 ? Math.sin(t * 90) * 10 : 0;
+    g.save(); g.globalAlpha = ease(t / 0.5);
+    text(S.story[0], W / 2, 300, 76, INK, "center");
+    text(S.story[1], W / 2, 400, 48, SOFT, "center", 700);
+    rr(120 + shake, 560, 840, 735, 40, "#EADFC6", INK, 8);
+    g.save(); g.beginPath(); g.roundRect(120 + shake, 560, 840, 735, 40); g.clip();
+    g.drawImage(moods[mood], 120 + shake, 560, 840, 735); g.restore();
+    rr(120 + shake, 560, 840, 735, 40, null, INK, 8);
+    if (t > 1.9) { g.save(); g.translate(W / 2, 1420); g.rotate(-0.05); const s = 1.4 - 0.4 * ease((t - 1.9) / 0.25); g.scale(s, s); rr(-300, -80, 600, 160, 30, "#D24A40", INK, 8); text("รุกฆาต!", 0, 6, 92, "#FBF7EE", "center"); g.restore(); }
+    if (t > 0.6) bubble(t < 1.9 ? "อืม... ตาไหนดี" : t < 3.1 ? "เฮ้ย!!" : S.story[2], W / 2, 1640, 50);
+    g.restore();
+  }
+  // 2. The product, in its atmosphere
+  if (t >= T.product) {
+    const a = ease((t - T.product) / 0.8), lt = t - T.product;
+    atmosphere(t, a);
+    const out = 1 - ease((t - T.cta) / 0.5); // the product scene steps aside for the call to action
+    g.save(); g.globalAlpha = a * out;
+    text(S.hook, W / 2, 250, 60, "#FFF7EC", "center", 800, true);
+    const s = 760, x = (W - s) / 2, y = 380 + Math.sin(lt * 1.2) * 10 + (1 - a) * 80;
+    g.shadowColor = "rgba(0,0,0,.55)"; g.shadowBlur = 60; g.shadowOffsetY = 30;
+    rr(x, y, s, s, 36, "#000"); g.shadowColor = "transparent";
+    g.save(); g.beginPath(); g.roundRect(x, y, s, s, 36); g.clip(); cover(photo, x, y, s, s, 1.02 + lt * 0.006); g.restore();
+    rr(x, y, s, s, 36, null, "rgba(255,255,255,.35)", 3);
+    // the "recommended" tag
+    g.save(); g.translate(x + 40, y - 6); g.rotate(-0.06); rr(0, -40, 270, 80, 40, "#EE4D2D", INK, 5); text("🔥 แนะนำ", 135, 2, 44, "#fff", "center"); g.restore();
+    const tA = ease((lt - 0.6) / 0.6);
+    g.globalAlpha = a * out * tA;
+    text(S.title, W / 2, 1265 + (1 - tA) * 30, 68, "#FFF7EC", "center", 800, true);
+    text(S.note, W / 2, 1360 + (1 - tA) * 30, 46, "#FFF7EC", "center", 700, true);
+    // the streamer comes back, happier
+    if (lt > 3) {
+      const b = ease((lt - 3) / 0.6);
+      g.globalAlpha = a * out * b;
+      g.save(); g.beginPath(); g.roundRect(70, 1480 + (1 - b) * 200, 380, 333, 30); g.fillStyle = "#EADFC6"; g.fill(); g.clip();
+      g.drawImage(moods.happy, 70, 1480 + (1 - b) * 200 + Math.abs(Math.sin(lt * 5)) * -8, 380, 333); g.restore();
+      rr(70, 1480 + (1 - b) * 200, 380, 333, 30, null, INK, 6);
+      bubble(S.story[3], 720, 1600, 46);
+    }
+    g.restore();
+  }
+  // 3. Call to action
+  if (t >= T.cta) {
+    const a = ease((t - T.cta) / 0.6), lt = t - T.cta;
+    g.save(); g.globalAlpha = a * 0.35; g.fillStyle = "#120c08"; g.fillRect(0, 0, W, H); g.restore();
+    g.save(); g.globalAlpha = a;
+    const s = 420, x = (W - s) / 2, y = 330;
+    g.save(); g.beginPath(); g.roundRect(x, y, s, s, 30); g.clip(); cover(photo, x, y, s, s, 1.05); g.restore();
+    rr(x, y, s, s, 30, null, "#FFF7EC", 5);
+    text(S.title, W / 2, 840, 58, "#FFF7EC", "center", 800, true);
+    const pulse = 1 + 0.04 * Math.sin(lt * 6);
+    g.save(); g.translate(W / 2, 1010); g.scale(pulse, pulse); rr(-380, -85, 760, 170, 40, "#EE4D2D", INK, 8); text("ลิงก์ในคำอธิบาย 👇", 0, 4, 66, "#fff", "center"); g.restore();
+    text("อยากฝึกก่อน? เล่นฟรีในเกม", W / 2, 1230, 46, "#FFF7EC", "center", 700, true);
+    rr(170, 1290, 740, 120, 30, "#F5C344", INK, 7); text("rochano.github.io/chess", W / 2, 1352, 52, INK, "center");
+    g.drawImage(logo, W / 2 - 80, 1500, 160, 160);
+    text("ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชัน", W / 2, 1750, 34, "#FFF7EC", "center", 700, true);
+    g.restore();
+  }
+};
+window.grab = () => c.toDataURL("image/jpeg", 0.9).split(",")[1];
+</script></body></html>
