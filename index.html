@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-p</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-q</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1648,16 +1648,18 @@ const G = {
 
 /* ---------- Sound ---------- */
 // Everything is synthesised with Web Audio, so the page ships no audio files.
-let audio = null, sfxBus = null, musicBus = null, noiseBuf = null;
+let audio = null, sfxBus = null, musicBus = null, noiseBuf = null, master = null;
 function ctx() {
   if (!audio) {
     audio = new (window.AudioContext || window.webkitAudioContext)();
-    sfxBus = audio.createGain(); sfxBus.connect(audio.destination);
+    // everything goes through one master gain, so it can be faded out before the page goes away (no pop)
+    master = audio.createGain(); master.connect(audio.destination);
+    sfxBus = audio.createGain(); sfxBus.connect(master);
     musicBus = audio.createGain(); musicBus.gain.value = 0;
     // A limiter keeps the loud battle themes from clipping.
     const lim = audio.createDynamicsCompressor();
     lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = 0.005; lim.release.value = 0.25;
-    musicBus.connect(lim); lim.connect(audio.destination);
+    musicBus.connect(lim); lim.connect(master);
     noiseBuf = audio.createBuffer(1, audio.sampleRate * 0.5, audio.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -2071,28 +2073,33 @@ function syncMusicButton() {
 // element, which moves iOS into the media channel so the game is audible.
 let unlocked = false, silentEl = null;
 function silentWavUrl() {
-  const rate = 8000, n = rate / 2, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+  // one second of true digital silence, 16-bit 44.1 kHz (an 8-bit 8 kHz clip can buzz or click when iOS resamples it)
+  const rate = 44100, n = rate * 2, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
   const str = (o, t) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
   str(0, "RIFF"); v.setUint32(4, 36 + n, true); str(8, "WAVE"); str(12, "fmt ");
   v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
-  v.setUint32(24, rate, true); v.setUint32(28, rate, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
   str(36, "data"); v.setUint32(40, n, true);
-  for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
   return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
 }
+// Facebook, Instagram, LINE, Messenger, TikTok and X open links in their own browser. Taking over the
+// phone's audio session there makes iOS switch audio back with a buzz when that browser is closed.
+const IN_APP = /FBAN|FBAV|FB_IAB|Instagram|Line\/|Messenger|TikTok|musical_ly|Twitter/i.test(navigator.userAgent);
 function unlockAudio(e) {
   // Safari only counts click, touchend and keydown as permission to play, not pointerdown,
   // so keep trying on every tap until the audio is really running.
   if (unlocked) { if (audio && audio.state !== "running" && e && e.type !== "pointerdown") { ctx(); if (prefs.music && !MUSIC.timer) startMusic(); } return; }
   if (e && e.type === "pointerdown" && /^((?!chrome|android).)*safari/i.test(navigator.userAgent)) return;
   try {
-    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    if (navigator.audioSession && !IN_APP) navigator.audioSession.type = "playback";
     const a = ctx();
     const src = a.createBufferSource(); src.buffer = a.createBuffer(1, 1, 22050);
     src.connect(a.destination); src.start(0);
-    const el = silentEl = new Audio(silentWavUrl());
-    el.loop = true; el.setAttribute("playsinline", "");
-    const p = el.play(); if (p && p.catch) p.catch(() => {});
+    if (!IN_APP) {
+      const el = silentEl = new Audio(silentWavUrl());
+      el.loop = true; el.setAttribute("playsinline", "");
+      const p = el.play(); if (p && p.catch) p.catch(() => {});
+    }
     if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
     unlocked = true;
     // Music starts with the first tap, so the menu is not silent.
@@ -2108,15 +2115,19 @@ function audioAway(away) {
     stopVoice();
     if (silentEl) try { silentEl.pause(); } catch (e) {}
     if (navigator.audioSession) try { navigator.audioSession.type = "auto"; } catch (e) {}
-    if (audio) try { audio.suspend(); } catch (e) {}
+    // fade to silence first; cutting a sound mid-wave is what makes the click
+    if (audio) try { master.gain.setTargetAtTime(0, audio.currentTime, 0.015); setTimeout(() => { if (document.hidden || away === "gone") audio.suspend(); }, 90); } catch (e) {}
   } else {
     if (navigator.audioSession && unlocked) try { navigator.audioSession.type = "playback"; } catch (e) {}
     if (silentEl) { const q = silentEl.play(); if (q && q.catch) q.catch(() => {}); }
-    if (audio) { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
+    if (audio) { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); try { master.gain.setTargetAtTime(1, audio.currentTime, 0.05); } catch (e) {} }
   }
 }
 document.addEventListener("visibilitychange", () => audioAway(document.hidden));
-addEventListener("pagehide", () => audioAway(true));
+addEventListener("pagehide", () => audioAway("gone"));
+// in-app browsers sometimes close without either event, but they do blur the window first
+addEventListener("blur", () => { if (IN_APP) audioAway(true); });
+addEventListener("focus", () => { if (IN_APP && !document.hidden) audioAway(false); });
 addEventListener("pageshow", e => { if (e.persisted) audioAway(false); });
 
 /* ---------- Board build ---------- */
