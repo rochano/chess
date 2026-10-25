@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-k</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-l</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3758,7 +3758,8 @@ const Train = {
   view: {
     init(el, focus) {
       this.el = el; this.svg = el.querySelector("svg"); this.z = 1;
-      this.fit(); this.x = focus[0] - this.w / 2; this.y = focus[1] - 40 - this.h / 2; this.apply();
+      // start close enough that the map can be dragged in every direction, not only sideways
+      this.fit(); this.z = 1.6; this.fit(); this.x = focus[0] - this.w / 2; this.y = focus[1] - 40 - this.h / 2; this.apply();
       // the map element is rebuilt every time the map opens, so its listeners are added each time too
       if (this.bound === el) return; this.bound = el;
       const pts = new Map(); let moved = 0, pinch = 0;
@@ -3774,7 +3775,11 @@ const Train = {
         }
         pts.set(e.pointerId, [e.clientX, e.clientY]);
         moved += Math.abs(e.clientX - px) + Math.abs(e.clientY - py);
-        if (moved > 6 && !el.hasPointerCapture(e.pointerId)) try { el.setPointerCapture(e.pointerId); } catch (x) {}
+        if (moved > 6 && !el.hasPointerCapture(e.pointerId)) {
+          try { el.setPointerCapture(e.pointerId); } catch (x) {}
+          // on a phone the town card covers a third of the screen; tuck it away while exploring (tap a town to bring it back)
+          if (innerWidth < 640 && $("townPanel")) $("townPanel").hidden = true;
+        }
         this.x -= (e.clientX - px) * this.w / r.width; this.y -= (e.clientY - py) * this.h / r.height; this.apply();
       });
       const up = e => { pts.delete(e.pointerId); if (!pts.size) el.classList.remove("drag"); };
@@ -3795,15 +3800,17 @@ const Train = {
       this.base = [w, h]; this.zmin = Math.min(1, w / 1000, h / 560); this.z = Math.max(this.z, this.zmin); this.w = w / this.z; this.h = h / this.z;
     },
     zoom(f, sx, sy) {
-      const r = this.el.getBoundingClientRect(), z = Math.min(3, Math.max(this.zmin, this.z * f)); if (z === this.z) return;
+      const r = this.el.getBoundingClientRect(), z = Math.min(4, Math.max(this.zmin, this.z * f)); if (z === this.z) return;
       const wx = this.x + sx / r.width * this.w, wy = this.y + sy / r.height * this.h;
       this.z = z; this.w = this.base[0] / z; this.h = this.base[1] / z;
       this.x = wx - sx / r.width * this.w; this.y = wy - sy / r.height * this.h; this.apply();
     },
     apply() {
       // when zoomed out past the map's edge, keep it centred
-      this.x = this.w >= 1000 ? (1000 - this.w) / 2 : Math.min(Math.max(this.x, 0), 1000 - this.w);
-      this.y = this.h >= 560 ? (560 - this.h) / 2 : Math.min(Math.max(this.y, 0), 560 - this.h);
+      // a little room past the edges so the camera never feels stuck on one axis
+      const M = 90;
+      this.x = this.w >= 1000 ? (1000 - this.w) / 2 : Math.min(Math.max(this.x, -M), 1000 - this.w + M);
+      this.y = this.h >= 560 ? (560 - this.h) / 2 : Math.min(Math.max(this.y, -M), 560 - this.h + M);
       this.svg.setAttribute("viewBox", `${this.x.toFixed(1)} ${this.y.toFixed(1)} ${this.w.toFixed(1)} ${this.h.toFixed(1)}`);
     },
   },
