@@ -1040,7 +1040,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-d</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-e</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2903,7 +2903,19 @@ function showResult() {
   }
   $("resText").textContent = trS(o.text);
   // The player stalemated the opponent: explain why a winning position became a draw.
-  if (o.stalemate && o.stalemate === me) $("resText").textContent += tr(" เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ");
+  // Stalemate gets its own title and one plain explanation, from the point of view of whoever is reading.
+  if (o.stalemate) {
+    const stuck = opp(o.stalemate);
+    $("resTitle").textContent = T("เสมอ (อับ)", "Draw by stalemate");
+    $("resText").textContent = me && o.stalemate === me
+      ? T("เกือบชนะแล้ว! คิงของอีกฝ่ายไม่ได้ถูกรุก แต่ขยับไปไหนไม่ได้เลย แบบนี้เรียกว่า \"อับ\" และกติกาให้นับเป็นเสมอ ครั้งหน้าเหลือช่องให้คิงเดินไว้สักช่อง แล้วค่อยรุกฆาต",
+          "So close! The other king wasn't in check, but it had no legal move. That's called stalemate, and the rules count it as a draw. Next time leave the king a square to move to, then checkmate.")
+      : me
+      ? T("รอดมาได้! คิงของคุณไม่ได้ถูกรุก แต่ไม่มีตาให้เดินเลย แบบนี้เรียกว่า \"อับ\" และกติกาให้นับเป็นเสมอ",
+          "Saved! Your king wasn't in check, but you had no legal move. That's called stalemate, so the game is a draw.")
+      : T("ฝ่าย" + tr(stuck === "w" ? "White" : "Black") + "ไม่ได้ถูกรุก แต่ไม่มีตาให้เดินเลย แบบนี้เรียกว่า \"อับ\" และกติกาให้นับเป็นเสมอ",
+          (stuck === "w" ? "White" : "Black") + " wasn't in check but had no legal move. That's called stalemate, so the game is a draw.");
+  }
   // Open once the suggested product (if any) is ready, so everything arrives in one smooth sequence;
   // a slow photo gets 1.8s, after that the product follows on its own.
   const wait = ms => new Promise(r => setTimeout(r, ms));
