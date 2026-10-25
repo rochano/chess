@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-m</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-n</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2069,7 +2069,7 @@ function syncMusicButton() {
 // while the ring/silent switch is on. On the first tap we start the audio
 // context, ask for a "playback" audio session, and loop a silent <audio>
 // element, which moves iOS into the media channel so the game is audible.
-let unlocked = false;
+let unlocked = false, silentEl = null;
 function silentWavUrl() {
   const rate = 8000, n = rate / 2, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
   const str = (o, t) => [...t].forEach((ch, i) => v.setUint8(o + i, ch.charCodeAt(0)));
@@ -2090,7 +2090,7 @@ function unlockAudio(e) {
     const a = ctx();
     const src = a.createBufferSource(); src.buffer = a.createBuffer(1, 1, 22050);
     src.connect(a.destination); src.start(0);
-    const el = new Audio(silentWavUrl());
+    const el = silentEl = new Audio(silentWavUrl());
     el.loop = true; el.setAttribute("playsinline", "");
     const p = el.play(); if (p && p.catch) p.catch(() => {});
     if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }
@@ -2101,10 +2101,23 @@ function unlockAudio(e) {
 }
 for (const ev of ["pointerdown", "touchend", "click", "keydown"]) document.addEventListener(ev, unlockAudio, { capture: true, passive: true });
 
-document.addEventListener("visibilitychange", () => {
-  if (!audio) return;
-  if (document.hidden) audio.suspend(); else { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
-});
+// Leaving the page on a phone: stop everything, including the silent loop and the sergeant's voice.
+// Otherwise iOS keeps the "playback" session alive in the background and the loop can click or buzz.
+function audioAway(away) {
+  if (away) {
+    stopVoice();
+    if (silentEl) try { silentEl.pause(); } catch (e) {}
+    if (navigator.audioSession) try { navigator.audioSession.type = "auto"; } catch (e) {}
+    if (audio) try { audio.suspend(); } catch (e) {}
+  } else {
+    if (navigator.audioSession && unlocked) try { navigator.audioSession.type = "playback"; } catch (e) {}
+    if (silentEl) { const q = silentEl.play(); if (q && q.catch) q.catch(() => {}); }
+    if (audio) { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
+  }
+}
+document.addEventListener("visibilitychange", () => audioAway(document.hidden));
+addEventListener("pagehide", () => audioAway(true));
+addEventListener("pageshow", e => { if (e.persisted) audioAway(false); });
 
 /* ---------- Board build ---------- */
 const boardEl = $("board");
