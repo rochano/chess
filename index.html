@@ -299,6 +299,32 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px s
 
 .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .btn.daily { background: #CFE0D6; }
+/* Road to master: a dark doorway with fog drifting past and the Black King watching from it */
+.btn.road { position: relative; overflow: hidden; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; text-align: left; padding: 10px 14px; min-height: 76px;
+  background: radial-gradient(ellipse 60% 120% at 88% 60%, #5A1A1A 0%, #2A1614 55%, #1A120F 100%); color: #F3EADB; isolation: isolate; }
+.btn.road .rtxt { position: relative; z-index: 2; display: grid; gap: 3px; }
+.btn.road .rtxt { min-width: 0; }
+.btn.road .rtxt b { font-size: 18px; letter-spacing: .01em; }
+.btn.road .rtxt small { font-size: 12.5px; font-weight: 700; color: #D9B48A; text-transform: none; letter-spacing: 0; line-height: 1.3; }
+.btn.road .pips { display: flex; gap: 4px; margin-top: 3px; }
+.btn.road .pips i { width: 14px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.18); }
+.btn.road .pips i.on { background: #F5C344; }
+.btn.road .pips i.now { background: #E0533F; animation: roadNow 1.4s ease-in-out infinite; }
+@keyframes roadNow { 50% { opacity: .35; } }
+.btn.road .rking { position: relative; z-index: 1; width: 56px; height: 56px; display: grid; place-items: center; font-size: 54px; line-height: 1; color: #0D0807; text-shadow: 0 0 14px rgba(224,60,40,.55); animation: roadBob 4s ease-in-out infinite; }
+.btn.road .rking i { position: absolute; top: 22px; width: 5px; height: 3px; border-radius: 50%; background: #FF4A2E; box-shadow: 0 0 6px 2px rgba(255,70,40,.8); transform-origin: center; animation: roadBlink 5s infinite; }
+.btn.road .rking i:first-child { left: 22px; } .btn.road .rking i:last-child { left: 30px; }
+@keyframes roadBob { 50% { transform: translateY(-3px); } }
+@keyframes roadBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.btn.road .rfog { position: absolute; inset: 0 -60%; z-index: 1; pointer-events: none; background: radial-gradient(ellipse 22% 40% at 30% 70%, rgba(220,210,200,.16), transparent 70%), radial-gradient(ellipse 18% 35% at 65% 30%, rgba(220,210,200,.12), transparent 70%), radial-gradient(ellipse 25% 45% at 85% 80%, rgba(220,210,200,.15), transparent 70%); animation: roadFog 9s linear infinite alternate; }
+.btn.road .rfog.b { animation-duration: 13s; animation-direction: alternate-reverse; opacity: .7; }
+@keyframes roadFog { from { transform: translateX(-18%); } to { transform: translateX(18%); } }
+.btn.road .rnew { position: absolute; top: 6px; right: 8px; z-index: 3; padding: 1px 7px; border-radius: 999px; background: #E0533F; color: #fff; font-size: 11px; font-weight: 800; animation: roadNow 1.4s ease-in-out infinite; }
+.btn.road:hover .rking, .btn.road:focus-visible .rking { text-shadow: 0 0 22px rgba(255,80,50,.9); }
+.btn.road.done { background: radial-gradient(ellipse 60% 120% at 88% 60%, #7A5A1E 0%, #3A2A12 60%, #1F160B 100%); }
+.btn.road.done .rking { color: #F5C344; text-shadow: 0 0 16px rgba(245,195,68,.8); }
+.btn.road.done .rking i { display: none; }
+@media (prefers-reduced-motion: reduce) { .btn.road *, .btn.road .rfog { animation: none !important; } }
 .btn.daily small { display: block; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
 /* Streamer character: a player at a desk who reacts to the game, for recording videos */
 .streamer { display: none; position: relative; background: #EADFC6; border: 2.5px solid var(--ink); border-radius: 14px; overflow: hidden; }
@@ -949,11 +975,11 @@ select {
     <nav class="menu-more" aria-labelledby="moreHd">
       <h3 class="menu-hd" id="moreHd">Practice &amp; more</h3>
       <div class="field">
-        <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
         <div class="row2">
-          <button class="btn" id="openTrain">Road to master</button>
+          <button class="btn daily" id="openDaily">Daily puzzle · โจทย์ประจำวัน</button>
           <button class="btn" id="openTut">How to play</button>
         </div>
+        <button class="btn road" id="openTrain">Road to master</button>
       </div>
       <div class="field">
         <span class="lbl">More</span>
@@ -1075,7 +1101,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-f</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-g</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2960,7 +2986,7 @@ function showResult() {
 
 function openMenu() {
   $("closeMenu").hidden = !G.history.length || !!G.over;
-  syncMenu(); if (typeof Daily !== "undefined") Daily.syncButton(); show("menu");
+  syncMenu(); if (typeof Daily !== "undefined") Daily.syncButton(); try { Story.syncButton(); } catch (x) {} show("menu");
 }
 function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
@@ -3440,6 +3466,22 @@ const Story = {
     if (this.seen().pro) { go(); return; }
     this.mark("pro"); this.play(STORY.prologue, { chap: [T("เส้นทางสู่เทพ", "Road to master"), T("สงครามแห่งหมอกดำ", "The War of the Black Fog")], mood: "red" }, go);
   },
+  // The menu button: chapter progress as pips and a teaser line for what is coming next.
+  syncButton() {
+    const b = $("openTrain"); if (!b) return;
+    const k = Train.rank(), n = COURSE.length, seen = this.seen(), done = k >= n;
+    const got = ["normal", "good", "true"].filter(e => seen["e_" + e]).length;
+    const tease = !seen.pro ? T("หมอกดำกำลังคืบคลานเข้ามา…", "A black fog is creeping in…")
+      : done ? T("ราชาดำล้มแล้ว · ตอนจบ ", "The Black King has fallen · Endings ") + got + "/3"
+      : k === n - 1 ? T("ราชาดำรอคุณอยู่ที่ห้องบัลลังก์…", "The Black King waits in his throne room…")
+      : T("บทที่ ", "Chapter ") + (k + 1) + "/" + n + " · " + COURSE[k].title;
+    b.classList.toggle("done", done);
+    b.innerHTML = `<span class="rfog"></span><span class="rfog b"></span>
+      <span class="rtxt"><b>${T("เส้นทางสู่เทพ", "Road to master")}</b><small>${esc(tease)}</small>
+      <span class="pips">${COURSE.map((_, i) => `<i class="${i < k ? "on" : i === k ? "now" : ""}"></i>`).join("")}</span></span>
+      <span class="rking" aria-hidden="true">♚<i></i><i></i></span>${!seen.pro ? `<span class="rnew">${T("ใหม่", "NEW")}</span>` : ""}`;
+    b.setAttribute("aria-label", T("เส้นทางสู่เทพ", "Road to master") + ": " + tease);
+  },
   // The ending depends on the share of all stars the player has earned.
   endingKey() {
     const all = COURSE.reduce((s, ch) => s + ch.lessons.length * 3, 0), r = Train.totalStars() / all;
@@ -3779,7 +3821,7 @@ const Daily = {
   },
 };
 $("openDaily").addEventListener("click", () => Daily.open());
-Daily.syncButton();
+Daily.syncButton(); Story.syncButton();
 
 $("closeTrain").addEventListener("click", () => { hide("train"); if (G.mode === "train") return; openMenu(); });
 $("lessonList").addEventListener("click", e => { const b = e.target.closest("button[data-c]"); if (b && !b.disabled) Train.start(+b.dataset.c, +b.dataset.l); });
