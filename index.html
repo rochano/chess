@@ -732,37 +732,55 @@ select {
 .chap.done .chap-head .n { background: var(--leaf); color: var(--card); }
 .chap-head b { display: block; font-size: 15px; }
 .chap-head small { color: var(--ink-soft); font-size: 12.5px; }
-/* Road map: a winding trail through eight towns, from the recruit camp down to the Black King's throne */
-.road-list { list-style: none; margin: 0; padding: 8px 0 4px; display: grid; gap: 0; max-height: 58vh; overflow-y: auto; overscroll-behavior: contain;
-  background: radial-gradient(circle at 20% 10%, rgba(110,139,78,.18), transparent 40%), radial-gradient(circle at 80% 55%, rgba(110,139,78,.14), transparent 40%), linear-gradient(#EFE6CF, #E3D6B8 70%, #4A3A36);
-  border: 2.5px solid var(--ink); border-radius: 14px; }
-.town { position: relative; padding: 6px 12px 22px; display: grid; gap: 8px; }
-.town::after { content: ""; position: absolute; z-index: 0; top: 52px; height: calc(100% - 30px); width: 46%; border: 5px dashed rgba(91,70,54,.55); border-top: 0; border-bottom: 0; pointer-events: none; }
-.town:nth-child(odd)::after { left: 22%; border-right: 0; border-radius: 0; border-left-style: dashed; transform: skewX(-18deg); }
-.town:nth-child(even)::after { right: 22%; border-left: 0; transform: skewX(18deg); }
-.town:last-child::after { display: none; }
-.town-head:focus-visible { outline: 3px solid var(--ember); outline-offset: 2px; border-radius: 12px; }
-.town-head { position: relative; z-index: 1; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font: inherit; color: inherit; }
-.town:nth-child(even) .town-head { grid-template-columns: minmax(0, 1fr) 130px; text-align: right; }
-.town:nth-child(even) .town-art { order: 2; }
-.town-art { position: relative; width: 130px; height: 94px; }
-.town-art svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 3px 0 rgba(47,38,32,.25)); }
-.town-art .fogc { position: absolute; inset: -6px; border-radius: 50%; background: radial-gradient(ellipse at 50% 55%, rgba(60,52,50,.92) 30%, rgba(60,52,50,.6) 55%, transparent 72%); display: grid; place-items: center; color: #E8DFCB; font-size: 22px; animation: townFog 6s ease-in-out infinite alternate; }
-@keyframes townFog { from { transform: translateX(-4px) scale(1); } to { transform: translateX(4px) scale(1.05); } }
-.town-art .me { position: absolute; left: 50%; top: -14px; width: 30px; height: 38px; margin-left: -15px; animation: townMe 1.1s ease-in-out infinite; }
-@keyframes townMe { 50% { transform: translateY(-6px); } }
-.town-info b { display: block; font-size: 16px; line-height: 1.25; }
-.town-info .tn { display: block; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
-.town-info small { display: block; color: var(--ink-soft); font-size: 12.5px; margin-top: 2px; }
-.town-info .tstar { color: var(--ember); font-weight: 800; }
-.town.locked .town-info { opacity: .6; }
-.town.done .town-info .tn::after { content: " ✓"; color: var(--leaf); }
-.town.boss .town-info, .town.boss .town-info small, .town.boss .town-info .tn { color: #F3EADB; }
-.town.boss .town-info b { color: #FF8A6E; }
-.town.boss.locked .town-info { opacity: .85; }
-.town .chap-lessons { position: relative; z-index: 1; background: rgba(251,247,238,.92); border: 2.5px solid var(--ink); border-radius: 12px; padding: 8px; }
-.town:not(.open) .chap-lessons { display: none; }
-@media (prefers-reduced-motion: reduce) { .town-art .fogc, .town-art .me { animation: none; } }
+/* Road map: a wide war map. Towns sit at uneven distances along a winding road, the east is the Black King's dark land. */
+/* Open-world map: fills the screen, drag to look around, scroll or pinch to zoom; the HUD and the town card float on top */
+#train.scrim { padding: 0; overflow: hidden; }
+#train .card.road { position: fixed; inset: 0; width: auto; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; display: block; background: #E9DDBE; overflow: hidden; }
+.road-map, .wmap { position: absolute; inset: 0; }
+.wmap { overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; background: #E9DDBE; }
+.wmap.drag { cursor: grabbing; }
+.wmap svg.world { display: block; width: 100%; height: 100%; }
+.road-hud { position: absolute; z-index: 2; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); width: min(360px, calc(100% - 20px)); background: rgba(251,247,238,.94); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); padding: 10px 12px; display: grid; gap: 6px; }
+.road-hud h2 { font-size: 18px; }
+.road-hud .road-head { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+.road-hud .rank-badge { width: 44px; height: 44px; font-size: 20px; }
+.road-hud .road-head b { font-size: 14.5px; }
+.road-hud .road-head small { font-size: 12px; }
+.road-btns { position: absolute; z-index: 3; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); display: flex; gap: 8px; }
+.road-btns .btn { padding: 8px 14px; min-height: 0; font-size: 14px; }
+.road-btns .btn.x { width: 44px; padding: 8px 0; font-size: 18px; }
+@media (max-width: 640px) {
+  .road-hud { top: calc(max(10px, env(safe-area-inset-top)) + 50px); padding: 8px 10px; }
+  .road-hud h2 { display: none; }
+  .road-btns { left: max(10px, env(safe-area-inset-left)); justify-content: flex-end; }
+  .road-btns .btn:not(.x) { flex: 0 1 auto; }
+}
+.wmap .mt { cursor: pointer; }
+.wmap .mt.locked { cursor: not-allowed; }
+.wmap .mt:focus { outline: none; }
+.wmap .mt:focus-visible .plate, .wmap .mt.sel .plate { stroke: var(--ember); stroke-width: 4; }
+.wmap .mt .halo { opacity: 0; }
+.wmap .mt.sel .halo { opacity: 1; animation: mapHalo 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes mapHalo { 50% { transform: scale(1.12); opacity: .5; } }
+.wmap .bob { animation: mapBob 1.1s ease-in-out infinite; }
+@keyframes mapBob { 50% { transform: translateY(-8px); } }
+.wmap .fogs { animation: mapFog 14s ease-in-out infinite alternate; }
+@keyframes mapFog { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+.wmap .eyes { animation: mapEyes 4s infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes mapEyes { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
+.town-panel { position: absolute; z-index: 4; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 20px), 640px); background: rgba(251,247,238,.97); border: 2.5px solid var(--ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--ink); padding: 12px 14px 14px; }
+.town-panel[hidden] { display: none; }
+.town-panel .tp-x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 20px; font-weight: 800; cursor: pointer; color: var(--ink); padding: 4px 8px; }
+.town-panel .tp-head { padding-right: 34px; }
+.town-panel { display: grid; gap: 8px; }
+.town-panel { animation: tpIn .22s ease-out; }
+@keyframes tpIn { from { opacity: 0; translate: 0 16px; } }
+.town-panel .tp-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.town-panel .tp-head b { font-size: 17px; }
+.town-panel .tp-head small { color: var(--ink-soft); font-size: 13px; }
+.town-panel .tstar { color: var(--ember); font-weight: 800; }
+.town-panel .chap-lessons { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+@media (prefers-reduced-motion: reduce) { .wmap .bob, .wmap .fogs, .wmap .eyes, .wmap .mt.sel .halo { animation: none; } }
 .chap-lessons { display: grid; gap: 6px; }
 .chap-lessons button { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 7px 10px; border: 2px solid var(--ink); border-radius: 10px; background: var(--card); font-weight: 800; font-size: 14px; text-align: left; box-shadow: 0 2px 0 var(--ink); }
 .chap-lessons button.boss { background: #FFF3CF; }
@@ -1131,7 +1149,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-h</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-i</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1172,13 +1190,15 @@ select {
 <!-- Road to chess master -->
 <div class="scrim" id="train" hidden>
   <div class="card road" role="dialog" aria-labelledby="trainTitle">
-    <h2 id="trainTitle">เส้นทางสู่เทพหมากรุก</h2>
-    <div class="road-head">
-      <div class="rank-badge" id="roadRank">0</div>
-      <div><b id="roadRankName"></b><small id="roadStars"></small><div class="meter"><i id="roadMeter"></i></div></div>
+    <div class="road-map" id="lessonList"></div>
+    <div class="road-hud">
+      <h2 id="trainTitle">เส้นทางสู่เทพหมากรุก</h2>
+      <div class="road-head">
+        <div class="rank-badge" id="roadRank">0</div>
+        <div><b id="roadRankName"></b><small id="roadStars"></small><div class="meter"><i id="roadMeter"></i></div></div>
+      </div>
     </div>
-    <ol class="road-list" id="lessonList"></ol>
-    <div class="btns"><button class="btn go" id="roadEnd" hidden>ดูตอนจบ</button><button class="btn" id="roadStory">เรื่องย่อ</button><button class="btn" id="closeTrain">ปิด</button></div>
+    <div class="road-btns"><button class="btn go" id="roadEnd" hidden>ดูตอนจบ</button><button class="btn" id="roadStory">เรื่องย่อ</button><button class="btn x" id="closeTrain" aria-label="ปิด">✕</button></div>
   </div>
 </div>
 
@@ -3597,9 +3617,119 @@ const Train = {
       ground("#C9D69A") + tower(20, 78, 22, 40, "#D8C79A") + `<rect x="40" y="52" width="60" height="26" fill="#E8DFCB" ${k}/><path d="M40 52v-6h10v4h10v-4h10v4h10v-4h10v4h10v-6" fill="#E8DFCB" ${k}/><path d="M64 78v-14a6 6 0 0 1 12 0v14" fill="#2F2620"/>` + tower(98, 78, 22, 40, "#D8C79A") + flag(109, 32, "#F5C344"),
       ground("#9BA88A") + `<path d="M0 80L30 30L52 62L72 22L98 60L116 38L140 80Z" fill="#7A8478" ${k}/><path d="M30 30l-7 12h14ZM72 22l-8 14h16Z" fill="#FBF7EE"/><ellipse cx="40" cy="66" rx="40" ry="9" fill="rgba(240,235,225,.75)"/><ellipse cx="100" cy="72" rx="42" ry="9" fill="rgba(240,235,225,.7)"/>`,
       ground("#6E6460") + tower(16, 80, 26, 56, "#3B3432") + tower(98, 80, 26, 56, "#3B3432") + `<rect x="42" y="38" width="56" height="42" fill="#4A403E" ${k}/><path d="M54 80V58a16 16 0 0 1 32 0v22Z" fill="#1A1412" ${k}/><circle cx="29" cy="40" r="3" fill="#FF4A2E"/><circle cx="111" cy="40" r="3" fill="#FF4A2E"/>`,
-      `<ellipse cx="70" cy="82" rx="64" ry="14" fill="#3B2422" ${k}/><path d="M24 82V30l10-12 10 12v52ZM96 82V30l10-12 10 12v52Z" fill="#2A1E1C" ${k}/><path d="M44 82V40h52v42Z" fill="#3B2C2A" ${k}/><path d="M52 82V56h36v26Z" fill="#7A1E1A" ${k}/><text x="70" y="70" text-anchor="middle" font-size="30" fill="#0D0807" stroke="#E0533F" stroke-width="1" font-family="'Noto Sans Symbols 2', serif">♚\uFE0E</text><circle cx="34" cy="34" r="2.5" fill="#FF4A2E"/><circle cx="106" cy="34" r="2.5" fill="#FF4A2E"/>`,
+      `<ellipse cx="70" cy="82" rx="64" ry="14" fill="#3B2422" ${k}/><path d="M24 82V30l10-12 10 12v52ZM96 82V30l10-12 10 12v52Z" fill="#2A1E1C" ${k}/><path d="M44 82V40h52v42Z" fill="#3B2C2A" ${k}/><path d="M52 82V56h36v26Z" fill="#7A1E1A" ${k}/><path d="M70 44v-6M67 41h6M62 66l-3-14 7 5 4-9 4 9 7-5-3 14Z" fill="#0D0807" stroke="#E0533F" stroke-width="2" stroke-linejoin="round"/><circle cx="34" cy="34" r="2.5" fill="#FF4A2E"/><circle cx="106" cy="34" r="2.5" fill="#FF4A2E"/>`,
     ];
     return `<svg viewBox="0 0 140 100" aria-hidden="true">${art[i]}</svg>`;
+  },
+  // Town positions on the 1000x560 war map, and the road between them (extra bends so it never runs straight).
+  MAP: [[95, 470], [255, 500], [340, 345], [175, 205], [480, 150], [610, 330], [800, 445], [905, 180]],
+  ROAD: [[[150, 525], [205, 470]], [[330, 470], [300, 400]], [[260, 300], [230, 250]], [[290, 120], [400, 95]], [[560, 190], [540, 280]], [[700, 330], [740, 420]], [[900, 420], [850, 290]]],
+  worldMap(rank) {
+    const k = 'stroke="#2F2620" stroke-width="3" stroke-linejoin="round"';
+    const pts = [this.MAP[0]]; this.ROAD.forEach((r, i) => pts.push(...r, this.MAP[i + 1]));
+    // smooth curve through the points (Catmull-Rom as cubic Béziers); "upto" ends the road at a town
+    const curve = upto => { const P = pts.slice(0, upto * 3 + 1); let d = `M${P[0]}`;
+      for (let i = 0; i < P.length - 1; i++) { const a = P[i - 1] || P[i], b = P[i], c = P[i + 1], e = P[i + 2] || c;
+        d += `C${b[0] + (c[0] - a[0]) / 6},${b[1] + (c[1] - a[1]) / 6} ${c[0] - (e[0] - b[0]) / 6},${c[1] - (e[1] - b[1]) / 6} ${c}`; } return d; };
+    const tri = (x, y, s, c = "#7A8478", snow = true) => `<path d="M${x - s} ${y}L${x} ${y - s * 1.3}L${x + s} ${y}Z" fill="${c}" ${k}/>${snow ? `<path d="M${x - s * .32} ${y - s * .88}L${x} ${y - s * 1.3}L${x + s * .32} ${y - s * .88}Z" fill="#FBF7EE"/>` : ""}`;
+    const pine = (x, y, c = "#5F7A43") => `<path d="M${x - 9} ${y}L${x} ${y - 22}L${x + 9} ${y}Z" fill="${c}" stroke="#2F2620" stroke-width="2"/>`;
+    const forest = (x, y, n, c) => Array.from({ length: n }, (_, i) => pine(x + (i % 4) * 14 + (i >> 2) * 7, y + (i >> 2) * 12, c)).join("");
+    const terrain = `
+      <defs><linearGradient id="wmDark" x1="0" x2="1"><stop offset=".55" stop-color="#2A1A18" stop-opacity="0"/><stop offset=".78" stop-color="#2A1A18" stop-opacity=".5"/><stop offset="1" stop-color="#1A0E0C" stop-opacity=".78"/></linearGradient>
+        <radialGradient id="wmFog"><stop offset="0" stop-color="#4A403E" stop-opacity=".95"/><stop offset=".6" stop-color="#4A403E" stop-opacity=".75"/><stop offset="1" stop-color="#4A403E" stop-opacity="0"/></radialGradient>
+        <pattern id="wmDots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#2F2620" opacity=".08"/></pattern></defs>
+      <rect width="1000" height="560" fill="#E9DDBE"/><rect width="1000" height="560" fill="url(#wmDots)"/>
+      <path d="M0 0H170C150 50 95 70 60 120S0 150 0 150Z" fill="#8FBBCB" ${k}/><path d="M30 40q10-6 20 0t20 0M70 80q10-6 20 0t20 0" stroke="#FBF7EE" stroke-width="2" fill="none"/>
+      <path d="M0 560V380C30 400 40 470 10 560Z" fill="#8FBBCB" ${k}/>
+      <path d="M430 0C390 110 450 210 395 300S300 430 335 560" fill="none" stroke="#2F2620" stroke-width="20" stroke-linecap="round"/><path d="M430 0C390 110 450 210 395 300S300 430 335 560" fill="none" stroke="#8FBBCB" stroke-width="14"/>
+      <ellipse cx="560" cy="490" rx="90" ry="40" fill="#C9D69A" opacity=".6"/><ellipse cx="140" cy="330" rx="80" ry="45" fill="#C9D69A" opacity=".6"/><ellipse cx="300" cy="140" rx="70" ry="35" fill="#C9D69A" opacity=".5"/>
+      ${tri(560, 280, 34)}${tri(625, 265, 44)}${tri(690, 285, 30)}${tri(700, 165, 36)}${tri(760, 140, 46)}${tri(820, 175, 30)}${tri(255, 60, 30)}${tri(310, 50, 38)}
+      ${forest(100, 320, 7)}${forest(500, 470, 8)}${forest(250, 420, 3)}${forest(560, 80, 5)}${forest(680, 520, 6, "#3E4A36")}${forest(930, 300, 4, "#2E3328")}
+      <rect width="1000" height="560" fill="url(#wmDark)"/>
+      <ellipse cx="560" cy="295" rx="80" ry="16" fill="#FBF7EE" opacity=".6"/><ellipse cx="660" cy="300" rx="70" ry="14" fill="#FBF7EE" opacity=".5"/>
+      <text x="870" y="535" text-anchor="middle" font-size="17" font-weight="800" fill="#E8DFCB" opacity=".75" letter-spacing="2">${esc(T("ดินแดนหมอกดำ", "THE BLACK FOG LANDS"))}</text>
+      <g transform="translate(60 505)" opacity=".75"><circle r="26" fill="#FBF7EE" ${k}/><path d="M0-22L6 0 0 22-6 0Z" fill="#C46A3A" stroke="#2F2620" stroke-width="2"/><text y="-30" text-anchor="middle" font-size="13" font-weight="800" fill="#2F2620">N</text></g>`;
+    // bridges where the road crosses the river
+    const bridges = [[322, 455], [412, 98]].map(([x, y]) => `<rect x="${x - 16}" y="${y - 9}" width="32" height="18" rx="3" fill="#B98A5B" ${k}/><path d="M${x - 10} ${y - 9}v18M${x} ${y - 9}v18M${x + 10} ${y - 9}v18" stroke="#2F2620" stroke-width="2"/>`).join("");
+    const road = `<path d="${curve(7)}" fill="none" stroke="#FBF7EE" stroke-width="9" stroke-linecap="round" opacity=".6"/>
+      <path d="${curve(7)}" fill="none" stroke="#5B4636" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
+      ${rank ? `<path d="${curve(Math.min(rank, 7))}" fill="none" stroke="#C0392B" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 8"/>` : ""}`;
+    const towns = COURSE.map((ch, ci) => {
+      const [x, y] = this.MAP[ci], open = this.chapterOpen(ci), done = this.chapterDone(ci), here = open && !done;
+      const name = open || ci === rank + 1 ? T(...this.TOWNS[ci]) : "???", w = Math.max(90, name.length * (LANG === "th" ? 9 : 8.6) + 24);
+      const got = ch.lessons.reduce((s, _, li) => s + this.lessonStars(ci, li), 0);
+      return `<g class="mt ${open ? "" : "locked"}" data-ci="${ci}" role="button" tabindex="${open ? 0 : -1}" aria-label="${esc(T("บทที่", "Chapter") + " " + (ci + 1) + ": " + name)}">
+        <ellipse class="halo" cx="${x}" cy="${y - 6}" rx="74" ry="26" fill="#F5C344" opacity=".55"/>
+        <svg x="${x - 66}" y="${y - 88}" width="132" height="94" viewBox="0 0 140 100">${this.townArt(ci).replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>
+        ${open ? "" : `<g class="fogs"><ellipse cx="${x}" cy="${y - 34}" rx="84" ry="56" fill="url(#wmFog)"/></g><text x="${x}" y="${y - 28}" text-anchor="middle" font-size="26">🔒</text>`}
+        ${done ? `<g transform="translate(${x + 44} ${y - 70})"><path d="M0 0V-30" stroke="#2F2620" stroke-width="3"/><path d="M0-30l20 7-20 7Z" fill="#F5C344" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/></g>` : ""}
+        <rect class="plate" x="${x - w / 2}" y="${y + 6}" width="${w}" height="${open ? 40 : 26}" rx="8" fill="${ci === 7 ? "#3B2422" : "#FBF7EE"}" ${k}/>
+        <text x="${x}" y="${y + 24}" text-anchor="middle" font-size="15" font-weight="800" fill="${ci === 7 ? "#FF8A6E" : "#2F2620"}">${esc(name)}</text>
+        ${open ? `<text x="${x}" y="${y + 40}" text-anchor="middle" font-size="12" font-weight="800" fill="${ci === 7 ? "#F3EADB" : "#E07A3E"}">★ ${got}/${ch.lessons.length * 3}</text>` : ""}
+        ${here ? `<g transform="translate(${x - 15} ${y - 116})"><g class="bob"><path d="M15 3a6 6 0 0 1 4 10.5c3 1.5 4 4 4 6.5h-3l3 12H7l3-12H7c0-2.5 1-5 4-6.5A6 6 0 0 1 15 3Z" fill="#F5C344" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/><rect x="5" y="32" width="20" height="5" rx="2" fill="#F5C344" stroke="#2F2620" stroke-width="2.5"/></g></g>` : ""}
+      </g>`;
+    }).join("");
+    // the Black King watches over his land
+    const eyes = `<g transform="translate(905 92)"><g class="eyes"><ellipse cx="-9" cy="0" rx="5" ry="3" fill="#FF4A2E"/><ellipse cx="9" cy="0" rx="5" ry="3" fill="#FF4A2E"/></g></g>`;
+    return `<svg class="world" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice" role="group" aria-label="${esc(T("แผนที่สงคราม", "War map"))}">${terrain}${road}${bridges}${eyes}${towns}</svg>`;
+  },
+  // Camera over the 1000x560 world: the viewBox always matches the screen's shape, so the map covers it.
+  view: {
+    init(el, focus) {
+      this.el = el; this.svg = el.querySelector("svg"); this.z = 1;
+      this.fit(); this.x = focus[0] - this.w / 2; this.y = focus[1] - 40 - this.h / 2; this.apply();
+      if (this.bound) return; this.bound = true;
+      const pts = new Map(); let moved = 0, pinch = 0;
+      el.addEventListener("pointerdown", e => { pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch = 0; el.classList.add("drag"); });
+      el.addEventListener("pointermove", e => {
+        if (!pts.has(e.pointerId)) return;
+        const [px, py] = pts.get(e.pointerId), r = el.getBoundingClientRect();
+        if (pts.size === 2) {
+          const [a, b] = [...pts.values()], d0 = Math.hypot(a[0] - b[0], a[1] - b[1]);
+          pts.set(e.pointerId, [e.clientX, e.clientY]);
+          const [c, d] = [...pts.values()], d1 = Math.hypot(c[0] - d[0], c[1] - d[1]);
+          if (d0) this.zoom(d1 / d0, (c[0] + d[0]) / 2 - r.left, (c[1] + d[1]) / 2 - r.top); moved = 99; pinch = 1; return;
+        }
+        pts.set(e.pointerId, [e.clientX, e.clientY]);
+        moved += Math.abs(e.clientX - px) + Math.abs(e.clientY - py);
+        if (moved > 6 && !el.hasPointerCapture(e.pointerId)) try { el.setPointerCapture(e.pointerId); } catch (x) {}
+        this.x -= (e.clientX - px) * this.w / r.width; this.y -= (e.clientY - py) * this.h / r.height; this.apply();
+      });
+      const up = e => { pts.delete(e.pointerId); if (!pts.size) el.classList.remove("drag"); };
+      el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+      // a drag should not count as tapping a town
+      el.addEventListener("click", e => { if (moved > 6 || pinch) { e.stopPropagation(); e.preventDefault(); } moved = 0; }, true);
+      el.addEventListener("wheel", e => { e.preventDefault(); const r = el.getBoundingClientRect(); this.zoom(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+      addEventListener("resize", () => { if (!$("train").hidden) { const cx = this.x + this.w / 2, cy = this.y + this.h / 2; this.fit(); this.x = cx - this.w / 2; this.y = cy - this.h / 2; this.apply(); } });
+    },
+    fit() {
+      const r = this.el.getBoundingClientRect(), a = (r.width || 1) / (r.height || 1);
+      // the smallest view that still covers the screen, then zoomed in
+      let w = 1000, h = 1000 / a; if (h > 560) { h = 560; w = 560 * a; }
+      this.base = [w, h]; this.w = w / this.z; this.h = h / this.z;
+    },
+    zoom(f, sx, sy) {
+      const r = this.el.getBoundingClientRect(), z = Math.min(3, Math.max(1, this.z * f)); if (z === this.z) return;
+      const wx = this.x + sx / r.width * this.w, wy = this.y + sy / r.height * this.h;
+      this.z = z; this.w = this.base[0] / z; this.h = this.base[1] / z;
+      this.x = wx - sx / r.width * this.w; this.y = wy - sy / r.height * this.h; this.apply();
+    },
+    apply() {
+      this.x = Math.min(Math.max(this.x, 0), 1000 - this.w); this.y = Math.min(Math.max(this.y, 0), 560 - this.h);
+      this.svg.setAttribute("viewBox", `${this.x.toFixed(1)} ${this.y.toFixed(1)} ${this.w.toFixed(1)} ${this.h.toFixed(1)}`);
+    },
+  },
+  pickTown(ci) {
+    const ch = COURSE[ci], open = this.chapterOpen(ci);
+    document.querySelectorAll("#lessonList .mt").forEach(g => g.classList.toggle("sel", +g.dataset.ci === ci));
+    const got = ch.lessons.reduce((s, _, li) => s + this.lessonStars(ci, li), 0);
+    $("townPanel").hidden = false;
+    $("townPanel").innerHTML = `<button class="tp-x" type="button" aria-label="${T("ปิด", "Close")}">✕</button><div class="tp-head"><b>${T("บทที่", "Chapter")} ${ci + 1} · ${esc(T(...this.TOWNS[ci]))}</b>
+      <small>${esc(ch.title)} · <span class="tstar">★ ${got}/${ch.lessons.length * 3}</span> · ${T("ยศ", "Rank")} ${esc(RANKS[ch.rank])}</small></div>
+      <div class="chap-lessons">${ch.lessons.map((L, li) => {
+        const ok = open && this.lessonOpen(ci, li), st = this.lessonStars(ci, li);
+        return `<button data-c="${ci}" data-l="${li}" ${ok ? "" : "disabled"} class="${L.boss ? "boss" : ""}"><span>${L.boss ? "👑 " : ""}${esc(L.title)}</span><span class="stars">${ok ? STAR(st) : "🔒"}</span></button>`;
+      }).join("")}</div>`;
   },
   openList() {
     clearTimeout(this.timer);
@@ -3609,28 +3739,13 @@ const Train = {
     $("roadRankName").textContent = tr("ยศตอนนี้: ") + RANKS[rank];
     $("roadStars").textContent = tr("ดาว ") + this.totalStars() + " / " + all + (rank < COURSE.length ? tr(" · ผ่านบท ") + (rank + 1) + tr(" เพื่อเลื่อนเป็น ") + RANKS[rank + 1] : tr(" · สูงสุดแล้ว!"));
     $("roadMeter").style.width = Math.round(rank / COURSE.length * 100) + "%";
-    const pawn = `<svg class="me" viewBox="0 0 30 38" aria-hidden="true"><path d="M15 3a6 6 0 0 1 4 10.5c3 1.5 4 4 4 6.5h-3l3 12H7l3-12H7c0-2.5 1-5 4-6.5A6 6 0 0 1 15 3Z" fill="#F5C344" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/><rect x="5" y="32" width="20" height="5" rx="2" fill="#F5C344" stroke="#2F2620" stroke-width="2.5"/></svg>`;
-    $("lessonList").innerHTML = COURSE.map((ch, ci) => {
-      const open = this.chapterOpen(ci), done = this.chapterDone(ci), here = open && !done;
-      const got = ch.lessons.reduce((s, _, li) => s + this.lessonStars(ci, li), 0), max = ch.lessons.length * 3;
-      const name = open || ci === rank + 1 ? T(...this.TOWNS[ci]) : "???";
-      return `<li class="town ${open ? "" : "locked"} ${done ? "done" : ""} ${here ? "open here" : ""} ${ci === COURSE.length - 1 ? "boss" : ""}" data-ci="${ci}">
-        <button class="town-head" type="button" ${open ? "" : "disabled"} aria-expanded="${here}">
-          <span class="town-art">${this.townArt(ci)}${open ? "" : `<span class="fogc">🔒</span>`}${here ? pawn : ""}</span>
-          <span class="town-info"><span class="tn">${T("บทที่", "Chapter")} ${ci + 1}${here ? " · " + T("คุณอยู่ที่นี่", "You are here") : ""}</span><b>${esc(name)}</b>
-            <small>${esc(ch.title)}</small><small>${open ? `<span class="tstar">★ ${got}/${max}</span> · ` : ""}${T("ยศ", "Rank")} ${esc(RANKS[ch.rank])}</small></span>
-        </button>
-        <div class="chap-lessons">${ch.lessons.map((L, li) => {
-          const ok = this.lessonOpen(ci, li), st = this.lessonStars(ci, li);
-          return `<button data-c="${ci}" data-l="${li}" ${ok ? "" : "disabled"} class="${L.boss ? "boss" : ""}"><span>${L.boss ? "👑 " : ""}${esc(L.title)}</span><span class="stars">${ok ? STAR(st) : "🔒"}</span></button>`;
-        }).join("")}</div></li>`;
-    }).join("");
+    $("lessonList").innerHTML = `<div class="wmap">${this.worldMap(rank)}</div><div class="town-panel" id="townPanel"></div>`;
+    this.pickTown(Math.min(rank, COURSE.length - 1));
     const seen = Story.seen(), got = ["normal", "good", "true"].filter(n => seen["e_" + n]).length;
     $("roadEnd").hidden = rank < COURSE.length;
     $("roadEnd").textContent = T("ดูตอนจบ", "Watch the ending") + " (" + got + "/3)";
     closeAll(); show("train");
-    const cur = $("lessonList").querySelector(".town.here");
-    if (cur) cur.scrollIntoView({ block: "nearest" });
+    this.view.init($("lessonList").querySelector(".wmap"), this.MAP[Math.min(rank, COURSE.length - 1)]);
   },
 
   /* --- board helpers --- */
@@ -3883,9 +3998,11 @@ $("openDaily").addEventListener("click", () => Daily.open());
 Daily.syncButton(); Story.syncButton();
 
 $("closeTrain").addEventListener("click", () => { hide("train"); if (G.mode === "train") return; openMenu(); });
+$("lessonList").addEventListener("keydown", e => { const t = e.target.closest(".mt"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); t.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 $("lessonList").addEventListener("click", e => {
-  const h = e.target.closest(".town-head");
-  if (h) { const t = h.parentNode; t.classList.toggle("open"); h.setAttribute("aria-expanded", t.classList.contains("open")); if (t.classList.contains("open")) t.querySelector(".chap-lessons").scrollIntoView({ block: "nearest", behavior: "smooth" }); return; }
+  const t = e.target.closest(".mt");
+  if (t) { if (!t.classList.contains("locked")) Train.pickTown(+t.dataset.ci); return; }
+  if (e.target.closest(".tp-x")) { $("townPanel").hidden = true; document.querySelectorAll("#lessonList .mt.sel").forEach(g => g.classList.remove("sel")); return; }
   const b = e.target.closest("button[data-c]"); if (b && !b.disabled) Train.start(+b.dataset.c, +b.dataset.l); });
 $("lsList").addEventListener("click", () => Train.openList());
 $("lsExit").addEventListener("click", () => Train.exit());
