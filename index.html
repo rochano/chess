@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-l</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-m</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2306,6 +2306,7 @@ function reportResult() {
 
 function newGame() {
   MUSIC.game++;
+  stopVoice(); // the sergeant should not keep talking into the next screen
   G.mode = prefs.mode === "online" && !Net.live ? "friend" : prefs.mode; G.level = +prefs.level;
   G.look = null; G.arrows = null;
   const [base, inc] = prefs.clock === "0" ? [0, 0] : prefs.clock.split("+").map(Number);
@@ -3065,6 +3066,7 @@ function showResult() {
 }
 
 function openMenu() {
+  stopVoice();
   $("closeMenu").hidden = !G.history.length || !!G.over;
   syncMenu(); if (typeof Daily !== "undefined") Daily.syncButton(); try { Story.syncButton(); } catch (x) {} show("menu");
 }
@@ -3510,7 +3512,7 @@ const Story = {
     const close = () => {
       clearInterval(typing); el.onclick = null;
       try { el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" }).onfinish = () => el.remove(); } catch (x) { el.remove(); }
-      try { speechSynthesis.cancel(); } catch (x) {}
+      stopVoice();
       if (done) done();
     };
     const next = () => {
