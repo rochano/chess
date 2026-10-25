@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-n</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-o</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2319,6 +2319,7 @@ function reportResult() {
 
 function newGame() {
   MUSIC.game++;
+  if (typeof fillNames === "function" && $("inNameW")) try { fillNames(); } catch (e) {}
   stopVoice(); // the sergeant should not keep talking into the next screen
   G.mode = prefs.mode === "online" && !Net.live ? "friend" : prefs.mode; G.level = +prefs.level;
   G.look = null; G.arrows = null;
@@ -4644,12 +4645,24 @@ function syncTaunts() {
   $("segRate").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs.voiceRate))));
   $("segVoice").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.voice))); $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
 syncTaunts();
+// A player who hasn't typed a name gets a warrior name, so every game (and the leaderboard) has one.
+function heroName() {
+  const r = a => a[Math.floor(Math.random() * a.length)], n = 10 + Math.floor(Math.random() * 90);
+  return LANG === "th"
+    ? r(["ขุนพล", "อัศวิน", "นักรบ", "จอมทัพ", "พลธนู", "เสือ", "หมาป่า", "เหยี่ยว", "มังกร", "ทหารม้า"]) + r(["เงา", "เหล็ก", "หมอก", "เพลิง", "สายฟ้า", "ทมิฬ", "พายุ", "ศิลา", "จันทรา", "ไร้นาม"]) + " " + n
+    : r(["Iron", "Shadow", "Misty", "Ember", "Storm", "Silent", "Stone", "Moon", "Grim", "Swift"]) + " " + r(["Knight", "Rook", "Warden", "Ranger", "Falcon", "Wolf", "Captain", "Archer", "Lancer", "Bishop"]) + " " + n;
+}
+function fillNames() {
+  for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) if (!prefs[key].trim()) { prefs[key] = heroName(); $(id).value = prefs[key]; }
+  savePrefs();
+}
 for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
   $(id).value = prefs[key];
   $(id).addEventListener("input", e => { prefs[key] = e.target.value; savePrefs(); });
 }
 
 applyTheme();
+fillNames();
 syncMenu();
 newGame();
 initExtras();
