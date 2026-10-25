@@ -819,6 +819,12 @@ select {
 .sq.look::before { box-shadow: inset 0 0 0 0.6cqw var(--ember); background: rgba(224, 122, 62, 0.22); animation: can 0.9s ease-in-out infinite alternate; }
 
 /* Leaderboard */
+/* the table takes whatever height is left, so the card always fits the screen and the close button stays visible */
+#leader .card { display: flex; flex-direction: column; max-height: calc(100dvh - 32px); max-width: calc(100vw - 32px); min-width: 0; margin-block: 0; align-self: center; }
+#leader .lb { flex: 1 1 auto; min-height: 110px; max-height: 60vh; }
+#leader .card > * { flex-shrink: 0; }
+#leader .card > .lb { flex-shrink: 1; }
+@media (max-height: 460px) { #leader .card { gap: 8px; padding: 12px 16px; } #leader .card h2 { font-size: 20px; } #leader .fine { display: none; } }
 .lb { max-height: 50vh; overflow: auto; border: 2.5px solid var(--ink); border-radius: 12px; background: var(--paper-2); }
 .lb table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
 .lb th, .lb td { padding: 7px 8px; text-align: right; border-bottom: 1.5px solid rgba(47, 38, 32, 0.15); }
@@ -826,6 +832,7 @@ select {
 .lb th:nth-child(2), .lb td:nth-child(2) { text-align: left; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb td:last-child { font-weight: 800; }
 .lb tr.top1 td { background: rgba(245, 195, 68, 0.45); }
+@media (max-width: 440px) { .lb th, .lb td { padding: 7px 4px; } .lb th:nth-child(2), .lb td:nth-child(2) { max-width: 104px; } .lb table { font-size: 13px; } }
 .lb .empty { padding: 16px; margin: 0; color: var(--ink-soft); font-weight: 700; line-height: 1.5; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1179,7 +1186,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-q</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-r</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -4238,7 +4245,7 @@ function tally(rows, local = false) {
 function drawBoard(rows, emptyText, local = false) {
   const list = tally(rows, local).slice(0, 50);
   $("lbBody").innerHTML = list.length
-    ? `<table><thead><tr><th>#</th><th>Name</th><th>Games</th><th>W</th><th>D</th><th>L</th><th>Pts</th></tr></thead><tbody>${list.map((e, k) =>
+    ? `<table><thead><tr><th>#</th><th>${T("ชื่อ", "Name")}</th><th>${T("เกม", "Games")}</th><th>${T("ชนะ", "W")}</th><th>${T("เสมอ", "D")}</th><th>${T("แพ้", "L")}</th><th>${T("แต้ม", "Pts")}</th></tr></thead><tbody>${list.map((e, k) =>
         `<tr class="${k === 0 ? "top1" : ""}"><td>${k + 1}</td><td>${esc(e.name)}</td><td>${e.p}</td><td>${e.w}</td><td>${e.d}</td><td>${e.l}</td><td>${e.pts}</td></tr>`).join("")}</tbody></table>`
     : `<p class="empty">${esc(emptyText)}</p>`;
 }
