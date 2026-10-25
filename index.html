@@ -737,7 +737,7 @@ select {
 #train.scrim { padding: 0; overflow: hidden; }
 #train .card.road { position: fixed; inset: 0; width: auto; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; display: block; background: #E9DDBE; overflow: hidden; }
 .road-map, .wmap { position: absolute; inset: 0; }
-.wmap { overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; background: #E9DDBE; }
+.wmap { overflow: hidden; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; background: #1E1610; }
 .wmap.drag { cursor: grabbing; }
 .wmap svg.world { display: block; width: 100%; height: 100%; }
 .road-hud { position: absolute; z-index: 2; top: max(10px, env(safe-area-inset-top)); left: max(10px, env(safe-area-inset-left)); width: min(360px, calc(100% - 20px)); background: rgba(251,247,238,.94); border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 4px 4px 0 var(--ink); padding: 10px 12px; display: grid; gap: 6px; }
@@ -758,12 +758,7 @@ select {
 .wmap .mt { cursor: pointer; }
 .wmap .mt.locked { cursor: not-allowed; }
 .wmap .mt:focus { outline: none; }
-.wmap .mt:focus-visible .plate, .wmap .mt.sel .plate { stroke: var(--ember); stroke-width: 4; }
 .wmap .mt .halo { opacity: 0; }
-.wmap .mt.sel .halo { opacity: 1; animation: mapHalo 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes mapHalo { 50% { transform: scale(1.12); opacity: .5; } }
-.wmap .bob { animation: mapBob 1.1s ease-in-out infinite; }
-@keyframes mapBob { 50% { transform: translateY(-8px); } }
 .wmap .fogs { animation: mapFog 14s ease-in-out infinite alternate; }
 @keyframes mapFog { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
 .wmap .eyes { animation: mapEyes 4s infinite; transform-box: fill-box; transform-origin: center; }
@@ -772,6 +767,37 @@ select {
 .town-panel[hidden] { display: none; }
 .town-panel .tp-x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 20px; font-weight: 800; cursor: pointer; color: var(--ink); padding: 4px 8px; }
 .town-panel .tp-head { padding-right: 34px; }
+/* War map chrome: dark leather and brass instead of the game's sticker style */
+#train .card.road { background: #1E1610; color: #E8D9B8; }
+#train .card.road, .road-hud, .road-btns .btn, .town-panel { font-family: Cinzel, "Noto Serif Thai", Georgia, serif; }
+.road-hud, .town-panel { background: rgba(26,18,12,.88); color: #E8D9B8; border: 1px solid #8A6A3A; border-radius: 6px; box-shadow: 0 8px 28px rgba(0,0,0,.45), inset 0 0 0 3px rgba(26,18,12,.9), inset 0 0 0 4px rgba(138,106,58,.5); backdrop-filter: blur(2px); }
+.road-hud h2 { font-family: inherit; color: #E3C27A; letter-spacing: .04em; font-weight: 700; }
+.road-hud .road-head small, .town-panel .tp-head small { color: #B9A47E; }
+.road-hud .rank-badge { background: #3B2A1A; color: #E3C27A; border: 1.5px solid #C9A35A; box-shadow: none; font-family: inherit; }
+.road-hud .meter { background: #3B2A1A; border: 1px solid #8A6A3A; height: 7px; }
+.road-hud .meter i { background: linear-gradient(90deg, #6A1A12, #B83A22); }
+.road-btns .btn { background: rgba(26,18,12,.88); color: #E8D9B8; border: 1px solid #8A6A3A; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.4); text-transform: none; letter-spacing: .03em; font-weight: 700; }
+.road-btns .btn.go { background: #6A1A12; border-color: #C9A35A; color: #F3E3BE; }
+.town-panel .tp-head b { color: #E3C27A; letter-spacing: .02em; }
+.town-panel .tp-x { color: #E8D9B8; }
+.town-panel .tp-x:focus:not(:focus-visible) { outline: none; }
+.town-panel .tp-x:focus-visible { outline: 2px solid #C9A35A; }
+.town-panel .tstar { color: #E0A04A; }
+.town-panel .chap-lessons button { background: rgba(255,240,210,.05); color: #E8D9B8; border: 1px solid #8A6A3A; border-radius: 5px; box-shadow: none; font-family: inherit; font-weight: 700; }
+.town-panel .chap-lessons button:hover:not(:disabled) { background: rgba(227,194,122,.14); }
+.town-panel .chap-lessons button.boss { background: rgba(106,26,18,.45); border-color: #C9A35A; }
+.town-panel .chap-lessons button:disabled { opacity: .55; }
+.town-panel .chap-lessons .stars { color: #E0A04A; }
+.wmap .mt .halo { opacity: 0; }
+.wmap .mt.sel .halo { opacity: .9; animation: mapHalo 2.4s linear infinite; }
+@keyframes mapHalo { to { stroke-dashoffset: -36; } }
+.wmap .pulse { transform-box: fill-box; transform-origin: center; animation: mapPulse 1.8s ease-out infinite; }
+@keyframes mapPulse { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.9); opacity: 0; } }
+.wmap .bob { animation: mapBob 1.6s ease-in-out infinite; }
+@keyframes mapBob { 50% { transform: translateY(-4px); } }
+.wmap .fogs { animation: mapFog 16s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .wmap .pulse { animation: none; } }
+
 .town-panel { display: grid; gap: 8px; }
 .town-panel { animation: tpIn .22s ease-out; }
 @keyframes tpIn { from { opacity: 0; translate: 0 16px; } }
@@ -1149,7 +1175,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-i</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-j</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3624,53 +3650,104 @@ const Train = {
   // Town positions on the 1000x560 war map, and the road between them (extra bends so it never runs straight).
   MAP: [[95, 470], [255, 500], [340, 345], [175, 205], [480, 150], [610, 330], [800, 445], [905, 180]],
   ROAD: [[[150, 525], [205, 470]], [[330, 470], [300, 400]], [[260, 300], [230, 250]], [[290, 120], [400, 95]], [[560, 190], [540, 280]], [[700, 330], [740, 420]], [[900, 420], [850, 290]]],
+  // Textures painted once on a canvas (cheaper than SVG filters while the map is dragged around).
+  tex: {},
+  paper() {
+    if (this.tex.paper) return this.tex.paper;
+    const c = document.createElement("canvas"), W = c.width = 1500, H = c.height = 840, g = c.getContext("2d");
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    g.fillStyle = "#D4BE92"; g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 70; i++) { const x = rnd() * W, y = rnd() * H, r = 40 + rnd() * 220, gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, `rgba(${rnd() < .5 ? "120,82,40" : "235,220,185"},${.05 + rnd() * .08})`); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+    const im = g.getImageData(0, 0, W, H), d = im.data;
+    for (let i = 0; i < d.length; i += 4) { const n = (rnd() - .5) * 22; d[i] += n; d[i + 1] += n; d[i + 2] += n * .8; }
+    g.putImageData(im, 0, 0);
+    g.strokeStyle = "rgba(70,45,20,.16)"; g.lineWidth = 3;
+    [[W / 3, 0, W / 3 + 6, H], [W * 2 / 3, 0, W * 2 / 3 - 4, H], [0, H / 2, W, H / 2 + 5]].forEach(([a, b, c2, d2]) => { g.beginPath(); g.moveTo(a, b); g.lineTo(c2, d2); g.stroke(); });
+    const v = g.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .62); v.addColorStop(0, "rgba(60,35,15,0)"); v.addColorStop(1, "rgba(50,28,10,.6)");
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+    return this.tex.paper = c.toDataURL("image/jpeg", .86);
+  },
+  fog() {
+    if (this.tex.fog) return this.tex.fog;
+    const c = document.createElement("canvas"), W = c.width = 360, H = c.height = 260, g = c.getContext("2d");
+    let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 90; i++) { const a = rnd() * Math.PI * 2, q = Math.sqrt(rnd()), x = W / 2 + Math.cos(a) * q * W * .36, y = H / 2 + Math.sin(a) * q * H * .32, r = 30 + rnd() * 60;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(28,24,22,${.12 + (1 - q) * .14})`); gr.addColorStop(1, "rgba(28,24,22,0)"); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); }
+    return this.tex.fog = c.toDataURL("image/png");
+  },
   worldMap(rank) {
-    const k = 'stroke="#2F2620" stroke-width="3" stroke-linejoin="round"';
+    const INK = "#3B2A1A", k = `stroke="${INK}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"`;
+    let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const pts = [this.MAP[0]]; this.ROAD.forEach((r, i) => pts.push(...r, this.MAP[i + 1]));
-    // smooth curve through the points (Catmull-Rom as cubic Béziers); "upto" ends the road at a town
     const curve = upto => { const P = pts.slice(0, upto * 3 + 1); let d = `M${P[0]}`;
       for (let i = 0; i < P.length - 1; i++) { const a = P[i - 1] || P[i], b = P[i], c = P[i + 1], e = P[i + 2] || c;
         d += `C${b[0] + (c[0] - a[0]) / 6},${b[1] + (c[1] - a[1]) / 6} ${c[0] - (e[0] - b[0]) / 6},${c[1] - (e[1] - b[1]) / 6} ${c}`; } return d; };
-    const tri = (x, y, s, c = "#7A8478", snow = true) => `<path d="M${x - s} ${y}L${x} ${y - s * 1.3}L${x + s} ${y}Z" fill="${c}" ${k}/>${snow ? `<path d="M${x - s * .32} ${y - s * .88}L${x} ${y - s * 1.3}L${x + s * .32} ${y - s * .88}Z" fill="#FBF7EE"/>` : ""}`;
-    const pine = (x, y, c = "#5F7A43") => `<path d="M${x - 9} ${y}L${x} ${y - 22}L${x + 9} ${y}Z" fill="${c}" stroke="#2F2620" stroke-width="2"/>`;
-    const forest = (x, y, n, c) => Array.from({ length: n }, (_, i) => pine(x + (i % 4) * 14 + (i >> 2) * 7, y + (i >> 2) * 12, c)).join("");
+    // pen-and-ink pieces
+    const mtn = (x, y, s, dark) => `<path d="M${x - s} ${y}C${x - s * .6} ${y - s * .45} ${x - s * .25} ${y - s * 1.05} ${x} ${y - s * 1.25}C${x + s * .3} ${y - s * .9} ${x + s * .62} ${y - s * .4} ${x + s} ${y}" fill="${dark ? "#2C211A" : "#CDB688"}" ${k}/>` +
+      [1, 2, 3, 4].map(i => `<path d="M${x + s * .08 * i} ${y - s * (1.12 - .2 * i)}l${s * .2} ${s * .34}" stroke="${dark ? "#6B5440" : INK}" stroke-width="1" opacity=".7"/>`).join("");
+    const range = (x, y, n, s, dark) => Array.from({ length: n }, (_, i) => mtn(x + i * s * 1.1 + rnd() * 10, y + rnd() * 18 - (i % 2) * 14, s * (.75 + rnd() * .5), dark)).join("");
+    const tree = (x, y, dark) => `<path d="M${x} ${y}v-4M${x - 5} ${y - 4}a5 6.5 0 1 1 10 0Z" fill="${dark ? "#2C211A" : "#BFA676"}" stroke="${INK}" stroke-width="1.1"/>`;
+    const forest = (x, y, n, dark) => Array.from({ length: n }, (_, i) => tree(x + (i % 6) * 11 + (rnd() * 6 | 0) + (i / 6 | 0) * 5, y + (i / 6 | 0) * 10 + (rnd() * 4 | 0), dark)).join("");
+    const hills = (x, y, n) => Array.from({ length: n }, (_, i) => `<path d="M${x + i * 30 - 13} ${y + (i % 2) * 8}q13 -12 26 0" fill="none" ${k} stroke-width="1.2"/><path d="M${x + i * 30 + 2} ${y + (i % 2) * 8 - 6}l5 5" stroke="${INK}" stroke-width=".9"/>`).join("");
+    const coast = (d, dx, dy) => `<path d="${d}" fill="#A79670" fill-opacity=".55" stroke="${INK}" stroke-width="1.8"/>` + [1, 2, 3, 4].map(i => `<path d="${d}" fill="none" stroke="${INK}" stroke-width=".9" opacity="${.32 - i * .06}" transform="translate(${dx * i} ${dy * i})"/>`).join("");
+    const RIVER = "M430 0C390 110 450 210 395 300S300 430 335 560";
+    const F = "#E0CFA4"; // fill for buildings
+    const house = (x, y, w = 14, h = 10, f = F) => `<path d="M${x} ${y}v${-h}l${w / 2} ${-h * .7}l${w / 2} ${h * .7}v${h}Z" fill="${f}" ${k}/>`;
+    const tent = (x, y, w, f = F) => `<path d="M${x} ${y}l${w / 2} ${-w * .8}l${w / 2} ${w * .8}Z" fill="${f}" ${k}/><path d="M${x + w / 2} ${y}v${-w * .35}" ${k}/>`;
+    const tower = (x, y, w, h, f = F) => `<path d="M${x} ${y}v${-h}h${w / 5}v-4h${w / 5}v4h${w / 5}v-4h${w / 5}v4h${w / 5}v${h}Z" fill="${f}" ${k}/>`;
+    const spire = (x, y, w, h, f) => `<path d="M${x} ${y}v${-h}l${w / 2} ${-h * .6}l${w / 2} ${h * .6}v${h}Z" fill="${f}" ${k}/>`;
+    const banner = (x, y, c = "#8E1B12") => `<path d="M${x} ${y}v-26" ${k}/><path d="M${x} ${y - 26}h14l-4 5 4 5h-14Z" fill="${c}" ${k} stroke-width="1.2"/>`;
+    const icon = [
+      (x, y) => tent(x - 30, y, 20) + tent(x - 8, y + 2, 24) + tent(x + 16, y, 18) + banner(x + 2, y - 18),
+      (x, y) => house(x - 30, y) + house(x - 14, y + 3, 16, 12) + house(x + 4, y, 14, 11) + house(x + 18, y + 4, 13, 9) + `<path d="M${x - 34} ${y + 6}h68" ${k} stroke-width="1"/>`,
+      (x, y) => house(x - 26, y - 2) + house(x - 10, y, 16, 12) + house(x + 8, y - 3, 13, 10) + `<path d="M${x + 22} ${y - 2}h18M${x + 26} ${y - 2}v6M${x + 34} ${y - 2}v6" ${k}/>`,
+      (x, y) => `<path d="M${x - 30} ${y}l2-14M${x - 24} ${y}l1-20M${x - 18} ${y}l-1-9M${x - 12} ${y}l2-17M${x + 14} ${y}l1-13M${x + 20} ${y}l-2-18M${x + 26} ${y}l1-8" ${k}/><path d="M${x - 8} ${y}l9-16l3 6l7 10Z" fill="#9C876A" ${k}/><path d="M${x - 2} ${y - 22}c-4-6 4-8 0-14M${x + 6} ${y - 20}c-4-6 4-8 0-14" fill="none" stroke="${INK}" stroke-width="1" opacity=".55"/>`,
+      (x, y) => tower(x - 34, y, 14, 30) + `<path d="M${x - 20} ${y}v-18h4v-4h5v4h5v-4h5v4h5v-4h5v4h5v-4h6v18Z" fill="${F}" ${k}/><path d="M${x - 4} ${y}v-8a4 4 0 0 1 8 0v8" fill="${INK}"/>` + tower(x + 20, y, 14, 30) + banner(x + 27, y - 30),
+      (x, y) => tower(x - 6, y, 12, 26) + house(x + 10, y, 14, 9) + house(x - 26, y + 2, 13, 9),
+      (x, y) => spire(x - 34, y, 16, 34, "#3A2C22") + `<path d="M${x - 18} ${y}v-26h36v26Z" fill="#3A2C22" ${k}/><path d="M${x - 8} ${y}v-14a8 8 0 0 1 16 0v14Z" fill="#120C08" ${k}/>` + spire(x + 18, y, 16, 34, "#3A2C22") + banner(x - 26, y - 54, "#120C08"),
+      (x, y) => spire(x - 36, y, 14, 40, "#1E1510") + spire(x - 20, y, 16, 56, "#1E1510") + spire(x - 2, y, 20, 70, "#1E1510") + spire(x + 20, y, 16, 56, "#1E1510") + spire(x + 36, y, 14, 40, "#1E1510") + `<path d="M${x - 36} ${y}h86" ${k}/><rect x="${x + 6}" y="${y - 50}" width="4" height="7" fill="#C0301E"/><rect x="${x - 14}" y="${y - 40}" width="3" height="6" fill="#C0301E"/><rect x="${x + 25}" y="${y - 38}" width="3" height="6" fill="#C0301E"/>`,
+    ];
+    const swords = (x, y) => `<g transform="translate(${x} ${y})" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"><path d="M-8-8L8 8M8-8L-8 8"/><path d="M-9 3l4 4M9 3l-4 4" stroke-width="1.3"/></g>`;
+    const fog = this.fog(), paper = this.paper();
+    const serif = `font-family="Cinzel, 'Noto Serif Thai', Georgia, serif"`;
+    const label = (x, y, txt, size, fill = INK, extra = "") => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" fill="${fill}" ${serif} ${extra} stroke="#D9C59A" stroke-width="4" stroke-opacity=".85" paint-order="stroke">${esc(txt)}</text>`;
     const terrain = `
-      <defs><linearGradient id="wmDark" x1="0" x2="1"><stop offset=".55" stop-color="#2A1A18" stop-opacity="0"/><stop offset=".78" stop-color="#2A1A18" stop-opacity=".5"/><stop offset="1" stop-color="#1A0E0C" stop-opacity=".78"/></linearGradient>
-        <radialGradient id="wmFog"><stop offset="0" stop-color="#4A403E" stop-opacity=".95"/><stop offset=".6" stop-color="#4A403E" stop-opacity=".75"/><stop offset="1" stop-color="#4A403E" stop-opacity="0"/></radialGradient>
-        <pattern id="wmDots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#2F2620" opacity=".08"/></pattern></defs>
-      <rect width="1000" height="560" fill="#E9DDBE"/><rect width="1000" height="560" fill="url(#wmDots)"/>
-      <path d="M0 0H170C150 50 95 70 60 120S0 150 0 150Z" fill="#8FBBCB" ${k}/><path d="M30 40q10-6 20 0t20 0M70 80q10-6 20 0t20 0" stroke="#FBF7EE" stroke-width="2" fill="none"/>
-      <path d="M0 560V380C30 400 40 470 10 560Z" fill="#8FBBCB" ${k}/>
-      <path d="M430 0C390 110 450 210 395 300S300 430 335 560" fill="none" stroke="#2F2620" stroke-width="20" stroke-linecap="round"/><path d="M430 0C390 110 450 210 395 300S300 430 335 560" fill="none" stroke="#8FBBCB" stroke-width="14"/>
-      <ellipse cx="560" cy="490" rx="90" ry="40" fill="#C9D69A" opacity=".6"/><ellipse cx="140" cy="330" rx="80" ry="45" fill="#C9D69A" opacity=".6"/><ellipse cx="300" cy="140" rx="70" ry="35" fill="#C9D69A" opacity=".5"/>
-      ${tri(560, 280, 34)}${tri(625, 265, 44)}${tri(690, 285, 30)}${tri(700, 165, 36)}${tri(760, 140, 46)}${tri(820, 175, 30)}${tri(255, 60, 30)}${tri(310, 50, 38)}
-      ${forest(100, 320, 7)}${forest(500, 470, 8)}${forest(250, 420, 3)}${forest(560, 80, 5)}${forest(680, 520, 6, "#3E4A36")}${forest(930, 300, 4, "#2E3328")}
+      <defs><linearGradient id="wmDark" x1="0" x2="1"><stop offset=".56" stop-color="#140C08" stop-opacity="0"/><stop offset=".76" stop-color="#140C08" stop-opacity=".45"/><stop offset="1" stop-color="#0A0604" stop-opacity=".82"/></linearGradient></defs>
+      <image href="${paper}" x="0" y="0" width="1000" height="560" preserveAspectRatio="none"/>
+      ${coast("M0 0H170C150 50 95 70 60 120S0 150 0 150Z", 7, 7)}${coast("M0 560V380C30 400 40 470 10 560Z", -6, 0)}
+      <path d="${RIVER}" fill="none" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="${RIVER}" fill="none" stroke="#B4A47C" stroke-width="5.4"/>
+      ${hills(120, 300, 4)}${hills(520, 490, 3)}${hills(250, 160, 2)}
+      ${range(530, 285, 4, 30)}${range(240, 70, 3, 28)}${range(680, 170, 4, 34, false)}${range(760, 520, 3, 26, true)}${range(930, 300, 2, 30, true)}
+      ${forest(90, 340, 16)}${forest(560, 470, 14)}${forest(250, 420, 6)}${forest(560, 70, 10)}${forest(660, 520, 10, true)}${forest(860, 330, 8, true)}${forest(205, 280, 6)}
       <rect width="1000" height="560" fill="url(#wmDark)"/>
-      <ellipse cx="560" cy="295" rx="80" ry="16" fill="#FBF7EE" opacity=".6"/><ellipse cx="660" cy="300" rx="70" ry="14" fill="#FBF7EE" opacity=".5"/>
-      <text x="870" y="535" text-anchor="middle" font-size="17" font-weight="800" fill="#E8DFCB" opacity=".75" letter-spacing="2">${esc(T("ดินแดนหมอกดำ", "THE BLACK FOG LANDS"))}</text>
-      <g transform="translate(60 505)" opacity=".75"><circle r="26" fill="#FBF7EE" ${k}/><path d="M0-22L6 0 0 22-6 0Z" fill="#C46A3A" stroke="#2F2620" stroke-width="2"/><text y="-30" text-anchor="middle" font-size="13" font-weight="800" fill="#2F2620">N</text></g>`;
-    // bridges where the road crosses the river
-    const bridges = [[322, 455], [412, 98]].map(([x, y]) => `<rect x="${x - 16}" y="${y - 9}" width="32" height="18" rx="3" fill="#B98A5B" ${k}/><path d="M${x - 10} ${y - 9}v18M${x} ${y - 9}v18M${x + 10} ${y - 9}v18" stroke="#2F2620" stroke-width="2"/>`).join("");
-    const road = `<path d="${curve(7)}" fill="none" stroke="#FBF7EE" stroke-width="9" stroke-linecap="round" opacity=".6"/>
-      <path d="${curve(7)}" fill="none" stroke="#5B4636" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
-      ${rank ? `<path d="${curve(Math.min(rank, 7))}" fill="none" stroke="#C0392B" stroke-width="5" stroke-linecap="round" stroke-dasharray="14 8"/>` : ""}`;
+      <g class="fogs"><image href="${fog}" x="700" y="-30" width="360" height="260"/><image href="${fog}" x="760" y="250" width="320" height="230" opacity=".8"/><image href="${fog}" x="540" y="240" width="200" height="140" opacity=".55"/></g>
+      ${label(640, 36, T("แผนที่สงครามแห่งหมอกดำ", "Map of the Black Fog War"), 20, INK, 'font-weight="700" letter-spacing="2"')}
+      <path d="M520 46h240" stroke="${INK}" stroke-width="1"/><circle cx="640" cy="46" r="2.5" fill="${INK}"/>
+      <text x="880" y="540" text-anchor="middle" font-size="15" fill="#C9A35A" ${serif} font-style="italic" letter-spacing="3" opacity=".8">${esc(T("ดินแดนหมอกดำ", "The Black Fog Lands"))}</text>
+      <g transform="translate(470 505)" opacity=".85"><circle r="30" fill="none" stroke="${INK}" stroke-width="1"/><circle r="24" fill="none" stroke="${INK}" stroke-width=".6"/>
+        <path d="M0-34L5-5 34 0 5 5 0 34-5 5-34 0-5-5Z" fill="#CDB688" stroke="${INK}" stroke-width="1.2"/><path d="M0-34L5-5 0 0ZM34 0L5 5 0 0ZM0 34L-5 5 0 0ZM-34 0L-5-5 0 0Z" fill="${INK}"/>
+        <path d="M-17-17l20 17M17-17l-17 20" stroke="${INK}" stroke-width=".6"/><text y="-38" text-anchor="middle" font-size="12" fill="${INK}" ${serif} font-weight="700">N</text></g>`;
+    const bridges = [[322, 455], [412, 98]].map(([x, y]) => `<path d="M${x - 14} ${y - 6}h28M${x - 14} ${y + 6}h28" ${k}/><path d="M${x - 9} ${y - 6}v12M${x - 3} ${y - 6}v12M${x + 3} ${y - 6}v12M${x + 9} ${y - 6}v12" stroke="${INK}" stroke-width="1"/>`).join("");
+    const road = `<path d="${curve(7)}" fill="none" stroke="#6A1A12" stroke-width="2" stroke-dasharray="1.5 7" stroke-linecap="round" opacity=".75"/>
+      ${rank ? `<path d="${curve(Math.min(rank, 7))}" fill="none" stroke="#7A1E14" stroke-width="3" stroke-dasharray="10 5" stroke-linecap="round"/>` : ""}`;
     const towns = COURSE.map((ch, ci) => {
-      const [x, y] = this.MAP[ci], open = this.chapterOpen(ci), done = this.chapterDone(ci), here = open && !done;
-      const name = open || ci === rank + 1 ? T(...this.TOWNS[ci]) : "???", w = Math.max(90, name.length * (LANG === "th" ? 9 : 8.6) + 24);
+      const [x, y] = this.MAP[ci], open = this.chapterOpen(ci), done = this.chapterDone(ci), here = open && !done, dark = ci >= 6;
+      const name = open || ci === rank + 1 ? T(...this.TOWNS[ci]) : "???";
       const got = ch.lessons.reduce((s, _, li) => s + this.lessonStars(ci, li), 0);
+      const lc = dark ? "#E3CFA2" : INK, halo = dark ? `stroke="#140C08" stroke-opacity=".7"` : "";
       return `<g class="mt ${open ? "" : "locked"}" data-ci="${ci}" role="button" tabindex="${open ? 0 : -1}" aria-label="${esc(T("บทที่", "Chapter") + " " + (ci + 1) + ": " + name)}">
-        <ellipse class="halo" cx="${x}" cy="${y - 6}" rx="74" ry="26" fill="#F5C344" opacity=".55"/>
-        <svg x="${x - 66}" y="${y - 88}" width="132" height="94" viewBox="0 0 140 100">${this.townArt(ci).replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>
-        ${open ? "" : `<g class="fogs"><ellipse cx="${x}" cy="${y - 34}" rx="84" ry="56" fill="url(#wmFog)"/></g><text x="${x}" y="${y - 28}" text-anchor="middle" font-size="26">🔒</text>`}
-        ${done ? `<g transform="translate(${x + 44} ${y - 70})"><path d="M0 0V-30" stroke="#2F2620" stroke-width="3"/><path d="M0-30l20 7-20 7Z" fill="#F5C344" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/></g>` : ""}
-        <rect class="plate" x="${x - w / 2}" y="${y + 6}" width="${w}" height="${open ? 40 : 26}" rx="8" fill="${ci === 7 ? "#3B2422" : "#FBF7EE"}" ${k}/>
-        <text x="${x}" y="${y + 24}" text-anchor="middle" font-size="15" font-weight="800" fill="${ci === 7 ? "#FF8A6E" : "#2F2620"}">${esc(name)}</text>
-        ${open ? `<text x="${x}" y="${y + 40}" text-anchor="middle" font-size="12" font-weight="800" fill="${ci === 7 ? "#F3EADB" : "#E07A3E"}">★ ${got}/${ch.lessons.length * 3}</text>` : ""}
-        ${here ? `<g transform="translate(${x - 15} ${y - 116})"><g class="bob"><path d="M15 3a6 6 0 0 1 4 10.5c3 1.5 4 4 4 6.5h-3l3 12H7l3-12H7c0-2.5 1-5 4-6.5A6 6 0 0 1 15 3Z" fill="#F5C344" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/><rect x="5" y="32" width="20" height="5" rx="2" fill="#F5C344" stroke="#2F2620" stroke-width="2.5"/></g></g>` : ""}
+        <ellipse class="halo" cx="${x}" cy="${y - 14}" rx="62" ry="40" fill="none" stroke="#8E1B12" stroke-width="2" stroke-dasharray="4 5"/>
+        <rect x="${x - 60}" y="${y - 80}" width="120" height="130" fill="transparent"/>
+        ${icon[ci](x, y)}
+        ${open ? "" : `<g class="fogs"><image href="${fog}" x="${x - 110}" y="${y - 100}" width="220" height="160"/></g>`}
+        ${done ? swords(x + 46, y - 30) : ""}
+        <text x="${x}" y="${y + 24}" text-anchor="middle" font-size="16" font-weight="700" fill="${ci === 7 ? "#E0533F" : lc}" ${serif} stroke="${dark ? "#140C08" : "#D9C59A"}" stroke-width="4" stroke-opacity=".85" paint-order="stroke">${esc(name)}</text>
+        <text x="${x}" y="${y + 40}" text-anchor="middle" font-size="11.5" fill="${dark ? "#C9A35A" : "#7A1E14"}" ${serif} font-style="italic" ${halo} stroke-width="3" paint-order="stroke">${T("บทที่", "Chapter")} ${ci + 1}${open ? " · ★ " + got + "/" + ch.lessons.length * 3 : ""}</text>
+        ${here ? `<g transform="translate(${x} ${y - 62})"><circle class="pulse" r="16" fill="none" stroke="#8E1B12" stroke-width="2"/><g class="bob"><path d="M0 22L-10 6A13 13 0 1 1 10 6Z" fill="#8E1B12" stroke="#3B0C08" stroke-width="1.6"/><path d="M0-9a3.5 3.5 0 0 1 2.4 6c1.8 1 2.4 2.4 2.4 4H3l1.6 6h-9.2L-3 1h-1.8c0-1.6.6-3 2.4-4A3.5 3.5 0 0 1 0-9Z" fill="#E8D5A8"/></g></g>` : ""}
       </g>`;
     }).join("");
-    // the Black King watches over his land
-    const eyes = `<g transform="translate(905 92)"><g class="eyes"><ellipse cx="-9" cy="0" rx="5" ry="3" fill="#FF4A2E"/><ellipse cx="9" cy="0" rx="5" ry="3" fill="#FF4A2E"/></g></g>`;
+    const eyes = `<g transform="translate(905 70)"><g class="eyes"><ellipse cx="-9" cy="0" rx="5" ry="2.6" fill="#FF3B1F"/><ellipse cx="9" cy="0" rx="5" ry="2.6" fill="#FF3B1F"/></g></g>`;
     return `<svg class="world" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice" role="group" aria-label="${esc(T("แผนที่สงคราม", "War map"))}">${terrain}${road}${bridges}${eyes}${towns}</svg>`;
   },
   // Camera over the 1000x560 world: the viewBox always matches the screen's shape, so the map covers it.
@@ -3745,6 +3822,7 @@ const Train = {
     $("roadEnd").hidden = rank < COURSE.length;
     $("roadEnd").textContent = T("ดูตอนจบ", "Watch the ending") + " (" + got + "/3)";
     closeAll(); show("train");
+    if (!document.getElementById("mapFont")) { const l = document.createElement("link"); l.id = "mapFont"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+Thai:wght@500;700&display=swap"; document.head.appendChild(l); }
     this.view.init($("lessonList").querySelector(".wmap"), this.MAP[Math.min(rank, COURSE.length - 1)]);
   },
 
