@@ -765,6 +765,10 @@ select {
 @keyframes mapEyes { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
 .town-panel { position: absolute; z-index: 4; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 20px), 640px); background: rgba(251,247,238,.97); border: 2.5px solid var(--ink); border-radius: 16px; box-shadow: 5px 5px 0 var(--ink); padding: 12px 14px 14px; }
 .town-panel[hidden] { display: none; }
+.map-zoom { position: absolute; z-index: 3; right: max(10px, env(safe-area-inset-right)); top: 50%; transform: translateY(-50%); display: grid; gap: 6px; }
+.map-zoom button { width: 40px; height: 40px; border-radius: 6px; border: 1px solid #8A6A3A; background: rgba(26,18,12,.86); color: #E8D9B8; font: 700 20px Georgia, serif; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+.map-hint { position: absolute; z-index: 3; left: 50%; top: 42%; transform: translate(-50%, -50%); padding: 8px 16px; border-radius: 999px; background: rgba(26,18,12,.82); color: #E8D9B8; font: 700 14px Georgia, "Noto Serif Thai", serif; pointer-events: none; white-space: nowrap; animation: mapHint 3.2s ease forwards; }
+@keyframes mapHint { 0%, 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
 .town-panel .tp-x { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 20px; font-weight: 800; cursor: pointer; color: var(--ink); padding: 4px 8px; }
 .town-panel .tp-head { padding-right: 34px; }
 /* War map chrome: dark leather and brass instead of the game's sticker style */
@@ -1175,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-j</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-k</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3755,7 +3759,8 @@ const Train = {
     init(el, focus) {
       this.el = el; this.svg = el.querySelector("svg"); this.z = 1;
       this.fit(); this.x = focus[0] - this.w / 2; this.y = focus[1] - 40 - this.h / 2; this.apply();
-      if (this.bound) return; this.bound = true;
+      // the map element is rebuilt every time the map opens, so its listeners are added each time too
+      if (this.bound === el) return; this.bound = el;
       const pts = new Map(); let moved = 0, pinch = 0;
       el.addEventListener("pointerdown", e => { pts.set(e.pointerId, [e.clientX, e.clientY]); moved = 0; pinch = 0; el.classList.add("drag"); });
       el.addEventListener("pointermove", e => {
@@ -3774,25 +3779,31 @@ const Train = {
       });
       const up = e => { pts.delete(e.pointerId); if (!pts.size) el.classList.remove("drag"); };
       el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+      // iOS Safari can still treat a drag on the SVG as a page scroll and cancel the pointer; stop that here
+      el.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+      el.addEventListener("gesturestart", e => e.preventDefault());
       // a drag should not count as tapping a town
       el.addEventListener("click", e => { if (moved > 6 || pinch) { e.stopPropagation(); e.preventDefault(); } moved = 0; }, true);
       el.addEventListener("wheel", e => { e.preventDefault(); const r = el.getBoundingClientRect(); this.zoom(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+      if (this.resizing) return; this.resizing = true;
       addEventListener("resize", () => { if (!$("train").hidden) { const cx = this.x + this.w / 2, cy = this.y + this.h / 2; this.fit(); this.x = cx - this.w / 2; this.y = cy - this.h / 2; this.apply(); } });
     },
     fit() {
       const r = this.el.getBoundingClientRect(), a = (r.width || 1) / (r.height || 1);
       // the smallest view that still covers the screen, then zoomed in
       let w = 1000, h = 1000 / a; if (h > 560) { h = 560; w = 560 * a; }
-      this.base = [w, h]; this.w = w / this.z; this.h = h / this.z;
+      this.base = [w, h]; this.zmin = Math.min(1, w / 1000, h / 560); this.z = Math.max(this.z, this.zmin); this.w = w / this.z; this.h = h / this.z;
     },
     zoom(f, sx, sy) {
-      const r = this.el.getBoundingClientRect(), z = Math.min(3, Math.max(1, this.z * f)); if (z === this.z) return;
+      const r = this.el.getBoundingClientRect(), z = Math.min(3, Math.max(this.zmin, this.z * f)); if (z === this.z) return;
       const wx = this.x + sx / r.width * this.w, wy = this.y + sy / r.height * this.h;
       this.z = z; this.w = this.base[0] / z; this.h = this.base[1] / z;
       this.x = wx - sx / r.width * this.w; this.y = wy - sy / r.height * this.h; this.apply();
     },
     apply() {
-      this.x = Math.min(Math.max(this.x, 0), 1000 - this.w); this.y = Math.min(Math.max(this.y, 0), 560 - this.h);
+      // when zoomed out past the map's edge, keep it centred
+      this.x = this.w >= 1000 ? (1000 - this.w) / 2 : Math.min(Math.max(this.x, 0), 1000 - this.w);
+      this.y = this.h >= 560 ? (560 - this.h) / 2 : Math.min(Math.max(this.y, 0), 560 - this.h);
       this.svg.setAttribute("viewBox", `${this.x.toFixed(1)} ${this.y.toFixed(1)} ${this.w.toFixed(1)} ${this.h.toFixed(1)}`);
     },
   },
@@ -3816,7 +3827,8 @@ const Train = {
     $("roadRankName").textContent = tr("ยศตอนนี้: ") + RANKS[rank];
     $("roadStars").textContent = tr("ดาว ") + this.totalStars() + " / " + all + (rank < COURSE.length ? tr(" · ผ่านบท ") + (rank + 1) + tr(" เพื่อเลื่อนเป็น ") + RANKS[rank + 1] : tr(" · สูงสุดแล้ว!"));
     $("roadMeter").style.width = Math.round(rank / COURSE.length * 100) + "%";
-    $("lessonList").innerHTML = `<div class="wmap">${this.worldMap(rank)}</div><div class="town-panel" id="townPanel"></div>`;
+    $("lessonList").innerHTML = `<div class="wmap">${this.worldMap(rank)}</div><div class="map-zoom"><button type="button" data-z="1.4" aria-label="${T("ซูมเข้า", "Zoom in")}">+</button><button type="button" data-z="0.7" aria-label="${T("ซูมออก", "Zoom out")}">−</button><button type="button" data-z="0" aria-label="${T("ดูทั้งแผนที่", "Whole map")}">⤢</button></div>
+      <div class="map-hint">${T("ลากเพื่อสำรวจแผนที่ · ถ่างนิ้วเพื่อซูม", "Drag to explore · pinch to zoom")}</div><div class="town-panel" id="townPanel"></div>`;
     this.pickTown(Math.min(rank, COURSE.length - 1));
     const seen = Story.seen(), got = ["normal", "good", "true"].filter(n => seen["e_" + n]).length;
     $("roadEnd").hidden = rank < COURSE.length;
@@ -4078,6 +4090,8 @@ Daily.syncButton(); Story.syncButton();
 $("closeTrain").addEventListener("click", () => { hide("train"); if (G.mode === "train") return; openMenu(); });
 $("lessonList").addEventListener("keydown", e => { const t = e.target.closest(".mt"); if (t && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); t.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 $("lessonList").addEventListener("click", e => {
+  const zb = e.target.closest(".map-zoom button");
+  if (zb) { const v = Train.view, r = v.el.getBoundingClientRect(), f = +zb.dataset.z; v.zoom(f ? f : v.zmin / v.z, r.width / 2, r.height / 2); return; }
   const t = e.target.closest(".mt");
   if (t) { if (!t.classList.contains("locked")) Train.pickTown(+t.dataset.ci); return; }
   if (e.target.closest(".tp-x")) { $("townPanel").hidden = true; document.querySelectorAll("#lessonList .mt.sel").forEach(g => g.classList.remove("sel")); return; }
