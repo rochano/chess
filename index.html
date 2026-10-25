@@ -1179,7 +1179,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-o</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-p</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -4645,15 +4645,21 @@ function syncTaunts() {
   $("segRate").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs.voiceRate))));
   $("segVoice").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.voice))); $("segTaunts").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.taunts))); }
 syncTaunts();
-// A player who hasn't typed a name gets a warrior name, so every game (and the leaderboard) has one.
+// A player who hasn't typed a name gets a quirky animal name, like the anonymous animals in Google Sheets.
+const NAME_ANIMALS = [["คาปิบาร่า", "Capybara"], ["อโซลอเติ้ล", "Axolotl"], ["ตุ่นปากเป็ด", "Platypus"], ["แพนด้าแดง", "Red Panda"], ["ควอกก้า", "Quokka"], ["นากทะเล", "Sea Otter"],
+  ["ตัวนิ่ม", "Armadillo"], ["สลอธ", "Sloth"], ["อัลปาก้า", "Alpaca"], ["นกฮูก", "Owl"], ["ลิงลม", "Slow Loris"], ["เพนกวิน", "Penguin"], ["ตัวกินมด", "Anteater"],
+  ["ปลาปักเป้า", "Pufferfish"], ["ปลาหมึก", "Octopus"], ["ชูก้าไกลเดอร์", "Sugar Glider"], ["หมีน้ำ", "Tardigrade"], ["ทาปีร์", "Tapir"], ["นาร์วาล", "Narwhal"], ["วอมแบต", "Wombat"],
+  ["เม่น", "Hedgehog"], ["นกกระทุง", "Pelican"], ["แมวน้ำ", "Seal"], ["ฟลามิงโก", "Flamingo"], ["ไคเมร่า", "Chimera"]];
+const NAME_VIBES = [["ขี้เซา", "Sleepy"], ["สายมู", "Lucky"], ["หัวร้อน", "Spicy"], ["สายชิล", "Chill"], ["ตัวตึง", "Boss"], ["สายเปย์", "Fancy"], ["นิรนาม", "Anonymous"],
+  ["งงๆ", "Confused"], ["สายฮา", "Silly"], ["ตาโต", "Wide-eyed"], ["อินดี้", "Indie"], ["ใจบาง", "Soft"], ["ขี้อ้อน", "Clingy"], ["สายลุย", "Bold"], ["ลึกลับ", "Mysterious"]];
+const OLD_HERO = /^((ขุนพล|อัศวิน|นักรบ|จอมทัพ|พลธนู|เสือ|หมาป่า|เหยี่ยว|มังกร|ทหารม้า)(เงา|เหล็ก|หมอก|เพลิง|สายฟ้า|ทมิฬ|พายุ|ศิลา|จันทรา|ไร้นาม)|(Iron|Shadow|Misty|Ember|Storm|Silent|Stone|Moon|Grim|Swift) (Knight|Rook|Warden|Ranger|Falcon|Wolf|Captain|Archer|Lancer|Bishop)) \d\d$/;
 function heroName() {
-  const r = a => a[Math.floor(Math.random() * a.length)], n = 10 + Math.floor(Math.random() * 90);
-  return LANG === "th"
-    ? r(["ขุนพล", "อัศวิน", "นักรบ", "จอมทัพ", "พลธนู", "เสือ", "หมาป่า", "เหยี่ยว", "มังกร", "ทหารม้า"]) + r(["เงา", "เหล็ก", "หมอก", "เพลิง", "สายฟ้า", "ทมิฬ", "พายุ", "ศิลา", "จันทรา", "ไร้นาม"]) + " " + n
-    : r(["Iron", "Shadow", "Misty", "Ember", "Storm", "Silent", "Stone", "Moon", "Grim", "Swift"]) + " " + r(["Knight", "Rook", "Warden", "Ranger", "Falcon", "Wolf", "Captain", "Archer", "Lancer", "Bishop"]) + " " + n;
+  const r = a => a[Math.floor(Math.random() * a.length)], [at, ae] = r(NAME_ANIMALS), [vt, ve] = r(NAME_VIBES);
+  return LANG === "th" ? at + vt : ve + " " + ae;
 }
 function fillNames() {
-  for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) if (!prefs[key].trim()) { prefs[key] = heroName(); $(id).value = prefs[key]; }
+  // names from the short-lived warrior generator count as empty, so they get the new style too
+  for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) if (!prefs[key].trim() || OLD_HERO.test(prefs[key].trim())) { prefs[key] = heroName(); $(id).value = prefs[key]; }
   savePrefs();
 }
 for (const [id, key] of [["inNameW", "nameW"], ["inNameB", "nameB"]]) {
