@@ -967,6 +967,14 @@ select {
     <section class="set-group" aria-labelledby="setLook">
     <h3 class="menu-hd" id="setLook">Display</h3>
     <div class="field">
+      <label class="lbl" for="lang">Language</label>
+      <select id="lang">
+        <option value="auto">Auto (from your device)</option>
+        <option value="th">ไทย</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="field">
       <span class="lbl">Streamer character</span>
       <div class="seg" id="segStreamer">
         <button data-v="on" aria-pressed="false">On</button>
@@ -974,7 +982,7 @@ select {
       </div>
       <p class="fine" style="margin:6px 0 0">A player at a desk who reacts to your game against the computer or online. Handy for recording videos.</p>
     </div>
-    <div class="field">
+    <div class="field" id="shopField">
       <span class="lbl">Product tips after a game</span>
       <div class="seg" id="segShop">
         <button data-v="on" aria-pressed="true">On</button>
@@ -1002,7 +1010,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. Version 2026.10.24-zk</p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-a</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1122,6 +1130,49 @@ if (!homeSite()) {
     + '<p style="margin:18px 0 0;font-size:13px;color:#6E5E50">© 2026 Rochanapan. All rights reserved.</p></div></div>';
   throw new Error("Chess Game runs only at " + HOME_URL);
 }
+/* ---------- Language: Thai on Thai devices, English everywhere else (Settings can override) ---------- */
+const LANG = (() => {
+  try { const l = JSON.parse(localStorage.getItem("chess-prefs") || "{}").lang; if (l === "th" || l === "en") return l; } catch (e) {}
+  return (navigator.languages || [navigator.language || ""]).some(l => /^th/i.test(l)) ? "th" : "en";
+})();
+document.documentElement.lang = LANG;
+// Keyed by the text as written in the code or page; a missing key shows the original.
+const I18N = { en: {"คิง (ราชา)": "King", "ประเมินค่าไม่ได้": "Priceless", "เดินได้ 1 ช่องทุกทิศทาง ห้ามเดินเข้าช่องที่โดนโจมตี โดนรุกฆาตคือแพ้": "Moves 1 square in any direction. It can't step onto an attacked square. If it's checkmated, you lose.", "เข้าป้อม (castling) ได้ถ้ายังไม่เคยเดิน": "Can castle if it hasn't moved yet.", "ควีน (ราชินี)": "Queen", "9 แต้ม": "9 points", "เดินตรงและเฉียงกี่ช่องก็ได้ ทั้ง 8 ทิศ จนกว่าจะชนตัวอื่น": "Moves straight or diagonally, any number of squares in all 8 directions, until something blocks it.", "ตัวที่แรงที่สุดบนกระดาน": "The strongest piece on the board.", "เรือ": "Rook", "5 แต้ม": "5 points", "เดินตรง หน้า หลัง ซ้าย ขวา กี่ช่องก็ได้ จนกว่าจะชนตัวอื่น": "Moves straight forward, back, left or right, any number of squares, until something blocks it.", "แรงมากตอนท้ายเกมและบนแถวที่โล่ง": "Very strong in the endgame and on open files.", "บิชอป (โคน)": "Bishop", "3 แต้ม": "3 points", "เดินเฉียงกี่ช่องก็ได้ จนกว่าจะชนตัวอื่น": "Moves diagonally any number of squares, until something blocks it.", "อยู่บนช่องสีเดิมตลอดเกม": "Stays on the same colour all game.", "ไนท์ (ม้า)": "Knight", "เดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1 ช่อง": "Moves in an L: 2 squares straight, then 1 to the side.", "ตัวเดียวที่กระโดดข้ามตัวอื่นได้": "The only piece that can jump over others.", "เบี้ย": "Pawn", "1 แต้ม": "1 point", "เดินหน้า 1 ช่อง (ก้าวแรกเดินได้ 2 ช่อง) กินเฉียงไปข้างหน้า 1 ช่อง": "Moves forward 1 square (2 on its first move) and captures 1 square diagonally forward.", "เดินถึงแถวสุดท้ายแล้วเลื่อนขั้นเป็นตัวอื่นได้ (ส่วนใหญ่เป็นควีน)": "Reaching the last row, it promotes to another piece (usually a queen).", "ตอนนี้เดินได้ ": "Moves now: ", " ทาง": "", " (กินได้ ": " (captures: ", "ตอนนี้ยังเดินไม่ได้": "No moves right now", "ขาว": "White", "ดำ": "Black", "ม้า": "Knight", "บิชอป": "Bishop", "ควีน": "Queen", "คิง": "King", "เอ่อ ท่านครับ {p}ตัวนั้นดูเสี่ยงๆ นะครับ": "Er, sir... that {p} looks risky.", "ท่านครับ {p}ยืนตรงนั้นไม่มีใครคุ้มกันนะ ระวังหน่อย": "Sir, nobody is guarding your {p} there. Careful.", "ผมว่า{p}มันกลัวแล้วนะครับ ถอยก่อนดีไหม": "I think your {p} is scared, sir. Pull it back?", "เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!": "Wait, wait, sir! Nobody is guarding that {p}!", "ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!": "The enemy is smiling, sir... our {p} is under attack!", "แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!": "I'm not on board with this plan, sir. Our {p} is about to be taken for free!", "อีกแล้วเหรอท่าน!!! ส่ง{p}ไปตายเปล่าๆ อีกแล้ว!!!": "Again, sir?!!! Sending the {p} to die for nothing again!!!", "ผมจะลาออกแล้วนะครับ!!! {p}ยืนรอโดนกินแบบนั้นได้ไง!!!": "I'm going to resign my post!!! How can the {p} just stand there waiting to be taken!!!", "ท่านเล่นให้ข้าศึกเหรอครับ!!! {p}โดนเล็งอยู่เห็นไหม!!!": "Are you playing for the enemy, sir?!!! Can't you see the {p} is under attack!!!", "เสีย{p}ไปตัวนึงแล้วครับท่าน ตั้งใจหน่อยนะ": "We lost a {p}, sir. Please focus.", "อ้าว {p}ของเราไปแล้ว... ไม่เป็นไรครับ สู้ต่อ": "Oh, our {p} is gone... Never mind, sir. Keep fighting.", "{p}ล้มไปแล้วครับ คราวหน้าระวังหน่อยนะท่าน": "The {p} has fallen, sir. Be more careful next time.", "โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!": "Ouch, our {p}! I told you, sir!", "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!": "Who ordered the {p} to stand there?! Who?!", "{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!": "The {p} is down! Morale is collapsing!", "พอแล้วท่าน!!! เสีย{p}อีกแล้ว!!! ผมจะบ้าตาย!!!": "Enough, sir!!! Another {p} lost!!! You're driving me crazy!!!", "ท่านครับ!!! {p}ไปแล้ว!!! เราจะเหลืออะไรให้สู้!!!": "Sir!!! The {p} is gone!!! What will we have left to fight with!!!", "ผมยื่นใบลาออกตอนนี้เลยนะครับ!!! เสีย{p}แบบนี้!!!": "I'm handing in my resignation right now!!! Losing the {p} like this!!!", "หงุดหงิด": "Annoyed", "โมโห": "Angry", "เดือดสุดๆ": "Furious", "จ่าสมชาย เตือน": "Sergeant Somchai warns", "จ่าสมชาย ด่า": "Sergeant Somchai yells", " · ฝั่งขาว": " · White", " · ฝั่งดำ": " · Black", "มาเล่นกัน!": "Let's play!", "เกมใหม่ สู้ๆ!": "New game, let's go!", "วันนี้ต้องชนะ!": "Gotta win today!", "ได้{p}มาฟรีๆ!": "Got a free {p}!", "เย้! กิน{p}ได้แล้ว": "Yes! Took the {p}", "{p}ตัวนี้เป็นของเรา!": "This {p} is ours!", "เก็บเบี้ยไปหนึ่ง": "Picked up a pawn", "ได้เบี้ยมาตัวนึง": "Won a pawn", "รุก!": "Check!", "รุกคิง! หนีไปไหน": "Check! Where are you running?", "จ่อคิงแล้ว!": "Got the king!", "เบี้ยกลายเป็น{p}แล้ว!": "The pawn became a {p}!", "โอ๊ย {p}ของเรา!": "Ouch, our {p}!", "ไม่นะ! {p}โดนกิน": "No! They took the {p}", "พลาดแล้ว เสีย{p}": "Oops, lost the {p}", "เสียเบี้ยไปตัวนึง ไม่เป็นไร": "Lost a pawn, no big deal", "แค่เบี้ย ไม่เป็นไร": "Just a pawn, it's fine", "โดนรุก! ต้องหนีก่อน": "Check! Gotta run", "เฮ้ย โดนรุกแล้ว": "Whoa, I'm in check", "เย้! ชนะแล้ว!": "Yes! I won!", "ชนะแล้ว! เก่งมาก": "Won it! Nice!", "แพ้ซะแล้ว… เอาใหม่!": "Lost this one… again!", "โดนซะแล้ว ตาหน้าเอาคืน": "Got me. I'll get them next time", "เสมอกัน ก็ยังดี": "A draw. Not bad", "คอมระดับ ": "the computer ( ", "เพื่อนออนไลน์": "an online friend", "เพื่อน": "a friend", "มาเล่นหมากรุก 3 มิติกัน ฟรี ไม่ต้องสมัคร": "Come play 3D chess. Free, no sign-up", "เสมอกับ": "Drew with", " ใน ": " in ", " ตา มาลองเล่นหมากรุก 3 มิติกัน": " moves. Come try 3D chess", "ชนะ": "Beat", "แบบรุกฆาต": "by checkmate", " ตา! มาท้าดวลหมากรุก 3 มิติกัน": " moves! Come challenge me at 3D chess", "แพ้": "Lost to", " ตา ใครเก่งมาช่วยแก้แค้นที! หมากรุก 3 มิติ เล่นฟรี": " moves. Who can avenge me? Free 3D chess", " ชนะใน ": " won in ", " ตา มาเล่นหมากรุก 3 มิติด้วยกัน": " moves. Come play 3D chess together", "เล่นฟรีที่ rochano.github.io/chess": "Play free at rochano.github.io/chess", "ท่านครับ เกมนี้เครียดจัด พักแป๊บนึงก่อนดีไหมครับ": "Sir, that game was intense. How about a short break?", "ผมเห็นท่านกำหมัดแน่นเลย ผ่อนคลายหน่อยครับ": "I can see you clenching your fists, sir. Relax a little.", "แพ้ไม่เป็นไรครับท่าน ชาร์จพลังก่อนแล้วค่อยแก้มือ": "Losing is fine, sir. Recharge first, then get your revenge.", "ทหารยังต้องพัก ท่านก็เหมือนกันครับ": "Even soldiers need rest, sir. So do you.", "ชนะสวยครับท่าน! ลองไปโชว์ฝีมือบนกระดานจริงไหม": "Beautiful win, sir! Want to show off on a real board?", "เก่งขนาดนี้ ต้องมีกระดานจริงไว้ท้าเพื่อนแล้วครับ": "With skills like that, you need a real board to challenge your friends.", "อยากเก่งขึ้นอีก ผมมีของแนะนำครับท่าน": "Want to get even better? I have something for you, sir.", "เกือบชนะแล้วครับท่าน! ฝึกปิดเกมอีกนิดนะครับ": "So close to winning, sir! Let's practise finishing the game.", "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ": "Sponsored link. We may earn a commission if you buy.", " เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ": " So close! Your opponent wasn't in check but had no legal move, and the rules count that as a draw. Next time leave the king a square to move to, then checkmate.", "ทหารเกณฑ์": "Recruit", "พลทหาร": "Private", "สิบตรี": "Corporal", "สิบเอก": "Sergeant", "จ่าสิบเอก": "Master Sergeant", "ร้อยตรี": "Lieutenant", "ร้อยเอก": "Captain", "พันเอก": "Colonel", "เทพหมากรุก": "Chess Master", "ฝึกเดินหมาก": "Learn the moves", "เรือวิ่งเป็นเส้นตรง กี่ช่องก็ได้": "The rook moves in straight lines, any distance", "มองทั้ง 4 ทิศ: ขึ้น ลง ซ้าย ขวา": "Look in all 4 directions: up, down, left, right", "ข้ามหมากไม่ได้ ถ้ามีหมากขวางต้องหยุด": "It can't jump over pieces. If something is in the way, it stops", "เรือเดินเป็นเส้นตรง ขึ้น ลง ซ้าย ขวา กี่ช่องก็ได้ ตามลูกศรเลย": "The rook moves in a straight line, up, down, left or right, any number of squares. Follow the arrows.", "ข้ามหมากไม่ได้ ทางซ้ายติดเบี้ยเราที่ b1 จึงไปได้แค่ c1 แต่ถ้าเจอหมากข้าศึก (ม้า d5) กินมันได้แล้วหยุดตรงนั้น": "It can't jump over pieces. To the left our pawn on b1 is in the way, so it can only reach c1. But an enemy piece (the knight on d5) can be captured, and the rook stops there.", "เก็บเบี้ยดำให้หมด 3 ตัว ภายใน 3 ตา (ฝ่ายดำจะไม่เดิน)": "Capture all 3 black pawns within 3 moves (Black won't move)", "เก็บหมากดำ 2 ตัว ภายใน 2 ตา ระวังเบี้ยเราเองขวางทาง": "Capture 2 black pieces within 2 moves. Watch out for your own pawn in the way", "บิชอปวิ่งแนวทแยง กี่ช่องก็ได้": "The bishop moves diagonally, any distance", "บิชอปอยู่บนสีเดิมตลอดเกม": "The bishop stays on its starting colour all game", "บิชอปช่องขาวไม่มีวันไปช่องดำได้": "A light-squared bishop can never reach a dark square", "บิชอปเดินแนวทแยงได้ไกล 4 ทิศ และอยู่บนสีเดิมตลอดเกม": "The bishop moves far along diagonals in 4 directions and stays on the same colour all game.", "เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา": "Capture 3 black pawns within 3 moves", "เก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา": "Capture 2 black pawns within 2 moves", "ม้าเดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1": "The knight moves in an L: 2 squares straight, then 1 to the side", "ม้ากระโดดข้ามหมากได้ ตัวเดียวในเกม": "The knight is the only piece that can jump over others", "ม้าที่อยู่ริมกระดานเดินได้น้อยลงมาก": "A knight on the edge of the board has far fewer moves", "ม้าเดินเป็นรูปตัว L ได้ 8 ทาง และกระโดดข้ามหมากตัวอื่นได้": "The knight moves in an L in 8 directions and can jump over other pieces.", "ถึงจะมีเบี้ยล้อมอยู่ ม้าก็กระโดดออกมาได้": "Even when surrounded by pawns, the knight can jump out.", "กระโดดออกมาเก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา": "Jump out and capture 2 black pawns within 2 moves", "ควีน คิง และเบี้ย": "Queen, king and pawn", "ควีน = เรือ + บิชอป เดินได้ 8 ทิศ": "Queen = rook + bishop, moves in 8 directions", "คิงเดินทีละ 1 ช่อง": "The king moves 1 square at a time", "เบี้ยเดินตรง แต่กินทแยง": "Pawns move straight but capture diagonally", "คิงห้ามเดินเข้าช่องที่ข้าศึกเล็งอยู่": "The king can't step onto a square the enemy attacks", "เบี้ยเดินถอยหลังไม่ได้": "Pawns can't move backwards", "ควีนแรงที่สุด เดินได้ทั้งเส้นตรงและแนวทแยง 8 ทิศ": "The queen is the strongest piece. It moves along straight lines and diagonals in 8 directions.", "คิงเดินได้ทีละ 1 ช่องทุกทิศ (วงสีส้ม) และห้ามเดินเข้าช่องที่โดนเล็ง": "The king moves 1 square in any direction (orange rings) and can't step onto an attacked square.", "เบี้ยเดินหน้าทีละช่อง ตาแรกเดินได้ 2 ช่อง แต่เวลากินจะกินทางทแยงหน้า": "A pawn moves forward one square (two on its first move), but it captures diagonally forward.", "ใช้ควีนเก็บเบี้ยดำ 4 ตัว ภายใน 4 ตา": "Use the queen to capture 4 black pawns within 4 moves", "ใช้เบี้ยขาวกินเบี้ยดำ 3 ตัว ภายใน 3 ตา (เบี้ยกินทางทแยง)": "Use white pawns to capture 3 black pawns within 3 moves (pawns capture diagonally)", "ด่านบอส: เก็บกวาด": "Boss level: Clean sweep", "วางแผนก่อนเดิน: ตัวไหนเก็บอะไร ลำดับไหน": "Plan before you move: which piece takes what, and in what order", "ตาไม่พอถ้าเดินเสียเปล่าแม้แต่ตาเดียว": "You run out of moves if you waste even one", "ด่านบอสไม่มีคำใบ้": "Boss levels have no hints", "ด่านบอส! ใช้ทุกอย่างที่ฝึกมา เก็บหมากให้หมดโดยไม่เสียตาเปล่า": "Boss level! Use everything you've learned. Capture every piece without wasting a move.", "ใช้บิชอปกับม้าเก็บให้หมด 3 ตัว ภายใน 4 ตา": "Use the bishop and knight to capture all 3 within 4 moves", "ใช้ควีนเก็บให้หมด 4 ตัว ภายใน 4 ตา": "Use the queen to capture all 4 within 4 moves", "ของฟรีและของแพง": "Free pieces and costly ones", "กินของฟรี": "Take free pieces", "ค่าหมาก: เบี้ย 1 ม้า 3 บิชอป 3 เรือ 5 ควีน 9": "Piece values: pawn 1, knight 3, bishop 3, rook 5, queen 9", "หมากข้าศึกที่ไม่มีใครคุ้มกัน = ของฟรี": "An enemy piece nobody guards = a free piece", "ก่อนกิน ดูว่าช่องนั้นมีใครรอกินคืนไหม": "Before capturing, check whether someone can capture back", "อย่าเอาตัวแพงไปแลกตัวถูก": "Don't trade an expensive piece for a cheap one", "หมากแต่ละตัวมีค่าไม่เท่ากัน: เบี้ย 1, ม้า 3, บิชอป 3, เรือ 5, ควีน 9 แต้ม (คิงมีค่าเท่าชีวิต)": "Pieces are worth different amounts: pawn 1, knight 3, bishop 3, rook 5, queen 9 points (the king is worth the whole game).", "บิชอป h5 ไม่มีใครคุ้มกัน (ของฟรี) แต่ม้า d5 มีเบี้ย e6 คุ้มอยู่ ถ้าเอาเรือไปกิน จะโดนเบี้ยกินคืน เสีย 5 ได้ 3": "The bishop on h5 is unguarded (free), but the knight on d5 is guarded by the pawn on e6. If the rook takes it, the pawn takes back: you lose 5 to win 3.", "ควีนดำยืนอยู่โดยไม่มีใครคุ้มกัน หาแล้วกินเลย": "The black queen is standing unguarded. Find it and take it", "ดำเผลออีกแล้ว มีตัวใหญ่ให้กินฟรี": "Black slipped again. There's a big piece to take for free", "มีให้กิน 2 ตัว ตัวไหนกินแล้วไม่โดนกินคืน?": "Two pieces to take. Which one can you take without losing yours?", "โดนจ่อแล้วต้องหนี": "Attacked? Move away", "ทุกตาที่ข้าศึกเดิน ถามว่า: มันจ่อกินอะไรเรา": "After every enemy move, ask: what is it threatening?", "หนีไปช่องที่ไม่มีใครเล็ง หรือหาคนมาคุ้มกัน": "Move to a square nobody attacks, or bring a defender", "อย่าหนีไปช่องที่ยังโดนกินได้": "Don't run to a square where you can still be captured", "ม้าดำ f6 จ่อกินควีนเราที่ h5 อยู่ (ลูกศร) ต้องรู้ตัวก่อนจะสาย": "The black knight on f6 is attacking our queen on h5 (arrow). Notice it before it's too late.", "พาควีนหนีไปช่องที่ปลอดภัย": "Move the queen to a safe square", "เบี้ย a6 ไล่บิชอปเรา ทำยังไงไม่ให้เสียหมาก": "The pawn on a6 chases our bishop. How do you avoid losing a piece?", "บิชอปดำจ่อเรือเราอยู่ หนีให้รอด (ถ้าหนีแล้วได้รุกด้วยยิ่งดี)": "The black bishop is attacking our rook. Get it to safety (even better if it gives check)", "ด่านบอส: ตาไว": "Boss level: Sharp eyes", "มองหาของฟรีของข้าศึก": "Look for the enemy's free pieces", "เช็กว่าของเราโดนจ่ออยู่ไหม": "Check whether your own pieces are attacked", "ด่านบอส! แต่ละโจทย์อาจเป็นการกินของฟรี หรือการหนี ต้องดูให้ออกเอง": "Boss level! Each puzzle may be a free capture or an escape. You have to spot which.", "หาของฟรีให้เจอ": "Find the free piece", "เบี้ย d5 จ่อบิชอปเราอยู่ ตอบให้ดีโดยไม่เสียหมาก": "The pawn on d5 is attacking our bishop. Answer without losing a piece", "รุกและรุกฆาต": "Check and checkmate", "แก้รุก": "Getting out of check", "โดนรุกแก้ได้ 3 ทาง: หนี บัง หรือกินตัวที่รุก": "There are 3 ways out of check: move away, block, or capture the checking piece", "ทางที่ดีที่สุดมักเป็นการกินตัวที่รุก": "The best way is often to capture the checking piece", "เดินอย่างอื่นไม่ได้จนกว่าจะแก้รุก": "You can't make any other move until you deal with the check", "ควีนดำรุกคิงเราตามแนว e (ลูกศร) เราต้องแก้ด้วยการ หนี บัง หรือกิน": "The black queen checks our king along the e-file (arrow). We must move away, block or capture.", "โดนรุก! แก้รุกแบบที่ได้กำไรที่สุด": "Check! Get out of it the most profitable way", "รุกฆาตในตาเดียว": "Mate in one", "รุกฆาต = รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินไม่ได้": "Checkmate = check, and the king can't move away, block or capture", "คิงที่ติดหมากตัวเองล้อมอยู่ อันตรายที่สุด": "A king boxed in by its own pieces is in the most danger", "รุกแล้วคิงยังหนีได้ ไม่ใช่รุกฆาต": "If the king can still escape, it isn't checkmate", "ถ้าคิงไม่โดนรุกแต่เดินไม่ได้เลย จะเป็นอับ (เสมอ)": "If the king isn't in check but has no legal move, it's stalemate (a draw)", "คิงดำโดนเบี้ยตัวเองขังไว้ ถ้าเรือวิ่งเข้าแถวหลัง คิงจะหนีไม่ได้ = รุกฆาตแถวหลัง": "The black king is boxed in by its own pawns. If the rook reaches the back rank, the king can't escape = back-rank mate", "ใช้คิงเราช่วย: คิง b6 คุมช่อง a7 b7 ควีนมาคุมแถว 8 คิงดำก็ไม่มีที่ไป": "Use our king to help: the king on b6 covers a7 and b7, the queen covers the 8th rank, and the black king has nowhere to go", "รุกฆาตในตาเดียว (ใช้คิงช่วย)": "Mate in one (use the king to help)", "รุกฆาตด้วยม้า: คิงดำติดหมากตัวเองหมดแล้ว": "Mate with the knight: the black king is boxed in by its own pieces", "เรือ 2 ตัวช่วยกัน รุกฆาตในตาเดียว": "Two rooks work together: mate in one", "ด่านบอส: มือสังหาร": "Boss level: The finisher", "หาช่องที่คิงข้าศึกหนีได้ แล้วปิดให้หมด": "Find the squares the enemy king can escape to, and cover them all", "ด่านบอส! รุกฆาตในตาเดียว 3 ข้อติด": "Boss level! Three mates in one in a row", "อาวุธลับ: ส้อม ตรึง เสียบ": "Secret weapons: fork, pin, skewer", "ส้อม (Fork)": "Fork", "ส้อม = จ่อ 2 ตัวพร้อมกัน ข้าศึกหนีได้ตัวเดียว": "Fork = attack 2 pieces at once. The enemy can only save one", "ม้าส้อมเก่งที่สุด เพราะกระโดดได้และเล็งได้หลายทิศ": "Knights fork best, because they jump and attack in many directions", "เบี้ยก็ส้อมได้!": "Pawns can fork too!", "ช่องที่ไปส้อมต้องไม่โดนกินคืน": "The forking square must not be one where you get captured", "ม้า b5 กำลังจะกระโดดไป c7": "The knight on b5 is about to jump to c7", "จาก c7 ม้าจ่อทั้งคิงและเรือ คิงต้องหนี แล้วเราก็กินเรือฟรี นี่คือส้อม": "From c7 the knight attacks both the king and the rook. The king must move, and we take the rook for free. That's a fork.", "หาตาที่ม้าจ่อคิงกับเรือพร้อมกัน แล้วเก็บเรือ": "Find the move where the knight attacks the king and rook together, then win the rook", "ใช้เบี้ยส้อมม้า 2 ตัว แล้วเก็บมาให้ได้ 1 ตัว": "Use a pawn to fork 2 knights, then win one of them", "ตรึง (Pin) และเสียบ (Skewer)": "Pin and skewer", "ตรึง: หมากที่บังคิงอยู่ ขยับไม่ได้": "Pin: a piece shielding the king can't move", "เสียบ: รุกตัวใหญ่ข้างหน้า พอมันหลบ ก็กินตัวข้างหลัง": "Skewer: attack a big piece in front, and when it moves, take the one behind", "หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้": "A pinned piece can't defend anything", "ตรึง: ม้า c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง ถ้าขยับคิงจะโดนกิน": "Pin: the knight on c6 can't move because the king is behind it. If it moved, the king could be captured.", "เสียบ: บิชอปรุกคิง d5 คิงต้องหลบ แล้วบิชอปก็กินควีน a8 ที่อยู่ข้างหลัง": "Skewer: the bishop checks the king on d5. The king must move, and the bishop takes the queen on a8 behind it.", "ตรึงม้า c6 ไว้กับคิง": "Pin the knight on c6 to the king", "เสียบคิงกับควีนดำ แล้วกินควีน": "Skewer the black king and queen, then take the queen", "ใช้เรือเสียบคิงกับควีน": "Use the rook to skewer the king and queen", "ด่านบอส: นักฆ่าเงียบ": "Boss level: Silent assassin", "หาตัวที่ยืนเรียงกัน หรือยืนให้ม้าแตะได้ 2 ตัว": "Look for pieces lined up, or two pieces a knight can reach at once", "ด่านบอส! ใช้ส้อมหรือเสียบให้ได้กำไร": "Boss level! Win material with a fork or a skewer", "ได้กำไรให้มากที่สุด": "Win as much material as you can", "ได้กำไรอย่างน้อย 1 ตัว": "Win at least 1 piece", "เปิดเกมแบบมือโปร": "Open like a pro", "3 กฎทอง": "3 golden rules", "1) ยึดกลางกระดานด้วยเบี้ย e หรือ d": "1) Take the centre with the e or d pawn", "2) ออกม้าและบิชอปให้ไว": "2) Develop knights and bishops quickly", "3) เข้าป้อมให้คิงปลอดภัย": "3) Castle to keep the king safe", "อย่าเดินตัวเดิมซ้ำ": "Don't move the same piece twice", "อย่าเอาควีนออกเร็ว": "Don't bring the queen out early", "กฎข้อ 1: ยึด 4 ช่องกลาง เพราะหมากที่อยู่กลางเดินได้หลายทาง": "Rule 1: take the 4 centre squares, because pieces in the centre have more moves.", "กฎข้อ 2: ออกม้าและบิชอปมาทางกลาง": "Rule 2: develop the knights and bishops towards the centre.", "กฎข้อ 3: เข้าป้อม แตะคิงแล้วแตะ g1 เรือจะข้ามมาเอง": "Rule 3: castle. Tap the king, then tap g1, and the rook jumps over by itself.", "ตาแรก: ยึดกลางกระดาน": "First move: take the centre", "ออกหมากรอง 1 ตัว": "Develop 1 minor piece", "เข้าป้อม": "Castle", "กับดักเปิดเกม": "Opening traps", "ช่อง f7 ของดำ (และ f2 ของขาว) มีแค่คิงคอยคุ้มกัน จึงเป็นจุดที่โดนโจมตีง่าย": "Black's f7 square (and White's f2) is guarded only by the king, so it's easy to attack", "ถ้าอีกฝ่ายเอาควีนออกมาเร็ว ให้ออกม้าหรือบิชอปไปโจมตีควีน ได้ทั้งไล่ควีนและพัฒนาหมากในตาเดียว": "If your opponent brings the queen out early, attack it with a knight or bishop: you chase the queen and develop in the same move", "ตอนเล่นดำ ถ้าควีนขาวอยู่ h5 และบิชอปอยู่ c4 อย่าเพิ่งออกม้าไป f6 เพราะควีนจะกิน f7 รุกฆาตทันที ต้องกัน f7 ก่อน": "Playing Black, if White's queen is on h5 and bishop on c4, don't play the knight to f6 yet: the queen takes f7 with checkmate. Defend f7 first", "กลลวง 4 ตา: ควีนกับบิชอปขาวรุมช่อง f7 ถ้าดำไม่กัน จะโดน Qxf7 รุกฆาต": "The 4-move trap: White's queen and bishop both aim at f7. If Black doesn't defend, Qxf7 is checkmate.", "คุณเล่นฝ่ายดำ กันรุกฆาตให้ได้ โดยไม่เสียหมาก": "You play Black. Stop the checkmate without losing a piece", "ควีนดำรีบออกมาที่ h4 เร็วเกินไป เดินม้าออกไปโจมตีควีน จะได้ไล่ควีนและออกหมากไปพร้อมกัน": "Black's queen came out to h4 too early. Move a knight out to attack it: you chase the queen and develop at the same time", "ด่านบอส: เปิดเกมจริง": "Boss level: A real opening", "ยึดกลาง ออกม้าบิชอป 3 ตัว แล้วเข้าป้อม": "Take the centre, develop 3 knights or bishops, then castle", "ห้ามเสียหมาก": "Don't lose any pieces", "ด่านบอส! เล่นจริงกับคอมพิวเตอร์ ภายใน 10 ตา ต้องออกม้าหรือบิชอป 3 ตัว และเข้าป้อม โดยไม่เสียหมาก": "Boss level! A real game against the computer. Within 10 moves, develop 3 knights or bishops and castle, without losing a piece.", "ออกม้า/บิชอป 3 ตัว + เข้าป้อม ภายใน 10 ตา ห้ามเสียหมาก": "3 knights/bishops out + castle within 10 moves, without losing a piece", "รุกฆาต 2 ตา": "Mate in two", "คิดล่วงหน้า 2 ตา": "Think 2 moves ahead", "ตาแรกบีบคิงให้ไม่มีที่ไป ตาที่สองรุกฆาต": "The first move takes away the king's squares, the second one mates", "บางทีต้องยอมเสียตัวใหญ่ก่อน (สละ) เพื่อรุกฆาต": "Sometimes you must give up a big piece first (a sacrifice) to mate", "ระวังทำให้คิงข้าศึกอับ (ไม่มีทางเดินแต่ไม่โดนรุก = เสมอ)": "Don't stalemate the enemy king (no legal move but not in check = draw)", "บันไดเรือ: เรือตัวแรกปิดแถว 7 แล้วเรือตัวที่สองรุกฆาตที่แถว 8": "Rook ladder: the first rook closes the 7th rank, then the second rook mates on the 8th", "สละควีน: ควีนรุกที่ g8 เรือดำต้องกิน แล้วม้า f7 รุกฆาตเพราะคิงโดนหมากตัวเองล้อม (ม้าอุดอู้)": "Queen sacrifice: the queen checks on g8, the black rook must take, then the knight mates on f7 because the king is boxed in by its own pieces (smothered mate)", "รุกฆาตใน 2 ตา": "Mate in 2", "รุกฆาตใน 2 ตา (ต้องกล้าสละ)": "Mate in 2 (be brave and sacrifice)", "ด่านบอส: 2 ตาจบ": "Boss level: Done in two", "ลองคิดว่าข้าศึกจะตอบยังไง ทุกทาง": "Think about every way the enemy can answer", "ด่านบอส! รุกฆาตใน 2 ตา": "Boss level! Mate in 2", "ดำเพิ่งกินควีนเรา แต่เรารุกฆาตใน 2 ตาได้!": "Black just took our queen, but we can mate in 2!", "ปิดเกม (Endgame)": "Endgame", "เบี้ยเข้าเมือง": "Promote the pawn", "เบี้ยที่ถึงแถวสุดท้ายเปลี่ยนเป็นควีนได้": "A pawn that reaches the last row can become a queen", "นับตา: เบี้ยเราถึงก่อน หรือคิงข้าศึกตามทัน": "Count moves: does our pawn get there first, or can the enemy king catch it?", "อย่าปล่อยให้เบี้ยโดนกินระหว่างทาง": "Don't let the pawn get captured on the way", "เบี้ยวิ่งไปแถวสุดท้ายแล้วเลือกเป็นควีน คิงดำอยู่ไกล ตามไม่ทัน": "The pawn runs to the last row and becomes a queen. The black king is too far away to catch it.", "พาเบี้ยเข้าเมืองให้เป็นควีน": "Promote the pawn to a queen", "แข่งกันวิ่ง! ใครเข้าเมืองก่อน": "Race! Who promotes first?", "รุกฆาตด้วยควีน": "Queen checkmate", "ใช้ควีนขังคิงข้าศึกไว้ในกล่องที่เล็กลงเรื่อยๆ (ห่างแบบม้าเดิน)": "Use the queen to trap the enemy king in a shrinking box (a knight's move away)", "พาคิงเรามาช่วย แล้วรุกฆาตที่ขอบกระดาน": "Bring our king to help, then mate on the edge of the board", "ระวังอับ! ถ้าคิงข้าศึกไม่โดนรุกแต่ไม่มีที่เดิน = เสมอ": "Watch for stalemate! If the enemy king isn't in check but can't move = draw", "อย่าเอาควีนไปยืนข้างคิงข้าศึกโดยไม่มีคนคุ้ม": "Don't put the queen next to the enemy king without protection", "ขั้นตอน: ควีนบีบคิงดำไปที่ขอบกระดาน แล้วเดินคิงเรามาใกล้ จากนั้นรุกฆาต": "Steps: the queen pushes the black king to the edge, then our king walks closer, then checkmate.", "รุกฆาตด้วยควีนกับคิง ภายใน 16 ตา": "Checkmate with queen and king within 16 moves", "ด่านบอส: เรือปิดเกม": "Boss level: Rook endgame", "เรือขังคิงทีละแถว คิงเราเดินเข้าไปประกบ": "The rook cuts the king off one row at a time, and our king walks up to face it", "อย่าให้คิงข้าศึกเข้าใกล้เรือเรา": "Don't let the enemy king get close to our rook", "ด่านบอส! เรือกับคิงต้องช่วยกัน เรือปิดแถว คิงเราเดินเข้าไปประกบคิงข้าศึก แล้วเรือรุกฆาตที่ขอบ": "Boss level! Rook and king must work together: the rook cuts off a row, our king walks up to face the enemy king, then the rook mates on the edge.", "รุกฆาตด้วยเรือกับคิง ภายใน 30 ตา": "Checkmate with rook and king within 30 moves", "ด่านเทพ": "Master level", "ล้มคอมพิวเตอร์": "Beat the computer", "ใช้ทุกอย่าง: ยึดกลาง ออกหมาก เข้าป้อม หาของฟรี และอย่าแจกฟรี": "Use everything: take the centre, develop, castle, grab free pieces, and don't give any away", "คอมไม่พลาดง่ายๆ ตรวจทุกตาว่าโดนจ่ออะไรอยู่": "The computer rarely blunders. Check every move for threats", "ด่านเทพไม่มีคำใบ้": "The master level has no hints", "ด่านสุดท้าย! ชนะคอมพิวเตอร์ให้ได้ทั้ง 3 ระดับ แล้วคุณคือเทพหมากรุก": "Final level! Beat the computer at all 3 levels, and you are a Chess Master", "ชนะคอมพิวเตอร์ระดับ Easy": "Beat the computer on Easy", "ชนะคอมพิวเตอร์ระดับ Normal": "Beat the computer on Normal", "ชนะคอมพิวเตอร์ระดับ Hard": "Beat the computer on Hard", "ตาหมดแล้ว แต่ยังเก็บไม่ครบ ลองวางลำดับใหม่": "Out of moves and not everything is captured. Try a different order", "อับ! คิงข้าศึกไม่มีทางเดินแต่ไม่โดนรุก เกมเลยเสมอ ต้องเว้นช่องให้มันหายใจ": "Stalemate! The enemy king has no legal move but isn't in check, so it's a draw. Leave it room to breathe", "ตาหมดแล้ว ยังรุกฆาตไม่สำเร็จ": "Out of moves and no checkmate yet", "ตานี้ปล่อยให้คิงข้าศึกหนีรอด": "That move let the enemy king escape", "ระวัง! หมากเรากำลังจะโดนกิน": "Careful! One of your pieces is about to be captured", "ควีนใหม่โดนกินทันที": "The new queen was captured right away", "เบี้ยโดนกินแล้ว": "The pawn was captured", "ตาหมดแล้ว เบี้ยยังไม่ถึงแถวสุดท้าย": "Out of moves and the pawn hasn't reached the last row", "เสียหมากแล้ว! เปิดเกมต้องระวังของฟรี": "You lost a piece! Watch for free pieces in the opening", "ครบ 10 ตาแล้ว ยังออกหมากหรือเข้าป้อมไม่ครบ": "10 moves are up and you haven't developed or castled fully", "ดูลูกศรบนกระดาน แล้วกด ถัดไป": "Look at the arrows on the board, then tap Next", "ผ่านแล้ว!": "Passed!", "ข้าศึกกำลังคิด…": "The enemy is thinking…", "ดูว่าเกิดอะไรขึ้น…": "Watch what happens…", "ภารกิจ: ": "Mission: ", "ยศตอนนี้: ": "Current rank: ", "ดาว ": "Stars ", " · ผ่านบท ": " · Pass chapter ", " เพื่อเลื่อนเป็น ": " to become ", " · สูงสุดแล้ว!": " · Top rank!", "อ่านออกเสียง": "Read aloud", "บทที่ ": "Chapter ", "สอน ": "Lesson ", "ย้อน": "Back", "เริ่มโจทย์": "Start puzzle", "ถัดไป": "Next", "คำใบ้": "Hint", "เริ่มใหม่": "Restart", " (เหลือ ": " ( ", " ตา)": " moves left)", "โจทย์ประจำวัน": "Daily puzzle", "👑 ด่านบอส ": "👑 Boss ", "โจทย์ ": "Puzzle ", " · คุณเล่นฝ่ายดำ": " · You play Black", "เกมเสมอ ยังไม่ผ่าน": "A draw. Not passed yet", "โดนรุกฆาต! ลองใหม่อีกครั้ง": "Checkmated! Try again", "ผ่าน! ": "Passed! ", " สุดยอด ไม่พลาดเลย": " Perfect, no mistakes", " (ใช้คำใบ้)": " (used a hint)", "เก่งมาก ไปโจทย์ต่อไปกัน": "Great job. On to the next puzzle", "โจทย์ถัดไป": "Next puzzle", "ยังไม่ได้กำไร หรือโดนกินคืน ลองดูใหม่": "No gain yet, or it gets taken back. Look again", "ยังเสียหมากอยู่ ดูว่าข้าศึกจ่อกินอะไร": "You're still losing a piece. Check what the enemy is attacking", "ยังกันไม่อยู่ หรือเสียหมาก": "Not defended yet, or you lost a piece", "ยังไม่ใช่ ลองอ่านกล่อง ควรดูตรงไหน อีกที": "Not quite. Read the \"Where to look\" box again", "ยังไม่ใช่รุกฆาต ข้าศึกยังหนีได้": "Not checkmate yet. The enemy can still escape", "ยังไม่ผ่าน": "Not passed yet", "เล่นใหม่": "Play again", "แผนที่": "Map", "จบบท: ": "Chapter done: ", "ได้ ": "Got ", " ทำใหม่ได้ถ้าอยากได้ 3 ดาว": " Replay it for 3 stars", " เต็ม!": " Full marks!", "บทต่อไป": "Next chapter", "ทำอีกครั้ง": "Try again", "คุณคือเทพหมากรุก!": "You are a Chess Master!", "เลื่อนยศ!": "Promoted!", "ยศใหม่: ": "New rank: ", " บทต่อไปเปิดแล้ว": " The next chapter is open", " ผ่านครบทุกด่าน สุดยอดจริงๆ": " You've cleared every level. Amazing", "ทำความเคารพ ท่านคือเทพหมากรุก": "Salute! You are a Chess Master", "ยินดีด้วยครับ เลื่อนยศเป็น ": "Congratulations, you've been promoted to ", "ม.ค.": "Jan", "ก.พ.": "Feb", "มี.ค.": "Mar", "เม.ย.": "Apr", "พ.ค.": "May", "มิ.ย.": "Jun", "ก.ค.": "Jul", "ส.ค.": "Aug", "ก.ย.": "Sep", "ต.ค.": "Oct", "พ.ย.": "Nov", "ธ.ค.": "Dec", "เดิน รุกฆาต": "to move, checkmate", "ในตาเดียว": "in one", "ใน ": "in ", " ตา": " moves", "โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง": "Couldn't load the puzzle. Please try again", "โจทย์ประจำวัน #": "Daily puzzle #", "หาตาที่รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินตัวที่รุกไม่ได้": "Find a check where the king can't move away, block, or capture the checking piece", "ตาแรกไม่จำเป็นต้องรุก แต่ต้องทำให้ตาต่อไปรุกฆาตได้แน่ๆ ไม่ว่าอีกฝ่ายจะตอบยังไง": "The first move doesn't have to be check, but it must guarantee mate on the next move whatever the reply", "ลองดูทุกตาที่รุกได้ทีละตา": "Try each checking move one at a time", "รุกแล้วคิงยังหนีได้ ไม่นับ": "A check the king can escape doesn't count", "ใช้คำใบ้ได้ แต่จะได้ 1 ดาว": "You can use a hint, but you'll get only 1 star", "แก้ได้แล้ว! ": "Solved! ", " · แก้ติดต่อกัน ": " · Streak: ", " วัน": " days", " พรุ่งนี้มีโจทย์ใหม่นะ": " A new puzzle comes tomorrow", "ชวนเพื่อนมาแก้": "Challenge a friend", "ลองใหม่": "Try again", "เมนู": "Menu", "แก้โจทย์หมากรุกประจำวัน ": "I solved the daily chess puzzle ", " ได้ ": " with ", " คุณแก้ได้ไหม?": " Can you?", "โจทย์หมากรุกประจำวัน": "Daily chess puzzle", "คัดลอกลิงก์แล้ว เอาไปวางให้เพื่อนได้เลย": "Link copied. Paste it to a friend", "Daily puzzle · โจทย์ประจำวัน": "Daily puzzle", "ยินดีต้อนรับสู่ Chess Game": "Welcome to Chess Game", "วิธีเดิน": "How to move", "หมากแต่ละตัว": "The pieces", "คิง: เดิน 1 ช่องทุกทิศ ต้องปกป้องให้ดี": "King: moves 1 square any way. Keep it safe", "ควีน: ไปไกลได้ทั้งแนวตรงและแนวทแยง ตัวที่แรงที่สุด": "Queen: goes far along lines and diagonals. The strongest piece", "เรือ: ไปไกลได้ตามแนวตรง": "Rook: goes far along straight lines", "บิชอป: ไปไกลได้ตามแนวทแยง": "Bishop: goes far along diagonals", "ม้า: เดินเป็นรูปตัว L กระโดดข้ามหมากได้": "Knight: moves in an L and can jump over pieces", "เบี้ย: เดินหน้า 1 ช่อง (ตาแรก 2 ช่อง) กินทแยงหน้า": "Pawn: moves forward 1 square (2 on its first move), captures diagonally forward", "กฎที่ควรรู้": "Rules to know", "ปุ่มในเกม": "Game buttons", "เลือกโหมดเล่น": "Choose a mode", "เริ่มเล่น": "Start playing", "ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่": "No finished games on this device yet. Finish a game (win, lose or draw) and the score shows up here", "ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม": "No one on the board yet. Enter your name in the menu and finish a game", "มาเล่นหมากรุกกัน รหัสห้อง ": "Let's play chess. Room code ", "ความเครียด": "Stress", "แตะเพื่อปิด": "Tap to close", "ควรดูตรงไหน": "Where to look", "ระวังอะไร": "Watch out for", "ออก": "Exit", "ย้อนกลับ": "Back", "ข้าม": "Skip", "ไปเส้นทางสู่เทพ": "Go to Road to master", "เส้นทางสู่เทพหมากรุก": "Road to Chess Master", "ปิด": "Close", "ไปต่อ": "Continue", "ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน": "Beat a person: 3 points. Draw: 1 point. Beat the computer: Easy 1, Normal 2, Hard 3 points. Enter your name in the menu before playing to get on the board.", "ชวนเพื่อนมาเล่น": "Invite friends", "ดูสินค้า →": "See product →", "ไม่ต้องแนะนำอีก": "Don't suggest again", "Classic · คลาสสิก": "Classic", "Garden · สวนยามเช้า": "Garden", "Nocturne · ราตรี": "Nocturne", "Waltz · วอลทซ์": "Waltz", "Journey · ออกเดินทาง": "Journey", "Thai speech": "Speech"}, th: {"White to move": "ขาวเดิน", "Black to move": "ดำเดิน", "Game over": "จบเกม", "Computer is thinking": "คอมกำลังคิด", "Sergeant Somchai": "จ่าสมชาย", "Show result": "ดูผลเกม", "Play again": "เล่นอีกครั้ง", "Player 1": "ผู้เล่น 1", "Player 2": "ผู้เล่น 2", "White": "ขาว", "Black": "ดำ", "You": "คุณ", "Computer": "คอมพิวเตอร์", "Undo": "ย้อนตา", "Reset": "เริ่มใหม่", "Resign": "ยอมแพ้", "Hint": "คำใบ้", "New game": "เกมใหม่", "Opponent": "คู่แข่ง", "Friend": "เพื่อน", "Online": "ออนไลน์", "Computer strength": "ระดับคอมพิวเตอร์", "Easy": "ง่าย", "Normal": "ปกติ", "Hard": "ยาก", "Play on two devices": "เล่นกันคนละเครื่อง", "Create a room": "สร้างห้อง", "Join": "เข้าห้อง", "Room code": "รหัสห้อง", "Player names": "ชื่อผู้เล่น", "Your name": "ชื่อของคุณ", "White player name": "ชื่อผู้เล่นฝ่ายขาว", "Black player name": "ชื่อผู้เล่นฝ่ายดำ", "Clock": "นาฬิกา", "None": "ไม่จับเวลา", "Start game": "เริ่มเกม", "Back to game": "กลับไปที่เกม", "Practice & more": "ฝึกและอื่นๆ", "Daily puzzle · โจทย์ประจำวัน": "โจทย์ประจำวัน", "Road to master": "เส้นทางสู่เทพ", "How to play": "วิธีเล่น", "More": "เพิ่มเติม", "Leaderboard": "ตารางคะแนน", "Settings": "ตั้งค่า", "Credits": "เครดิต", "Settings panel": "ตั้งค่า", "Sound": "เสียง", "Music": "เพลง", "Music on": "เปิดเพลงอยู่", "Turn music off": "ปิดเพลง", "Turn music on": "เปิดเพลง", "Switch view": "สลับมุมมอง", "Chess board": "กระดานหมากรุก", "Soundtrack": "เพลงประกอบ", "Change every game": "เปลี่ยนทุกเกม", "Move sounds": "เสียงเดินหมาก", "Check and clock alerts": "เสียงเตือนรุกและเวลา", "Sergeant": "จ่าสมชาย", "Comments": "คำบ่น", "On": "เปิด", "Off": "ปิด", "Voice": "เสียงพูด", "Thai speech": "พูดไทย", "Mumble": "พึมพำ", "Speaking speed": "ความเร็วในการพูด", "Slow": "ช้า", "Medium": "กลาง", "Display": "การแสดงผล", "Streamer character": "ตัวละครสตรีมเมอร์", "A player at a desk who reacts to your game against the computer or online. Handy for recording videos.": "ผู้เล่นที่นั่งโต๊ะคอยแสดงอารมณ์ตามเกมของคุณตอนเล่นกับคอมหรือออนไลน์ เหมาะกับการอัดวิดีโอ", "Product tips after a game": "แนะนำสินค้าหลังจบเกม", "Board theme": "ธีมกระดาน", "Walnut": "ไม้วอลนัท", "Sandstone": "หินทราย", "Slate": "หินชนวน", "Done": "เสร็จ", "Language": "ภาษา", "Auto (from your device)": "อัตโนมัติ (ตามเครื่อง)", "Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.": "ออกแบบจาก design sheet ของ Chess Game: กระดานไม้วอลนัท ไอคอนสติกเกอร์ และตัวบอกตาเดินแบบพระอาทิตย์กับพระจันทร์", "Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.": "มีกติกาครบ: เข้าป้อม กินผ่าน เลื่อนขั้นเบี้ย รุก รุกฆาต อับ ตำแหน่งซ้ำ 3 ครั้ง กฎ 50 ตา และหมากไม่พอรุกฆาต คอมพิวเตอร์คิดล่วงหน้าหลายตาด้วย alpha-beta pruning", "Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.": "เพลงใช้เสียงเครื่องดนตรีจาก FluidR3 GM soundfont โดย Frank Wen (CC BY 3.0) ผ่าน midi-js-soundfonts โดย Benjamin Gleitzman", "Pieces use the Noto Sans Symbols 2 typeface.": "ตัวหมากใช้ฟอนต์ Noto Sans Symbols 2", "© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess": "© 2026 Rochanapan สงวนลิขสิทธิ์ เล่นได้ที่ rochano.github.io/chess เท่านั้น", "This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.": "เว็บนี้ใช้ Google Analytics นับจำนวนผู้เข้าชมและดูคร่าวๆ ว่าผู้เล่นมาจากประเทศและเมืองไหน ชื่อที่คุณใส่และผลเกมจะถูกบันทึกลงตารางคะแนน", "Close": "ปิด", "Resign this game?": "ยอมแพ้เกมนี้?", "Your opponent will be awarded the win.": "คู่แข่งจะได้ชัยชนะ", "Keep playing": "เล่นต่อ", "Promote your pawn": "เลื่อนขั้นเบี้ย", "Everyone": "ทุกคน", "This device": "เครื่องนี้", "Back to menu": "กลับเมนู", "Checkmate": "รุกฆาต", "View board": "ดูกระดาน", "Share": "แชร์", "Copy link": "คัดลอกลิงก์", "Link copied": "คัดลอกแล้ว", "Copy this": "คัดลอกข้อความนี้", "Copy this link": "คัดลอกลิงก์นี้", "Follow camera: on": "กล้องตาม: เปิด", "Follow camera: off": "กล้องตาม: ปิด", "Reset view": "รีเซ็ตมุมกล้อง", "Switch to the flat 2D board": "สลับเป็นกระดาน 2D", "Switch to the 3D battlefield": "สลับเป็นสนามรบ 3D", "3D battlefield. Tap a piece, then tap where it should go. Drag to look around.": "สนามรบ 3 มิติ แตะหมาก แล้วแตะช่องที่จะไป ลากเพื่อหมุนดูรอบๆ", "Tap a piece to see its moves.": "แตะหมากเพื่อดูช่องที่เดินได้", "You play White. Tap a piece to see its moves.": "คุณเล่นฝ่ายขาว แตะหมากเพื่อดูช่องที่เดินได้", "Thinking about a hint…": "กำลังคิดคำใบ้…", "Saving to the score sheet…": "กำลังบันทึกคะแนน…", "Result sent to the score sheet.": "บันทึกผลลงตารางคะแนนแล้ว", "Couldn't reach the score sheet. Check your connection.": "ส่งคะแนนไม่ได้ ลองเช็กอินเทอร์เน็ต", "Easy: plays like a beginner. Half its moves are random, it often misses pieces it could take, and it never checks what you can take back.": "ง่าย: เล่นแบบมือใหม่ เดินมั่วครึ่งหนึ่ง มักมองข้ามหมากที่กินได้ และไม่ระวังโดนกินคืน", "Normal: looks two moves ahead and works out every exchange, so it keeps its pieces safe and punishes loose ones.": "ปกติ: คิดล่วงหน้า 2 ตาและคำนวณการแลกหมากทุกครั้ง จึงไม่ค่อยเสียหมากฟรีและจะกินหมากที่คุณปล่อยหลุด", "Hard: looks four moves ahead and always plays the best move it finds. It thinks for up to two seconds.": "ยาก: คิดล่วงหน้า 4 ตาและเดินตาที่ดีที่สุดเสมอ คิดนานสุด 2 วินาที", "Leave the online game?": "ออกจากเกมออนไลน์?", "You'll leave the room and your opponent will be told.": "คุณจะออกจากห้อง และคู่แข่งจะได้รับแจ้ง", "Leave": "ออก", "Start over?": "เริ่มใหม่?", "This game will be cleared and you can pick new settings.": "เกมนี้จะถูกล้าง แล้วเลือกการตั้งค่าใหม่ได้", "Start over": "เริ่มใหม่", "Time's up": "หมดเวลา", "Away too long": "หายไปนานเกิน", "Opponent left": "คู่แข่งออกไปแล้ว", "Resigned": "ยอมแพ้", "Draw": "เสมอ", ". The computer wins": " คอมพิวเตอร์ชนะ", ". You lose": " คุณแพ้", ". You win": " คุณชนะ", "Checkmate.": "รุกฆาต", "White wins.": "ขาวชนะ", "Black wins.": "ดำชนะ", "Stalemate.": "อับ", "The game is a draw.": "เกมนี้เสมอ", "Draw by the fifty-move rule.": "เสมอตามกฎ 50 ตา", "Draw by threefold repetition.": "เสมอเพราะตำแหน่งซ้ำ 3 ครั้ง", "Draw.": "เสมอ", "Neither side can force mate.": "ไม่มีฝ่ายไหนมีหมากพอรุกฆาต", "White ran out of time.": "ขาวหมดเวลา", "Black ran out of time.": "ดำหมดเวลา", "White resigned.": "ขาวยอมแพ้", "Black resigned.": "ดำยอมแพ้", "Your opponent left before the first move.": "คู่แข่งออกไปก่อนเดินตาแรก", "Block the check or capture the attacker.": "บังการรุก หรือกินตัวที่รุก", "Glowing pieces can move.": "หมากที่เรืองแสงคือตัวที่เดินได้", "Your king has no safe square: its neighbours are blocked by your own pieces or attacked.": "คิงไม่มีช่องปลอดภัย ช่องรอบๆ ถูกหมากตัวเองขวางหรือโดนเล็งอยู่", "Your opponent switched away from the game. Clocks are paused.": "คู่แข่งสลับออกไปจากเกม หยุดนาฬิกาไว้ก่อน", "Your opponent lost connection. Clocks are paused while you wait.": "คู่แข่งหลุดการเชื่อมต่อ หยุดนาฬิกาไว้ระหว่างรอ", "Connected. Starting the game…": "เชื่อมต่อแล้ว กำลังเริ่มเกม…", "Creating a room…": "กำลังสร้างห้อง…", "Type the room code your friend sent you.": "ใส่รหัสห้องที่เพื่อนส่งมา", "Your friend left the room.": "เพื่อนออกจากห้องแล้ว", "The connection closed. Create or join a room again.": "การเชื่อมต่อปิดแล้ว สร้างหรือเข้าห้องใหม่อีกครั้ง", "Asked your opponent for a new game…": "ขอคู่แข่งเล่นเกมใหม่แล้ว…", "White resigns and Black is awarded the win.": "ขาวยอมแพ้ ดำได้ชัยชนะ", "Black resigns and White is awarded the win.": "ดำยอมแพ้ ขาวได้ชัยชนะ", "No captures yet": "ยังไม่ได้กินหมาก"} };
+function tr(s) { const v = I18N[LANG][s]; return v === undefined ? s : v; }
+function T(th, en) { return LANG === "th" ? th : en; }
+const PIECE_TH = { king: "คิง", queen: "ควีน", rook: "เรือ", bishop: "บิชอป", knight: "ม้า", pawn: "เบี้ย" };
+// Game messages are built from English sentences ("Checkmate. White wins."): translate each sentence.
+function trS(s) {
+  if (LANG === "en" || !s) return s;
+  return (String(s).match(/[^.!?…]+[.!?…]*\s*/g) || [s]).map(x => {
+    const t = x.trim(); let m;
+    if ((m = t.match(/^This (\w+) can't stop the check\.$/))) return PIECE_TH[m[1]] + "ตัวนี้กันการรุกไม่ได้";
+    if ((m = t.match(/^This (\w+) has no legal move( \(it may be pinned to your king\))?\.$/))) return PIECE_TH[m[1]] + "ตัวนี้เดินไม่ได้" + (m[2] ? " (อาจโดนตรึงไว้กับคิง)" : "");
+    if (t === "Check!") return "รุก!";
+    if ((m = t.match(/^(White|Black) must answer it\.$/))) return tr(m[1]) + "ต้องแก้รุก";
+    if ((m = t.match(/^Hint: (\w+) (\w\d) to (\w\d)$/))) return "คำใบ้: " + PIECE_TH[m[1]] + " " + m[2] + " ไป " + m[3];
+    if ((m = t.match(/^Move (\d+)$/))) return "ตาที่ " + m[1];
+    if ((m = t.match(/^Waiting for (.+) to move…$/))) return "รอ " + m[1] + " เดิน…";
+    if (t === "You play White.") return "คุณเล่นฝ่ายขาว";
+    if (t === "You play Black.") return "คุณเล่นฝ่ายดำ";
+    if (t === "You move first.") return "คุณเดินก่อน";
+    if (t === "White moves first.") return "ขาวเดินก่อน";
+    if ((m = t.match(/^You were away too long, so (White|Black) was given the win\.$/))) return "คุณหายไปนานเกิน " + tr(m[1]) + "จึงได้ชัยชนะ";
+    return tr(t);
+  }).join(" ");
+}
+// Static page text: swap each text node and label for its translation.
+(function translatePage() {
+  if (LANG === "en" && !Object.keys(I18N.en).length) return;
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n; (n = walk.nextNode());) {
+    const t = n.nodeValue.trim(); if (!t || n.parentNode.closest("svg, script, style")) continue;
+    const v = tr(t); if (v !== t) n.nodeValue = n.nodeValue.replace(t, v);
+  }
+  document.querySelectorAll("[placeholder], [aria-label], [title]").forEach(el => {
+    for (const a of ["placeholder", "aria-label", "title"]) if (el.hasAttribute(a)) el.setAttribute(a, tr(el.getAttribute(a)));
+  });
+})();
 /*ENGINE START*/
 const GLYPH = { K: "♚", Q: "♛", R: "♜", B: "♝", N: "♞", P: "♟︎" };
 const VAL = { P: 100, N: 320, B: 330, R: 500, Q: 900, K: 0 };
@@ -1841,7 +1892,7 @@ function syncMusicButton() {
   const b = $("musicBtn");
   b.innerHTML = prefs.music ? ICON.note : ICON.noteOff;
   b.setAttribute("aria-pressed", String(prefs.music));
-  b.setAttribute("aria-label", prefs.music ? "Turn music off" : "Turn music on");
+  b.setAttribute("aria-label", tr(prefs.music ? "Turn music off" : "Turn music on"));
 }
 // Mobile browsers only allow sound after a tap, and iPhones mute Web Audio
 // while the ring/silent switch is on. On the first tap we start the audio
@@ -1908,12 +1959,12 @@ function buildBoard() {
    Pointing at a piece with a mouse explains it: name, how it moves, its points, and how many moves it has now. */
 const PieceTip = (() => {
   const INFO = {
-    K: { th: "คิง (ราชา)", pts: "ประเมินค่าไม่ได้", how: "เดินได้ 1 ช่องทุกทิศทาง ห้ามเดินเข้าช่องที่โดนโจมตี โดนรุกฆาตคือแพ้", extra: "เข้าป้อม (castling) ได้ถ้ายังไม่เคยเดิน" },
-    Q: { th: "ควีน (ราชินี)", pts: "9 แต้ม", how: "เดินตรงและเฉียงกี่ช่องก็ได้ ทั้ง 8 ทิศ จนกว่าจะชนตัวอื่น", extra: "ตัวที่แรงที่สุดบนกระดาน" },
-    R: { th: "เรือ", pts: "5 แต้ม", how: "เดินตรง หน้า หลัง ซ้าย ขวา กี่ช่องก็ได้ จนกว่าจะชนตัวอื่น", extra: "แรงมากตอนท้ายเกมและบนแถวที่โล่ง" },
-    B: { th: "บิชอป (โคน)", pts: "3 แต้ม", how: "เดินเฉียงกี่ช่องก็ได้ จนกว่าจะชนตัวอื่น", extra: "อยู่บนช่องสีเดิมตลอดเกม" },
-    N: { th: "ไนท์ (ม้า)", pts: "3 แต้ม", how: "เดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1 ช่อง", extra: "ตัวเดียวที่กระโดดข้ามตัวอื่นได้" },
-    P: { th: "เบี้ย", pts: "1 แต้ม", how: "เดินหน้า 1 ช่อง (ก้าวแรกเดินได้ 2 ช่อง) กินเฉียงไปข้างหน้า 1 ช่อง", extra: "เดินถึงแถวสุดท้ายแล้วเลื่อนขั้นเป็นตัวอื่นได้ (ส่วนใหญ่เป็นควีน)" },
+    K: { th: tr("คิง (ราชา)"), pts: tr("ประเมินค่าไม่ได้"), how: tr("เดินได้ 1 ช่องทุกทิศทาง ห้ามเดินเข้าช่องที่โดนโจมตี โดนรุกฆาตคือแพ้"), extra: tr("เข้าป้อม (castling) ได้ถ้ายังไม่เคยเดิน") },
+    Q: { th: tr("ควีน (ราชินี)"), pts: tr("9 แต้ม"), how: tr("เดินตรงและเฉียงกี่ช่องก็ได้ ทั้ง 8 ทิศ จนกว่าจะชนตัวอื่น"), extra: tr("ตัวที่แรงที่สุดบนกระดาน") },
+    R: { th: tr("เรือ"), pts: tr("5 แต้ม"), how: tr("เดินตรง หน้า หลัง ซ้าย ขวา กี่ช่องก็ได้ จนกว่าจะชนตัวอื่น"), extra: tr("แรงมากตอนท้ายเกมและบนแถวที่โล่ง") },
+    B: { th: tr("บิชอป (โคน)"), pts: tr("3 แต้ม"), how: tr("เดินเฉียงกี่ช่องก็ได้ จนกว่าจะชนตัวอื่น"), extra: tr("อยู่บนช่องสีเดิมตลอดเกม") },
+    N: { th: tr("ไนท์ (ม้า)"), pts: tr("3 แต้ม"), how: tr("เดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1 ช่อง"), extra: tr("ตัวเดียวที่กระโดดข้ามตัวอื่นได้") },
+    P: { th: tr("เบี้ย"), pts: tr("1 แต้ม"), how: tr("เดินหน้า 1 ช่อง (ก้าวแรกเดินได้ 2 ช่อง) กินเฉียงไปข้างหน้า 1 ช่อง"), extra: tr("เดินถึงแถวสุดท้ายแล้วเลื่อนขั้นเป็นตัวอื่นได้ (ส่วนใหญ่เป็นควีน)") },
   };
   const DIRS = { K: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]], Q: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]], R: [[-1,0],[1,0],[0,-1],[0,1]], B: [[-1,-1],[-1,1],[1,-1],[1,1]] };
   // A 5x5 picture of the move pattern, with the piece in the middle and "forward" pointing up.
@@ -1933,9 +1984,9 @@ const PieceTip = (() => {
     let now = "";
     if (G.st.turn === p[0] && !G.over) {
       const n = G.moves.filter(m => m.from === sq), caps = n.filter(m => G.st.board[m.to] || m.ep).length;
-      now = n.length ? "ตอนนี้เดินได้ " + n.length + " ทาง" + (caps ? " (กินได้ " + caps + ")" : "") : "ตอนนี้ยังเดินไม่ได้";
+      now = n.length ? tr("ตอนนี้เดินได้ ") + n.length + tr(" ทาง") + (caps ? tr(" (กินได้ ") + caps + ")" : "") : tr("ตอนนี้ยังเดินไม่ได้");
     }
-    return `<div>${mini(t, p[0])}</div><div><h4>${info.th} <small>${NAME[t][0].toUpperCase() + NAME[t].slice(1)} · ${p[0] === "w" ? "ขาว" : "ดำ"} · ${sqName(sq)}</small></h4>
+    return `<div>${mini(t, p[0])}</div><div><h4>${info.th} <small>${LANG === "th" ? NAME[t][0].toUpperCase() + NAME[t].slice(1) + " · " : ""}${p[0] === "w" ? tr("ขาว") : tr("ดำ")} · ${sqName(sq)}</small></h4>
       <p>${info.how}</p><p>${info.extra}</p><span class="pts">${info.pts}</span>${now ? `<p class="now">${now}</p>` : ""}</div>`;
   }
   function place(x, y) {
@@ -1990,22 +2041,22 @@ function render() {
   const turn = $("turn");
   turn.dataset.side = st.turn;
   $("turnIcon").innerHTML = st.turn === "w" ? ICON.sun : ICON.moon;
-  $("turnText").textContent = G.over ? "Game over" : G.thinking ? "Computer is thinking" : (st.turn === "w" ? "White" : "Black") + " to move";
+  $("turnText").textContent = tr(G.over ? "Game over" : G.thinking ? "Computer is thinking" : (st.turn === "w" ? "White" : "Black") + " to move");
 
   // status
   const status = $("status");
   status.classList.toggle("alert", kingInCheck >= 0 && !G.over);
-  if (G.over) status.textContent = G.over.text;
-  else if (G.stuck) status.textContent = G.stuck.text;
+  if (G.over) status.textContent = trS(G.over.text);
+  else if (G.stuck) status.textContent = trS(G.stuck.text);
   else if (G.mode === "train" && Train.phase === "teach") status.textContent = Train.status();
-  else if (kingInCheck >= 0) status.textContent = "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.";
-  else if (G.hint) status.textContent = "Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to);
+  else if (kingInCheck >= 0) status.textContent = trS("Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it.");
+  else if (G.hint) status.textContent = trS("Hint: " + NAME[st.board[G.hint.from][1]] + " " + sqName(G.hint.from) + " to " + sqName(G.hint.to));
   else if (G.mode === "train") status.textContent = Train.status();
-  else if (G.mode === "online" && !Net.connected) status.textContent = Net.away ? "Your opponent switched away from the game. Clocks are paused." : "Your opponent lost connection. Clocks are paused while you wait.";
-  else if (G.mode === "online" && st.turn !== Net.color) status.textContent = "Waiting for " + G.names[st.turn] + " to move…";
-  else if (G.mode === "online" && !G.history.length) status.textContent = "You play " + (Net.color === "w" ? "White. You move first." : "Black. White moves first.");
-  else if (!G.history.length) status.textContent = G.mode === "cpu" ? "You play White. Tap a piece to see its moves." : "Tap a piece to see its moves.";
-  else status.textContent = "Move " + (Math.floor(G.history.length / 2) + 1);
+  else if (G.mode === "online" && !Net.connected) status.textContent = trS(Net.away ? "Your opponent switched away from the game. Clocks are paused." : "Your opponent lost connection. Clocks are paused while you wait.");
+  else if (G.mode === "online" && st.turn !== Net.color) status.textContent = trS("Waiting for " + G.names[st.turn] + " to move…");
+  else if (G.mode === "online" && !G.history.length) status.textContent = trS("You play " + (Net.color === "w" ? "White. You move first." : "Black. White moves first."));
+  else if (!G.history.length) status.textContent = trS(G.mode === "cpu" ? "You play White. Tap a piece to see its moves." : "Tap a piece to see its moves.");
+  else status.textContent = trS("Move " + (Math.floor(G.history.length / 2) + 1));
 
   // players
   $("pW").classList.toggle("on", !G.over && st.turn === "w");
@@ -2031,7 +2082,7 @@ function renderCaps() {
     const diff = Math.round((material(c) - material(opp(c))) / 100);
     el.innerHTML = list.length
       ? list.map(p => `<span class="${p[0]}">${GLYPH[p[1]]}</span>`).join("") + (diff > 0 ? `<span class="adv">+${diff}</span>` : "")
-      : '<span class="none">No captures yet</span>';
+      : '<span class="none">' + tr("No captures yet") + '</span>';
   }
 }
 
@@ -2076,10 +2127,10 @@ function reportResult() {
   saveLocalResult(row);
   // In an online game both devices see the result; only the host writes it to the sheet.
   if (!SHEET_URL || (G.mode === "online" && Net.role !== "host")) return;
-  el.hidden = false; el.textContent = "Saving to the score sheet…";
+  el.hidden = false; el.textContent = tr("Saving to the score sheet…");
   fetch(SHEET_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(row) })
-    .then(() => { el.textContent = "Result sent to the score sheet."; })
-    .catch(() => { el.textContent = "Couldn't reach the score sheet. Check your connection."; G.reported = false; });
+    .then(() => { el.textContent = tr("Result sent to the score sheet."); })
+    .catch(() => { el.textContent = tr("Couldn't reach the score sheet. Check your connection."); G.reported = false; });
 }
 
 function newGame() {
@@ -2098,8 +2149,8 @@ function newGame() {
     b: G.mode === "cpu" ? "Computer" : prefs.nameB.trim() || "Player 2",
   };
   G.reported = false; G.startedAt = new Date(); G.stress = { w: 0, b: 0 };
-  $("nameW").innerHTML = esc(G.names.w) + "<small>White</small>";
-  $("nameB").innerHTML = esc(G.names.b) + "<small>Black · " + (G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
+  $("nameW").innerHTML = esc(tr(G.names.w)) + "<small>" + tr("White") + "</small>";
+  $("nameB").innerHTML = esc(tr(G.names.b)) + "<small>" + tr("Black") + " · " + tr(G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
   $("avW").innerHTML = AVATAR.p1;
   $("avB").innerHTML = G.mode === "cpu" ? AVATAR.cpu : AVATAR.p2;
   render();
@@ -2171,20 +2222,20 @@ function doMove(m) {
 }
 
 /* ---------- Sergeant Somchai: complains about risky moves and lost pieces ---------- */
-const THAI_PIECE = { P: "เบี้ย", N: "ม้า", B: "บิชอป", R: "เรือ", Q: "ควีน", K: "คิง" };
+const THAI_PIECE = { P: tr("เบี้ย"), N: tr("ม้า"), B: tr("บิชอป"), R: tr("เรือ"), Q: tr("ควีน"), K: tr("คิง") };
 const RANT = {
   risky: [
-    ["เอ่อ ท่านครับ {p}ตัวนั้นดูเสี่ยงๆ นะครับ", "ท่านครับ {p}ยืนตรงนั้นไม่มีใครคุ้มกันนะ ระวังหน่อย", "ผมว่า{p}มันกลัวแล้วนะครับ ถอยก่อนดีไหม"],
-    ["เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!", "ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!", "แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!"],
-    ["อีกแล้วเหรอท่าน!!! ส่ง{p}ไปตายเปล่าๆ อีกแล้ว!!!", "ผมจะลาออกแล้วนะครับ!!! {p}ยืนรอโดนกินแบบนั้นได้ไง!!!", "ท่านเล่นให้ข้าศึกเหรอครับ!!! {p}โดนเล็งอยู่เห็นไหม!!!"],
+    [tr("เอ่อ ท่านครับ {p}ตัวนั้นดูเสี่ยงๆ นะครับ"), tr("ท่านครับ {p}ยืนตรงนั้นไม่มีใครคุ้มกันนะ ระวังหน่อย"), tr("ผมว่า{p}มันกลัวแล้วนะครับ ถอยก่อนดีไหม")],
+    [tr("เดี๋ยวๆ ท่าน! {p}ตัวนั้นไม่มีใครคุ้มกันเลยนะครับ!"), tr("ข้าศึกยิ้มแล้วครับท่าน... {p}ของเราโดนเล็งอยู่!"), tr("แผนนี้ผมไม่เอาด้วยนะครับ {p}กำลังจะโดนกินฟรี!")],
+    [tr("อีกแล้วเหรอท่าน!!! ส่ง{p}ไปตายเปล่าๆ อีกแล้ว!!!"), tr("ผมจะลาออกแล้วนะครับ!!! {p}ยืนรอโดนกินแบบนั้นได้ไง!!!"), tr("ท่านเล่นให้ข้าศึกเหรอครับ!!! {p}โดนเล็งอยู่เห็นไหม!!!")],
   ],
   lost: [
-    ["เสีย{p}ไปตัวนึงแล้วครับท่าน ตั้งใจหน่อยนะ", "อ้าว {p}ของเราไปแล้ว... ไม่เป็นไรครับ สู้ต่อ", "{p}ล้มไปแล้วครับ คราวหน้าระวังหน่อยนะท่าน"],
-    ["โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!", "ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!", "{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!"],
-    ["พอแล้วท่าน!!! เสีย{p}อีกแล้ว!!! ผมจะบ้าตาย!!!", "ท่านครับ!!! {p}ไปแล้ว!!! เราจะเหลืออะไรให้สู้!!!", "ผมยื่นใบลาออกตอนนี้เลยนะครับ!!! เสีย{p}แบบนี้!!!"],
+    [tr("เสีย{p}ไปตัวนึงแล้วครับท่าน ตั้งใจหน่อยนะ"), tr("อ้าว {p}ของเราไปแล้ว... ไม่เป็นไรครับ สู้ต่อ"), tr("{p}ล้มไปแล้วครับ คราวหน้าระวังหน่อยนะท่าน")],
+    [tr("โอ๊ย {p}ของเรา! ผมบอกแล้วไงครับ!"), tr("ใครสั่งให้{p}ไปยืนตรงนั้นครับ! ใคร!"), tr("{p}ล้มแล้วครับ! ทหารเริ่มขวัญเสียกันหมดแล้ว!")],
+    [tr("พอแล้วท่าน!!! เสีย{p}อีกแล้ว!!! ผมจะบ้าตาย!!!"), tr("ท่านครับ!!! {p}ไปแล้ว!!! เราจะเหลืออะไรให้สู้!!!"), tr("ผมยื่นใบลาออกตอนนี้เลยนะครับ!!! เสีย{p}แบบนี้!!!")],
   ],
 };
-const ANGER_LABEL = ["", "หงุดหงิด", "โมโห", "เดือดสุดๆ"];
+const ANGER_LABEL = ["", tr("หงุดหงิด"), tr("โมโห"), tr("เดือดสุดๆ")];
 let tauntTimer = 0, tauntLeft = 0, tauntStart = 0, lastRant = {};
 function material(board, color) { return board.reduce((s, p) => s + (p ? (p[0] === color ? 1 : -1) * VAL[p[1]] : 0), 0); }
 // Which side(s) this device moves: both in a friend game, one side otherwise.
@@ -2217,7 +2268,7 @@ let voiceNodes = [], thaiVoice = null, glottal = null;
 function findThaiVoice() {
   try {
     const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    thaiVoice = vs.find(v => /^th/i.test(v.lang)) || null;
+    thaiVoice = vs.find(v => (LANG === "th" ? /^th/i : /^en/i).test(v.lang)) || null;
   } catch (e) { thaiVoice = null; }
 }
 if (window.speechSynthesis) { findThaiVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", findThaiVoice); }
@@ -2234,7 +2285,7 @@ function voice(text, level) {
     try {
       // Speak phrase by phrase (split at spaces and punctuation) so there are
       // natural pauses, at a steady slow speed. Anger shows in pitch only.
-      const phrases = text.replace(/\.{2,}|…/g, " ").split(/[\s!?]+/).filter(Boolean);
+      const phrases = LANG === "th" ? text.replace(/\.{2,}|…/g, " ").split(/[\s!?]+/).filter(Boolean) : text.split(/(?<=[.!?…])\s+/).filter(Boolean);
       const rate = +prefs.voiceRate || 0.8;
       for (const ph of phrases) {
         const u = new SpeechSynthesisUtterance(ph);
@@ -2327,8 +2378,8 @@ function showTaunt(kind, pieceType, side, level) {
   const el = $("taunt");
   level = level || 1;
   el.dataset.level = level;
-  $("tauntText").textContent = pickLine(kind, level).replace(/\{p\}/g, THAI_PIECE[pieceType]);
-  $("tauntWho").textContent = (kind === "risky" ? "จ่าสมชาย เตือน" : "จ่าสมชาย ด่า") + (myColor() ? "" : side === "w" ? " · ฝั่งขาว" : " · ฝั่งดำ");
+  $("tauntText").textContent = pickLine(kind, level).replace(/\{p\}/g, LANG === "en" ? THAI_PIECE[pieceType].toLowerCase() : THAI_PIECE[pieceType]);
+  $("tauntWho").textContent = (kind === "risky" ? tr("จ่าสมชาย เตือน") : tr("จ่าสมชาย ด่า")) + (myColor() ? "" : side === "w" ? tr(" · ฝั่งขาว") : tr(" · ฝั่งดำ"));
   el.querySelectorAll(".anger i").forEach((d, k) => d.classList.toggle("on", k < level));
   $("angerLabel").textContent = ANGER_LABEL[level];
   el.classList.toggle("warn", kind === "risky");
@@ -2380,17 +2431,17 @@ const Streamer = (() => {
     draw: ["e-normal", "m-wavy", "a-desk", "hands-desk"],
   };
   const LINES = {
-    start: ["มาเล่นกัน!", "เกมใหม่ สู้ๆ!", "วันนี้ต้องชนะ!"],
-    take: ["ได้{p}มาฟรีๆ!", "เย้! กิน{p}ได้แล้ว", "{p}ตัวนี้เป็นของเรา!"],
-    pawn: ["เก็บเบี้ยไปหนึ่ง", "ได้เบี้ยมาตัวนึง"],
-    check: ["รุก!", "รุกคิง! หนีไปไหน", "จ่อคิงแล้ว!"],
-    promo: ["เบี้ยกลายเป็น{p}แล้ว!"],
-    lost: ["โอ๊ย {p}ของเรา!", "ไม่นะ! {p}โดนกิน", "พลาดแล้ว เสีย{p}"],
-    lostPawn: ["เสียเบี้ยไปตัวนึง ไม่เป็นไร", "แค่เบี้ย ไม่เป็นไร"],
-    checked: ["โดนรุก! ต้องหนีก่อน", "เฮ้ย โดนรุกแล้ว"],
-    win: ["เย้! ชนะแล้ว!", "ชนะแล้ว! เก่งมาก"],
-    lose: ["แพ้ซะแล้ว… เอาใหม่!", "โดนซะแล้ว ตาหน้าเอาคืน"],
-    draw: ["เสมอกัน ก็ยังดี"],
+    start: [tr("มาเล่นกัน!"), tr("เกมใหม่ สู้ๆ!"), tr("วันนี้ต้องชนะ!")],
+    take: [tr("ได้{p}มาฟรีๆ!"), tr("เย้! กิน{p}ได้แล้ว"), tr("{p}ตัวนี้เป็นของเรา!")],
+    pawn: [tr("เก็บเบี้ยไปหนึ่ง"), tr("ได้เบี้ยมาตัวนึง")],
+    check: [tr("รุก!"), tr("รุกคิง! หนีไปไหน"), tr("จ่อคิงแล้ว!")],
+    promo: [tr("เบี้ยกลายเป็น{p}แล้ว!")],
+    lost: [tr("โอ๊ย {p}ของเรา!"), tr("ไม่นะ! {p}โดนกิน"), tr("พลาดแล้ว เสีย{p}")],
+    lostPawn: [tr("เสียเบี้ยไปตัวนึง ไม่เป็นไร"), tr("แค่เบี้ย ไม่เป็นไร")],
+    checked: [tr("โดนรุก! ต้องหนีก่อน"), tr("เฮ้ย โดนรุกแล้ว")],
+    win: [tr("เย้! ชนะแล้ว!"), tr("ชนะแล้ว! เก่งมาก")],
+    lose: [tr("แพ้ซะแล้ว… เอาใหม่!"), tr("โดนซะแล้ว ตาหน้าเอาคืน")],
+    draw: [tr("เสมอกัน ก็ยังดี")],
   };
   let timer = 0, sayTimer = 0, last = {};
   const el = () => $("streamer");
@@ -2405,7 +2456,7 @@ const Streamer = (() => {
     let k; do { k = Math.floor(Math.random() * list.length); } while (list.length > 1 && k === last[kind]);
     last[kind] = k;
     const b = $("streamerSay");
-    b.textContent = list[k].replace("{p}", THAI_PIECE[piece] || "");
+    b.textContent = list[k].replace("{p}", (LANG === "en" ? (THAI_PIECE[piece] || "").toLowerCase() : THAI_PIECE[piece]) || "");
     b.classList.add("show");
     clearTimeout(sayTimer);
     if (!hold) sayTimer = setTimeout(() => b.classList.remove("show"), 2600);
@@ -2425,7 +2476,7 @@ const Streamer = (() => {
     sync() {
       $("app").classList.toggle("streaming", on());
       const me = myColor();
-      $("streamerTag").textContent = (G.names && me && G.names[me]) || "You";
+      $("streamerTag").textContent = tr((G.names && me && G.names[me]) || "You");
     },
     start() {
       clearTimeout(timer); $("streamerSay").classList.remove("show");
@@ -2501,7 +2552,7 @@ function undo() {
 function hint() {
   if (G.mode === "train") { Train.hint(); return; }
   if (G.over || G.thinking || G.mode === "online") return;
-  $("status").textContent = "Thinking about a hint…";
+  $("status").textContent = tr("Thinking about a hint…");
   setTimeout(() => {
     const m = bestMove(G.st, 2, 0, new Set(G.keys));
     if (!m) return;
@@ -2540,7 +2591,7 @@ function closeAll() { overlays.forEach(hide); }
 
 let confirmAction = null;
 function confirmBox(title, text, yes, action) {
-  $("confTitle").textContent = title; $("confText").textContent = text; $("confYes").textContent = yes;
+  $("confTitle").textContent = tr(title); $("confText").textContent = tr(text); $("confYes").textContent = tr(yes);
   confirmAction = action; show("confirm");
 }
 
@@ -2550,7 +2601,7 @@ function askPromotion(cands) {
   for (const q of "QRBN") {
     const b = document.createElement("button");
     b.innerHTML = pieceHTML(color + q);
-    b.setAttribute("aria-label", "Promote to " + NAME[q]);
+    b.setAttribute("aria-label", T("เลื่อนเป็น" + PIECE_TH[NAME[q]], "Promote to " + NAME[q]));
     b.addEventListener("click", () => { hide("promo"); doMove(cands.find(m => m.promo === q)); });
     $("promoRow").appendChild(b);
   }
@@ -2562,13 +2613,13 @@ function askPromotion(cands) {
 const Share = {
   link(method) { return HOME_URL + "?utm_source=" + method + "&utm_medium=share&utm_campaign=result"; },
   text() {
-    const o = G.over, me = myColor(), moves = Math.ceil(G.history.length / 2);
-    const foe = G.mode === "cpu" ? "คอมระดับ " + ["", "Easy", "Normal", "Hard"][G.level] : G.mode === "online" ? "เพื่อนออนไลน์" : "เพื่อน";
-    if (!o) return "มาเล่นหมากรุก 3 มิติกัน ฟรี ไม่ต้องสมัคร";
-    if (o.type === "draw") return "เสมอกับ" + foe + " ใน " + moves + " ตา มาลองเล่นหมากรุก 3 มิติกัน";
-    if (me && o.winner === me) return "ชนะ" + foe + (o.type === "mate" ? "แบบรุกฆาต" : "") + " ใน " + moves + " ตา! มาท้าดวลหมากรุก 3 มิติกัน";
-    if (me) return "แพ้" + foe + " ใน " + moves + " ตา ใครเก่งมาช่วยแก้แค้นที! หมากรุก 3 มิติ เล่นฟรี";
-    return (o.winner === "w" ? G.names.w : G.names.b) + " ชนะใน " + moves + " ตา มาเล่นหมากรุก 3 มิติด้วยกัน";
+    const o = G.over, me = myColor(), moves = Math.ceil(G.history.length / 2), lv = ["", "Easy", "Normal", "Hard"][G.level];
+    const foe = G.mode === "cpu" ? T("คอมระดับ " + lv, "the computer (" + lv + ")") : G.mode === "online" ? T("เพื่อนออนไลน์", "an online friend") : T("เพื่อน", "a friend");
+    if (!o) return T("มาเล่นหมากรุก 3 มิติกัน ฟรี ไม่ต้องสมัคร", "Come play 3D chess. Free, no sign-up");
+    if (o.type === "draw") return T("เสมอกับ" + foe + " ใน " + moves + " ตา มาลองเล่นหมากรุก 3 มิติกัน", "Drew with " + foe + " in " + moves + " moves! Come try 3D chess");
+    if (me && o.winner === me) return T("ชนะ" + foe + (o.type === "mate" ? "แบบรุกฆาต" : "") + " ใน " + moves + " ตา! มาท้าดวลหมากรุก 3 มิติกัน", "Beat " + foe + (o.type === "mate" ? " by checkmate" : "") + " in " + moves + " moves! Come challenge me at 3D chess");
+    if (me) return T("แพ้" + foe + " ใน " + moves + " ตา ใครเก่งมาช่วยแก้แค้นที! หมากรุก 3 มิติ เล่นฟรี", "Lost to " + foe + " in " + moves + " moves! Who can avenge me? Free 3D chess");
+    return T((o.winner === "w" ? G.names.w : G.names.b) + " ชนะใน " + moves + " ตา มาเล่นหมากรุก 3 มิติด้วยกัน", (o.winner === "w" ? G.names.w : G.names.b) + " won in " + moves + " moves! Come play 3D chess together");
   },
   // A 1080x1080 picture of the final position, for the phone share sheet.
   async picture() {
@@ -2594,7 +2645,7 @@ const Share = {
       g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(GLYPH[p[1]], cx, cy);
     }
     g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 34px " + font;
-    g.fillText("เล่นฟรีที่ rochano.github.io/chess", S / 2, S - 36);
+    g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, S - 36);
     return new Promise(res => c.toBlob(b => res(b), "image/png"));
   },
   async go() {
@@ -2618,7 +2669,7 @@ const Share = {
   copy(quiet) {
     const t = this.text() + " " + this.link("copy"), b = $("shareCopy");
     if (!quiet) track("share", { method: "copy", opponent: G.mode });
-    const done = () => { b.textContent = "Link copied"; setTimeout(() => { b.textContent = "Copy link"; }, 2000); };
+    const done = () => { b.textContent = tr("Link copied"); setTimeout(() => { b.textContent = tr("Copy link"); }, 2000); };
     try { navigator.clipboard.writeText(t).then(done, () => prompt("Copy this", t)); } catch (e) { prompt("Copy this", t); }
   },
 };
@@ -2722,11 +2773,11 @@ const Atmo = {
 const Shop = {
   items: null, games: 0, lastShown: -9,
   LINES: {
-    tense: ["ท่านครับ เกมนี้เครียดจัด พักแป๊บนึงก่อนดีไหมครับ", "ผมเห็นท่านกำหมัดแน่นเลย ผ่อนคลายหน่อยครับ"],
-    lost: ["แพ้ไม่เป็นไรครับท่าน ชาร์จพลังก่อนแล้วค่อยแก้มือ", "ทหารยังต้องพัก ท่านก็เหมือนกันครับ"],
-    won: ["ชนะสวยครับท่าน! ลองไปโชว์ฝีมือบนกระดานจริงไหม", "เก่งขนาดนี้ ต้องมีกระดานจริงไว้ท้าเพื่อนแล้วครับ"],
-    learn: ["อยากเก่งขึ้นอีก ผมมีของแนะนำครับท่าน"],
-    stalemate: ["เกือบชนะแล้วครับท่าน! ฝึกปิดเกมอีกนิดนะครับ"],
+    tense: [tr("ท่านครับ เกมนี้เครียดจัด พักแป๊บนึงก่อนดีไหมครับ"), tr("ผมเห็นท่านกำหมัดแน่นเลย ผ่อนคลายหน่อยครับ")],
+    lost: [tr("แพ้ไม่เป็นไรครับท่าน ชาร์จพลังก่อนแล้วค่อยแก้มือ"), tr("ทหารยังต้องพัก ท่านก็เหมือนกันครับ")],
+    won: [tr("ชนะสวยครับท่าน! ลองไปโชว์ฝีมือบนกระดานจริงไหม"), tr("เก่งขนาดนี้ ต้องมีกระดานจริงไว้ท้าเพื่อนแล้วครับ")],
+    learn: [tr("อยากเก่งขึ้นอีก ผมมีของแนะนำครับท่าน")],
+    stalemate: [tr("เกือบชนะแล้วครับท่าน! ฝึกปิดเกมอีกนิดนะครับ")],
   },
   async load() {
     if (this.items) return this.items;
@@ -2755,7 +2806,7 @@ const Shop = {
     const lost = o.type !== "draw" && o.winner !== me;
     lsSet("chess-losses", lost ? lsGet("chess-losses", 0) + 1 : 0);
     this.games++;
-    if (prefs.shop === "off") return;
+    if (prefs.shop === "off" || LANG !== "th") return;
     const mood = this.mood();
     // Not every game: tense or lost moods can show every other game, good moods one game in four.
     const gap = mood === "tense" || mood === "lost" ? 2 : 4;
@@ -2783,7 +2834,7 @@ const Shop = {
     $("shopNote").textContent = (it.notes && it.notes[want]) || it.note || "";
     $("shopItem").href = it.url;
     $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
-    $("shopAd").textContent = it.affiliate ? "ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ" : "";
+    $("shopAd").textContent = it.affiliate ? tr("ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ") : "";
     $("shop").hidden = false;
     Atmo.set(it, photo ? it.img : "");
     if (!preview) track("shop_view", { item: it.id, mood });
@@ -2798,6 +2849,9 @@ $("shopOff").addEventListener("click", () => { prefs.shop = "off"; savePrefs(); 
 $("segShop").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; prefs.shop = b.dataset.v; savePrefs(); syncShop(); });
 function syncShop() { $("segShop").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === prefs.shop))); }
 syncShop();
+$("shopField").hidden = LANG !== "th";
+$("lang").value = prefs.lang || "auto";
+$("lang").addEventListener("change", e => { prefs.lang = e.target.value === "auto" ? "" : e.target.value; savePrefs(); track("language", { lang: e.target.value }); location.reload(); });
 $("shareGo").addEventListener("click", () => Share.go());
 $("shareLine").addEventListener("click", () => Share.open("line"));
 $("shareFb").addEventListener("click", () => Share.open("facebook"));
@@ -2810,16 +2864,16 @@ function showResult() {
   { const me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win"); }
   reportResult();
   const me = myColor(), youLost = !!me && o.winner !== me;
-  if (o.type === "draw") { badge.className = "result-badge draw"; badge.textContent = "♚"; $("resTitle").textContent = "Draw"; }
+  if (o.type === "draw") { badge.className = "result-badge draw"; badge.textContent = "♚"; $("resTitle").textContent = tr("Draw"); }
   else {
     badge.className = "result-badge " + (o.type === "mate" ? "mate" : "win");
     badge.innerHTML = `<span class="pc ${o.winner}" style="font-size:44px">${GLYPH.K}</span>`;
-    $("resTitle").textContent = o.type === "mate" ? "Checkmate" : o.type === "flag" ? "Time's up" : o.type === "abandon" ? (youLost ? "Away too long" : "Opponent left") : "Resigned";
-    if (me) $("resTitle").textContent += youLost ? (G.mode === "cpu" ? ". The computer wins" : ". You lose") : ". You win";
+    $("resTitle").textContent = tr(o.type === "mate" ? "Checkmate" : o.type === "flag" ? "Time's up" : o.type === "abandon" ? (youLost ? "Away too long" : "Opponent left") : "Resigned");
+    if (me) $("resTitle").textContent += tr(youLost ? (G.mode === "cpu" ? ". The computer wins" : ". You lose") : ". You win");
   }
-  $("resText").textContent = o.text;
+  $("resText").textContent = trS(o.text);
   // The player stalemated the opponent: explain why a winning position became a draw.
-  if (o.stalemate && o.stalemate === me) $("resText").textContent += " เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ";
+  if (o.stalemate && o.stalemate === me) $("resText").textContent += tr(" เกือบชนะแล้ว! อีกฝ่ายไม่ถูกรุก แต่ไม่มีตาเดินเลย กติกานับว่าเสมอ ครั้งหน้าเว้นช่องให้คิงเดิน แล้วค่อยรุกฆาตครับ");
   // Open once the suggested product (if any) is ready, so everything arrives in one smooth sequence;
   // a slow photo gets 1.8s, after that the product follows on its own.
   const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -2835,16 +2889,16 @@ function syncMenu() {
   for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]])
     $(seg).querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === String(prefs[key]))));
   $("levelField").hidden = prefs.mode !== "cpu";
-  $("levelNote").textContent = {
+  $("levelNote").textContent = tr({
     1: "Easy: plays like a beginner. Half its moves are random, it often misses pieces it could take, and it never checks what you can take back.",
     2: "Normal: looks two moves ahead and works out every exchange, so it keeps its pieces safe and punishes loose ones.",
     3: "Hard: looks four moves ahead and always plays the best move it finds. It thinks for up to two seconds.",
-  }[prefs.level] || "";
+  }[prefs.level] || "");
   $("onlineField").hidden = prefs.mode !== "online";
   $("newGame").hidden = prefs.mode === "online";
   $("inNameB").hidden = prefs.mode !== "friend";
-  $("inNameW").placeholder = prefs.mode === "friend" ? "White" : "Your name";
-  $("namesLbl").textContent = prefs.mode === "friend" ? "Player names" : "Your name";
+  $("inNameW").placeholder = tr(prefs.mode === "friend" ? "White" : "Your name");
+  $("namesLbl").textContent = tr(prefs.mode === "friend" ? "Player names" : "Your name");
 }
 for (const [seg, key] of [["segMode", "mode"], ["segLevel", "level"], ["segClock", "clock"]]) {
   $(seg).addEventListener("click", e => {
@@ -2912,201 +2966,201 @@ function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch
    promote  promote a pawn within n moves without losing it
    opening  castle and develop three minor pieces within n moves without losing material
    beat     win a full game against the computer at level */
-const RANKS = ["ทหารเกณฑ์", "พลทหาร", "สิบตรี", "สิบเอก", "จ่าสิบเอก", "ร้อยตรี", "ร้อยเอก", "พันเอก", "เทพหมากรุก"];
+const RANKS = [tr("ทหารเกณฑ์"), tr("พลทหาร"), tr("สิบตรี"), tr("สิบเอก"), tr("จ่าสิบเอก"), tr("ร้อยตรี"), tr("ร้อยเอก"), tr("พันเอก"), tr("เทพหมากรุก")];
 const COURSE = [
-  { title: "ฝึกเดินหมาก", rank: 1, lessons: [
-    { title: "เรือ", look: ["เรือวิ่งเป็นเส้นตรง กี่ช่องก็ได้", "มองทั้ง 4 ทิศ: ขึ้น ลง ซ้าย ขวา"], warn: ["ข้ามหมากไม่ได้ ถ้ามีหมากขวางต้องหยุด"],
+  { title: tr("ฝึกเดินหมาก"), rank: 1, lessons: [
+    { title: tr("เรือ"), look: [tr("เรือวิ่งเป็นเส้นตรง กี่ช่องก็ได้"), tr("มองทั้ง 4 ทิศ: ขึ้น ลง ซ้าย ขวา")], warn: [tr("ข้ามหมากไม่ได้ ถ้ามีหมากขวางต้องหยุด")],
       teach: [
-        { fen: "8/8/8/8/3R4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4d1", "d4a4", "d4h4"], text: "เรือเดินเป็นเส้นตรง ขึ้น ลง ซ้าย ขวา กี่ช่องก็ได้ ตามลูกศรเลย" },
-        { fen: "8/8/8/3n4/8/8/8/1P1R4 w - - 0 1", arrows: ["d1d5"], marks: ["b1", "d5"], text: "ข้ามหมากไม่ได้ ทางซ้ายติดเบี้ยเราที่ b1 จึงไปได้แค่ c1 แต่ถ้าเจอหมากข้าศึก (ม้า d5) กินมันได้แล้วหยุดตรงนั้น" },
+        { fen: "8/8/8/8/3R4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4d1", "d4a4", "d4h4"], text: tr("เรือเดินเป็นเส้นตรง ขึ้น ลง ซ้าย ขวา กี่ช่องก็ได้ ตามลูกศรเลย") },
+        { fen: "8/8/8/3n4/8/8/8/1P1R4 w - - 0 1", arrows: ["d1d5"], marks: ["b1", "d5"], text: tr("ข้ามหมากไม่ได้ ทางซ้ายติดเบี้ยเราที่ b1 จึงไปได้แค่ c1 แต่ถ้าเจอหมากข้าศึก (ม้า d5) กินมันได้แล้วหยุดตรงนั้น") },
       ],
       drills: [
-        { goal: "collect", n: 3, fen: "8/8/8/p3p3/8/8/4p3/R7 w - - 0 1", text: "เก็บเบี้ยดำให้หมด 3 ตัว ภายใน 3 ตา (ฝ่ายดำจะไม่เดิน)", hint: "a1a5" },
-        { goal: "collect", n: 2, fen: "8/7n/8/8/8/3P4/8/3R3b w - - 0 1", text: "เก็บหมากดำ 2 ตัว ภายใน 2 ตา ระวังเบี้ยเราเองขวางทาง", hint: "d1h1" },
+        { goal: "collect", n: 3, fen: "8/8/8/p3p3/8/8/4p3/R7 w - - 0 1", text: tr("เก็บเบี้ยดำให้หมด 3 ตัว ภายใน 3 ตา (ฝ่ายดำจะไม่เดิน)"), hint: "a1a5" },
+        { goal: "collect", n: 2, fen: "8/7n/8/8/8/3P4/8/3R3b w - - 0 1", text: tr("เก็บหมากดำ 2 ตัว ภายใน 2 ตา ระวังเบี้ยเราเองขวางทาง"), hint: "d1h1" },
       ] },
-    { title: "บิชอป", look: ["บิชอปวิ่งแนวทแยง กี่ช่องก็ได้", "บิชอปอยู่บนสีเดิมตลอดเกม"], warn: ["บิชอปช่องขาวไม่มีวันไปช่องดำได้"],
+    { title: tr("บิชอป"), look: [tr("บิชอปวิ่งแนวทแยง กี่ช่องก็ได้"), tr("บิชอปอยู่บนสีเดิมตลอดเกม")], warn: [tr("บิชอปช่องขาวไม่มีวันไปช่องดำได้")],
       teach: [
-        { fen: "8/8/8/8/3B4/8/8/8 w - - 0 1", arrows: ["d4h8", "d4a7", "d4a1", "d4g1"], text: "บิชอปเดินแนวทแยงได้ไกล 4 ทิศ และอยู่บนสีเดิมตลอดเกม" },
+        { fen: "8/8/8/8/3B4/8/8/8 w - - 0 1", arrows: ["d4h8", "d4a7", "d4a1", "d4g1"], text: tr("บิชอปเดินแนวทแยงได้ไกล 4 ทิศ และอยู่บนสีเดิมตลอดเกม") },
       ],
       drills: [
-        { goal: "collect", n: 3, fen: "8/6p1/8/4p3/8/2p5/8/B7 w - - 0 1", text: "เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา", hint: "a1c3" },
-        { goal: "collect", n: 2, fen: "8/3p4/8/1p6/8/8/8/5B2 w - - 0 1", text: "เก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา", hint: "f1b5" },
+        { goal: "collect", n: 3, fen: "8/6p1/8/4p3/8/2p5/8/B7 w - - 0 1", text: tr("เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา"), hint: "a1c3" },
+        { goal: "collect", n: 2, fen: "8/3p4/8/1p6/8/8/8/5B2 w - - 0 1", text: tr("เก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา"), hint: "f1b5" },
       ] },
-    { title: "ม้า", look: ["ม้าเดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1", "ม้ากระโดดข้ามหมากได้ ตัวเดียวในเกม"], warn: ["ม้าที่อยู่ริมกระดานเดินได้น้อยลงมาก"],
+    { title: tr("ม้า"), look: [tr("ม้าเดินเป็นรูปตัว L: ตรง 2 ช่องแล้วเลี้ยว 1"), tr("ม้ากระโดดข้ามหมากได้ ตัวเดียวในเกม")], warn: [tr("ม้าที่อยู่ริมกระดานเดินได้น้อยลงมาก")],
       teach: [
-        { fen: "8/8/8/8/3N4/8/8/8 w - - 0 1", arrows: ["d4c6", "d4e6", "d4f5", "d4f3", "d4e2", "d4c2", "d4b3", "d4b5"], text: "ม้าเดินเป็นรูปตัว L ได้ 8 ทาง และกระโดดข้ามหมากตัวอื่นได้" },
-        { fen: "8/8/8/8/8/8/5PPP/6N1 w - - 0 1", arrows: ["g1f3", "g1h3", "g1e2"], text: "ถึงจะมีเบี้ยล้อมอยู่ ม้าก็กระโดดออกมาได้" },
+        { fen: "8/8/8/8/3N4/8/8/8 w - - 0 1", arrows: ["d4c6", "d4e6", "d4f5", "d4f3", "d4e2", "d4c2", "d4b3", "d4b5"], text: tr("ม้าเดินเป็นรูปตัว L ได้ 8 ทาง และกระโดดข้ามหมากตัวอื่นได้") },
+        { fen: "8/8/8/8/8/8/5PPP/6N1 w - - 0 1", arrows: ["g1f3", "g1h3", "g1e2"], text: tr("ถึงจะมีเบี้ยล้อมอยู่ ม้าก็กระโดดออกมาได้") },
       ],
       drills: [
-        { goal: "collect", n: 3, fen: "8/8/5p2/3p4/8/2p5/8/1N6 w - - 0 1", text: "เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา", hint: "b1c3" },
-        { goal: "collect", n: 2, fen: "8/8/8/8/3p4/8/4pPPP/6N1 w - - 0 1", text: "กระโดดออกมาเก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา", hint: "g1e2" },
+        { goal: "collect", n: 3, fen: "8/8/5p2/3p4/8/2p5/8/1N6 w - - 0 1", text: tr("เก็บเบี้ยดำ 3 ตัว ภายใน 3 ตา"), hint: "b1c3" },
+        { goal: "collect", n: 2, fen: "8/8/8/8/3p4/8/4pPPP/6N1 w - - 0 1", text: tr("กระโดดออกมาเก็บเบี้ยดำ 2 ตัว ภายใน 2 ตา"), hint: "g1e2" },
       ] },
-    { title: "ควีน คิง และเบี้ย", look: ["ควีน = เรือ + บิชอป เดินได้ 8 ทิศ", "คิงเดินทีละ 1 ช่อง", "เบี้ยเดินตรง แต่กินทแยง"], warn: ["คิงห้ามเดินเข้าช่องที่ข้าศึกเล็งอยู่", "เบี้ยเดินถอยหลังไม่ได้"],
+    { title: tr("ควีน คิง และเบี้ย"), look: [tr("ควีน = เรือ + บิชอป เดินได้ 8 ทิศ"), tr("คิงเดินทีละ 1 ช่อง"), tr("เบี้ยเดินตรง แต่กินทแยง")], warn: [tr("คิงห้ามเดินเข้าช่องที่ข้าศึกเล็งอยู่"), tr("เบี้ยเดินถอยหลังไม่ได้")],
       teach: [
-        { fen: "8/8/8/8/3Q4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4h8", "d4h4", "d4g1", "d4d1", "d4a1", "d4a4", "d4a7"], text: "ควีนแรงที่สุด เดินได้ทั้งเส้นตรงและแนวทแยง 8 ทิศ" },
-        { fen: "8/8/8/8/3K4/8/8/8 w - - 0 1", marks: ["c5", "d5", "e5", "c4", "e4", "c3", "d3", "e3"], text: "คิงเดินได้ทีละ 1 ช่องทุกทิศ (วงสีส้ม) และห้ามเดินเข้าช่องที่โดนเล็ง" },
-        { fen: "8/8/8/3p4/4P3/8/1P6/8 w - - 0 1", arrows: ["b2b4", "e4d5"], text: "เบี้ยเดินหน้าทีละช่อง ตาแรกเดินได้ 2 ช่อง แต่เวลากินจะกินทางทแยงหน้า" },
+        { fen: "8/8/8/8/3Q4/8/8/8 w - - 0 1", arrows: ["d4d8", "d4h8", "d4h4", "d4g1", "d4d1", "d4a1", "d4a4", "d4a7"], text: tr("ควีนแรงที่สุด เดินได้ทั้งเส้นตรงและแนวทแยง 8 ทิศ") },
+        { fen: "8/8/8/8/3K4/8/8/8 w - - 0 1", marks: ["c5", "d5", "e5", "c4", "e4", "c3", "d3", "e3"], text: tr("คิงเดินได้ทีละ 1 ช่องทุกทิศ (วงสีส้ม) และห้ามเดินเข้าช่องที่โดนเล็ง") },
+        { fen: "8/8/8/3p4/4P3/8/1P6/8 w - - 0 1", arrows: ["b2b4", "e4d5"], text: tr("เบี้ยเดินหน้าทีละช่อง ตาแรกเดินได้ 2 ช่อง แต่เวลากินจะกินทางทแยงหน้า") },
       ],
       drills: [
-        { goal: "collect", n: 4, fen: "8/p7/7p/8/8/4p3/7p/Q7 w - - 0 1", text: "ใช้ควีนเก็บเบี้ยดำ 4 ตัว ภายใน 4 ตา", hint: "a1a7" },
-        { goal: "collect", n: 3, fen: "8/8/8/5p2/4p3/3p4/4P3/8 w - - 0 1", text: "ใช้เบี้ยขาวกินเบี้ยดำ 3 ตัว ภายใน 3 ตา (เบี้ยกินทางทแยง)", hint: "e2d3" },
+        { goal: "collect", n: 4, fen: "8/p7/7p/8/8/4p3/7p/Q7 w - - 0 1", text: tr("ใช้ควีนเก็บเบี้ยดำ 4 ตัว ภายใน 4 ตา"), hint: "a1a7" },
+        { goal: "collect", n: 3, fen: "8/8/8/5p2/4p3/3p4/4P3/8 w - - 0 1", text: tr("ใช้เบี้ยขาวกินเบี้ยดำ 3 ตัว ภายใน 3 ตา (เบี้ยกินทางทแยง)"), hint: "e2d3" },
       ] },
-    { title: "ด่านบอส: เก็บกวาด", boss: true, look: ["วางแผนก่อนเดิน: ตัวไหนเก็บอะไร ลำดับไหน"], warn: ["ตาไม่พอถ้าเดินเสียเปล่าแม้แต่ตาเดียว", "ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! ใช้ทุกอย่างที่ฝึกมา เก็บหมากให้หมดโดยไม่เสียตาเปล่า" }],
+    { title: tr("ด่านบอส: เก็บกวาด"), boss: true, look: [tr("วางแผนก่อนเดิน: ตัวไหนเก็บอะไร ลำดับไหน")], warn: [tr("ตาไม่พอถ้าเดินเสียเปล่าแม้แต่ตาเดียว"), tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: tr("ด่านบอส! ใช้ทุกอย่างที่ฝึกมา เก็บหมากให้หมดโดยไม่เสียตาเปล่า") }],
       drills: [
-        { goal: "collect", n: 4, fen: "8/5p2/8/4p3/2p5/8/8/5BN1 w - - 0 1", text: "ใช้บิชอปกับม้าเก็บให้หมด 3 ตัว ภายใน 4 ตา" },
-        { goal: "collect", n: 4, fen: "8/1p6/5p2/8/8/8/1p6/5b1Q w - - 0 1", text: "ใช้ควีนเก็บให้หมด 4 ตัว ภายใน 4 ตา" },
+        { goal: "collect", n: 4, fen: "8/5p2/8/4p3/2p5/8/8/5BN1 w - - 0 1", text: tr("ใช้บิชอปกับม้าเก็บให้หมด 3 ตัว ภายใน 4 ตา") },
+        { goal: "collect", n: 4, fen: "8/1p6/5p2/8/8/8/1p6/5b1Q w - - 0 1", text: tr("ใช้ควีนเก็บให้หมด 4 ตัว ภายใน 4 ตา") },
       ] },
   ] },
-  { title: "ของฟรีและของแพง", rank: 2, lessons: [
-    { title: "กินของฟรี", look: ["ค่าหมาก: เบี้ย 1 ม้า 3 บิชอป 3 เรือ 5 ควีน 9", "หมากข้าศึกที่ไม่มีใครคุ้มกัน = ของฟรี"], warn: ["ก่อนกิน ดูว่าช่องนั้นมีใครรอกินคืนไหม", "อย่าเอาตัวแพงไปแลกตัวถูก"],
+  { title: tr("ของฟรีและของแพง"), rank: 2, lessons: [
+    { title: tr("กินของฟรี"), look: [tr("ค่าหมาก: เบี้ย 1 ม้า 3 บิชอป 3 เรือ 5 ควีน 9"), tr("หมากข้าศึกที่ไม่มีใครคุ้มกัน = ของฟรี")], warn: [tr("ก่อนกิน ดูว่าช่องนั้นมีใครรอกินคืนไหม"), tr("อย่าเอาตัวแพงไปแลกตัวถูก")],
       teach: [
-        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", marks: ["d1", "a1", "b1", "c1"], text: "หมากแต่ละตัวมีค่าไม่เท่ากัน: เบี้ย 1, ม้า 3, บิชอป 3, เรือ 5, ควีน 9 แต้ม (คิงมีค่าเท่าชีวิต)" },
-        { fen: "4k3/8/4p3/3n3b/8/5N2/8/3RK3 w - - 0 1", arrows: ["f3h4", "d1d5"], marks: ["h5", "d5"], text: "บิชอป h5 ไม่มีใครคุ้มกัน (ของฟรี) แต่ม้า d5 มีเบี้ย e6 คุ้มอยู่ ถ้าเอาเรือไปกิน จะโดนเบี้ยกินคืน เสีย 5 ได้ 3" },
+        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", marks: ["d1", "a1", "b1", "c1"], text: tr("หมากแต่ละตัวมีค่าไม่เท่ากัน: เบี้ย 1, ม้า 3, บิชอป 3, เรือ 5, ควีน 9 แต้ม (คิงมีค่าเท่าชีวิต)") },
+        { fen: "4k3/8/4p3/3n3b/8/5N2/8/3RK3 w - - 0 1", arrows: ["f3h4", "d1d5"], marks: ["h5", "d5"], text: tr("บิชอป h5 ไม่มีใครคุ้มกัน (ของฟรี) แต่ม้า d5 มีเบี้ย e6 คุ้มอยู่ ถ้าเอาเรือไปกิน จะโดนเบี้ยกินคืน เสีย 5 ได้ 3") },
       ],
       drills: [
-        { goal: "win", target: 800, n: 1, fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", text: "ควีนดำยืนอยู่โดยไม่มีใครคุ้มกัน หาแล้วกินเลย", hint: "f3h4" },
-        { goal: "win", target: 800, n: 1, fen: "r3k2r/ppp2ppp/2n5/3q4/8/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1", text: "ดำเผลออีกแล้ว มีตัวใหญ่ให้กินฟรี", hint: "c3d5" },
-        { goal: "win", target: 300, n: 1, fen: "6k1/5ppp/4p3/3n4/7b/5N2/5PPP/3R2K1 w - - 0 1", text: "มีให้กิน 2 ตัว ตัวไหนกินแล้วไม่โดนกินคืน?", hint: "f3h4" },
+        { goal: "win", target: 800, n: 1, fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", text: tr("ควีนดำยืนอยู่โดยไม่มีใครคุ้มกัน หาแล้วกินเลย"), hint: "f3h4" },
+        { goal: "win", target: 800, n: 1, fen: "r3k2r/ppp2ppp/2n5/3q4/8/2N5/PPP2PPP/R2QKB1R w KQkq - 0 1", text: tr("ดำเผลออีกแล้ว มีตัวใหญ่ให้กินฟรี"), hint: "c3d5" },
+        { goal: "win", target: 300, n: 1, fen: "6k1/5ppp/4p3/3n4/7b/5N2/5PPP/3R2K1 w - - 0 1", text: tr("มีให้กิน 2 ตัว ตัวไหนกินแล้วไม่โดนกินคืน?"), hint: "f3h4" },
       ] },
-    { title: "โดนจ่อแล้วต้องหนี", look: ["ทุกตาที่ข้าศึกเดิน ถามว่า: มันจ่อกินอะไรเรา", "หนีไปช่องที่ไม่มีใครเล็ง หรือหาคนมาคุ้มกัน"], warn: ["อย่าหนีไปช่องที่ยังโดนกินได้"],
+    { title: tr("โดนจ่อแล้วต้องหนี"), look: [tr("ทุกตาที่ข้าศึกเดิน ถามว่า: มันจ่อกินอะไรเรา"), tr("หนีไปช่องที่ไม่มีใครเล็ง หรือหาคนมาคุ้มกัน")], warn: [tr("อย่าหนีไปช่องที่ยังโดนกินได้")],
       teach: [
-        { fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", arrows: ["f6h5"], marks: ["h5"], text: "ม้าดำ f6 จ่อกินควีนเราที่ h5 อยู่ (ลูกศร) ต้องรู้ตัวก่อนจะสาย" },
+        { fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", arrows: ["f6h5"], marks: ["h5"], text: tr("ม้าดำ f6 จ่อกินควีนเราที่ h5 อยู่ (ลูกศร) ต้องรู้ตัวก่อนจะสาย") },
       ],
       drills: [
-        { goal: "keep", n: 1, fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", text: "พาควีนหนีไปช่องที่ปลอดภัย", hint: "h5e2" },
-        { goal: "keep", n: 1, fen: "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4", text: "เบี้ย a6 ไล่บิชอปเรา ทำยังไงไม่ให้เสียหมาก", hint: "b5a4" },
-        { goal: "keep", n: 1, fen: "6k1/5ppp/8/8/3b4/8/1R3PPP/6K1 w - - 0 1", text: "บิชอปดำจ่อเรือเราอยู่ หนีให้รอด (ถ้าหนีแล้วได้รุกด้วยยิ่งดี)", hint: "b2b8" },
+        { goal: "keep", n: 1, fen: "rnbqkb1r/pppp1ppp/5n2/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3", text: tr("พาควีนหนีไปช่องที่ปลอดภัย"), hint: "h5e2" },
+        { goal: "keep", n: 1, fen: "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4", text: tr("เบี้ย a6 ไล่บิชอปเรา ทำยังไงไม่ให้เสียหมาก"), hint: "b5a4" },
+        { goal: "keep", n: 1, fen: "6k1/5ppp/8/8/3b4/8/1R3PPP/6K1 w - - 0 1", text: tr("บิชอปดำจ่อเรือเราอยู่ หนีให้รอด (ถ้าหนีแล้วได้รุกด้วยยิ่งดี)"), hint: "b2b8" },
       ] },
-    { title: "ด่านบอส: ตาไว", boss: true, look: ["มองหาของฟรีของข้าศึก", "เช็กว่าของเราโดนจ่ออยู่ไหม"], warn: ["ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! แต่ละโจทย์อาจเป็นการกินของฟรี หรือการหนี ต้องดูให้ออกเอง" }],
+    { title: tr("ด่านบอส: ตาไว"), boss: true, look: [tr("มองหาของฟรีของข้าศึก"), tr("เช็กว่าของเราโดนจ่ออยู่ไหม")], warn: [tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: tr("ด่านบอส! แต่ละโจทย์อาจเป็นการกินของฟรี หรือการหนี ต้องดูให้ออกเอง") }],
       drills: [
-        { goal: "win", target: 300, n: 1, fen: "r1bqkbnr/pppp1ppp/8/4n3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 4", text: "หาของฟรีให้เจอ" },
-        { goal: "keep", n: 1, fen: "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq d6 0 5", text: "เบี้ย d5 จ่อบิชอปเราอยู่ ตอบให้ดีโดยไม่เสียหมาก" },
+        { goal: "win", target: 300, n: 1, fen: "r1bqkbnr/pppp1ppp/8/4n3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 4", text: tr("หาของฟรีให้เจอ") },
+        { goal: "keep", n: 1, fen: "r1bqkb1r/ppp2ppp/2n2n2/3pp3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq d6 0 5", text: tr("เบี้ย d5 จ่อบิชอปเราอยู่ ตอบให้ดีโดยไม่เสียหมาก") },
       ] },
   ] },
-  { title: "รุกและรุกฆาต", rank: 3, lessons: [
-    { title: "แก้รุก", look: ["โดนรุกแก้ได้ 3 ทาง: หนี บัง หรือกินตัวที่รุก", "ทางที่ดีที่สุดมักเป็นการกินตัวที่รุก"], warn: ["เดินอย่างอื่นไม่ได้จนกว่าจะแก้รุก"],
+  { title: tr("รุกและรุกฆาต"), rank: 3, lessons: [
+    { title: tr("แก้รุก"), look: [tr("โดนรุกแก้ได้ 3 ทาง: หนี บัง หรือกินตัวที่รุก"), tr("ทางที่ดีที่สุดมักเป็นการกินตัวที่รุก")], warn: [tr("เดินอย่างอื่นไม่ได้จนกว่าจะแก้รุก")],
       teach: [
-        { fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", arrows: ["e4e1"], marks: ["e1"], text: "ควีนดำรุกคิงเราตามแนว e (ลูกศร) เราต้องแก้ด้วยการ หนี บัง หรือกิน" },
+        { fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", arrows: ["e4e1"], marks: ["e1"], text: tr("ควีนดำรุกคิงเราตามแนว e (ลูกศร) เราต้องแก้ด้วยการ หนี บัง หรือกิน") },
       ],
       drills: [
-        { goal: "win", target: 800, n: 1, fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", text: "โดนรุก! แก้รุกแบบที่ได้กำไรที่สุด", hint: "d2e4" },
+        { goal: "win", target: 800, n: 1, fen: "4k3/8/8/8/4q3/8/3N4/R3K3 w - - 0 1", text: tr("โดนรุก! แก้รุกแบบที่ได้กำไรที่สุด"), hint: "d2e4" },
       ] },
-    { title: "รุกฆาตในตาเดียว", look: ["รุกฆาต = รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินไม่ได้", "คิงที่ติดหมากตัวเองล้อมอยู่ อันตรายที่สุด"], warn: ["รุกแล้วคิงยังหนีได้ ไม่ใช่รุกฆาต", "ถ้าคิงไม่โดนรุกแต่เดินไม่ได้เลย จะเป็นอับ (เสมอ)"],
+    { title: tr("รุกฆาตในตาเดียว"), look: [tr("รุกฆาต = รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินไม่ได้"), tr("คิงที่ติดหมากตัวเองล้อมอยู่ อันตรายที่สุด")], warn: [tr("รุกแล้วคิงยังหนีได้ ไม่ใช่รุกฆาต"), tr("ถ้าคิงไม่โดนรุกแต่เดินไม่ได้เลย จะเป็นอับ (เสมอ)")],
       teach: [
-        { fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", arrows: ["a1a8"], marks: ["f7", "g7", "h7"], text: "คิงดำโดนเบี้ยตัวเองขังไว้ ถ้าเรือวิ่งเข้าแถวหลัง คิงจะหนีไม่ได้ = รุกฆาตแถวหลัง" },
-        { fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", arrows: ["h1h8"], marks: ["a7", "b7", "b8"], text: "ใช้คิงเราช่วย: คิง b6 คุมช่อง a7 b7 ควีนมาคุมแถว 8 คิงดำก็ไม่มีที่ไป" },
+        { fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", arrows: ["a1a8"], marks: ["f7", "g7", "h7"], text: tr("คิงดำโดนเบี้ยตัวเองขังไว้ ถ้าเรือวิ่งเข้าแถวหลัง คิงจะหนีไม่ได้ = รุกฆาตแถวหลัง") },
+        { fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", arrows: ["h1h8"], marks: ["a7", "b7", "b8"], text: tr("ใช้คิงเราช่วย: คิง b6 คุมช่อง a7 b7 ควีนมาคุมแถว 8 คิงดำก็ไม่มีที่ไป") },
       ],
       drills: [
-        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", text: "รุกฆาตในตาเดียว", hint: "a1a8" },
-        { goal: "mate", n: 1, fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", text: "รุกฆาตในตาเดียว (ใช้คิงช่วย)", hint: "h1h8" },
-        { goal: "mate", n: 1, fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", text: "รุกฆาตด้วยม้า: คิงดำติดหมากตัวเองหมดแล้ว", hint: "g5f7" },
-        { goal: "mate", n: 1, fen: "7k/R7/8/8/8/8/8/1R5K w - - 0 1", text: "เรือ 2 ตัวช่วยกัน รุกฆาตในตาเดียว", hint: "b1b8" },
+        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", text: tr("รุกฆาตในตาเดียว"), hint: "a1a8" },
+        { goal: "mate", n: 1, fen: "k7/8/1K6/8/8/8/8/7Q w - - 0 1", text: tr("รุกฆาตในตาเดียว (ใช้คิงช่วย)"), hint: "h1h8" },
+        { goal: "mate", n: 1, fen: "6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1", text: tr("รุกฆาตด้วยม้า: คิงดำติดหมากตัวเองหมดแล้ว"), hint: "g5f7" },
+        { goal: "mate", n: 1, fen: "7k/R7/8/8/8/8/8/1R5K w - - 0 1", text: tr("เรือ 2 ตัวช่วยกัน รุกฆาตในตาเดียว"), hint: "b1b8" },
       ] },
-    { title: "ด่านบอส: มือสังหาร", boss: true, look: ["หาช่องที่คิงข้าศึกหนีได้ แล้วปิดให้หมด"], warn: ["ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! รุกฆาตในตาเดียว 3 ข้อติด" }],
+    { title: tr("ด่านบอส: มือสังหาร"), boss: true, look: [tr("หาช่องที่คิงข้าศึกหนีได้ แล้วปิดให้หมด")], warn: [tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: tr("ด่านบอส! รุกฆาตในตาเดียว 3 ข้อติด") }],
       drills: [
-        { goal: "mate", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", text: "รุกฆาตในตาเดียว" },
-        { goal: "mate", n: 1, fen: "5rk1/5ppp/8/8/8/8/1B6/K5Q1 w - - 0 1", text: "รุกฆาตในตาเดียว" },
-        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", text: "รุกฆาตในตาเดียว" },
+        { goal: "mate", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", text: tr("รุกฆาตในตาเดียว") },
+        { goal: "mate", n: 1, fen: "5rk1/5ppp/8/8/8/8/1B6/K5Q1 w - - 0 1", text: tr("รุกฆาตในตาเดียว") },
+        { goal: "mate", n: 1, fen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1", text: tr("รุกฆาตในตาเดียว") },
       ] },
   ] },
-  { title: "อาวุธลับ: ส้อม ตรึง เสียบ", rank: 4, lessons: [
-    { title: "ส้อม (Fork)", look: ["ส้อม = จ่อ 2 ตัวพร้อมกัน ข้าศึกหนีได้ตัวเดียว", "ม้าส้อมเก่งที่สุด เพราะกระโดดได้และเล็งได้หลายทิศ", "เบี้ยก็ส้อมได้!"], warn: ["ช่องที่ไปส้อมต้องไม่โดนกินคืน"],
+  { title: tr("อาวุธลับ: ส้อม ตรึง เสียบ"), rank: 4, lessons: [
+    { title: tr("ส้อม (Fork)"), look: [tr("ส้อม = จ่อ 2 ตัวพร้อมกัน ข้าศึกหนีได้ตัวเดียว"), tr("ม้าส้อมเก่งที่สุด เพราะกระโดดได้และเล็งได้หลายทิศ"), tr("เบี้ยก็ส้อมได้!")], warn: [tr("ช่องที่ไปส้อมต้องไม่โดนกินคืน")],
       teach: [
-        { fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", arrows: ["b5c7"], text: "ม้า b5 กำลังจะกระโดดไป c7" },
-        { fen: "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1", arrows: ["c7e8", "c7a8"], marks: ["e8", "a8"], text: "จาก c7 ม้าจ่อทั้งคิงและเรือ คิงต้องหนี แล้วเราก็กินเรือฟรี นี่คือส้อม" },
+        { fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", arrows: ["b5c7"], text: tr("ม้า b5 กำลังจะกระโดดไป c7") },
+        { fen: "r3k3/2N5/8/8/8/8/8/4K3 b - - 0 1", arrows: ["c7e8", "c7a8"], marks: ["e8", "a8"], text: tr("จาก c7 ม้าจ่อทั้งคิงและเรือ คิงต้องหนี แล้วเราก็กินเรือฟรี นี่คือส้อม") },
       ],
       drills: [
-        { goal: "win", target: 450, n: 2, fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: "หาตาที่ม้าจ่อคิงกับเรือพร้อมกัน แล้วเก็บเรือ", hint: "b5c7" },
-        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/2n1n3/8/3P4/8/7K w - - 0 1", text: "ใช้เบี้ยส้อมม้า 2 ตัว แล้วเก็บมาให้ได้ 1 ตัว", hint: "d3d4" },
+        { goal: "win", target: 450, n: 2, fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: tr("หาตาที่ม้าจ่อคิงกับเรือพร้อมกัน แล้วเก็บเรือ"), hint: "b5c7" },
+        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/2n1n3/8/3P4/8/7K w - - 0 1", text: tr("ใช้เบี้ยส้อมม้า 2 ตัว แล้วเก็บมาให้ได้ 1 ตัว"), hint: "d3d4" },
       ] },
-    { title: "ตรึง (Pin) และเสียบ (Skewer)", look: ["ตรึง: หมากที่บังคิงอยู่ ขยับไม่ได้", "เสียบ: รุกตัวใหญ่ข้างหน้า พอมันหลบ ก็กินตัวข้างหลัง"], warn: ["หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้"],
+    { title: tr("ตรึง (Pin) และเสียบ (Skewer)"), look: [tr("ตรึง: หมากที่บังคิงอยู่ ขยับไม่ได้"), tr("เสียบ: รุกตัวใหญ่ข้างหน้า พอมันหลบ ก็กินตัวข้างหลัง")], warn: [tr("หมากที่โดนตรึงช่วยป้องกันอะไรไม่ได้")],
       teach: [
-        { fen: "4k3/pp3ppp/2n5/1B6/8/8/PPP2PPP/4K3 w - - 0 1", arrows: ["b5e8"], marks: ["c6"], text: "ตรึง: ม้า c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง ถ้าขยับคิงจะโดนกิน" },
-        { fen: "q7/8/8/3k4/8/5B2/8/7K w - - 0 1", arrows: ["f3a8"], marks: ["d5", "a8"], text: "เสียบ: บิชอปรุกคิง d5 คิงต้องหลบ แล้วบิชอปก็กินควีน a8 ที่อยู่ข้างหลัง" },
+        { fen: "4k3/pp3ppp/2n5/1B6/8/8/PPP2PPP/4K3 w - - 0 1", arrows: ["b5e8"], marks: ["c6"], text: tr("ตรึง: ม้า c6 ขยับไม่ได้ เพราะข้างหลังมันคือคิง ถ้าขยับคิงจะโดนกิน") },
+        { fen: "q7/8/8/3k4/8/5B2/8/7K w - - 0 1", arrows: ["f3a8"], marks: ["d5", "a8"], text: tr("เสียบ: บิชอปรุกคิง d5 คิงต้องหลบ แล้วบิชอปก็กินควีน a8 ที่อยู่ข้างหลัง") },
       ],
       drills: [
-        { goal: "pick", ok: ["f1b5"], fen: "4k3/pp3ppp/2n5/8/8/8/PPP2PPP/4KB2 w - - 0 1", text: "ตรึงม้า c6 ไว้กับคิง", hint: "f1b5" },
-        { goal: "win", target: 450, n: 2, fen: "q7/8/8/3k4/8/8/8/3B3K w - - 0 1", text: "เสียบคิงกับควีนดำ แล้วกินควีน", hint: "d1f3" },
-        { goal: "win", target: 300, n: 2, fen: "8/8/8/qk6/8/8/8/6KR w - - 0 1", text: "ใช้เรือเสียบคิงกับควีน", hint: "h1h5" },
+        { goal: "pick", ok: ["f1b5"], fen: "4k3/pp3ppp/2n5/8/8/8/PPP2PPP/4KB2 w - - 0 1", text: tr("ตรึงม้า c6 ไว้กับคิง"), hint: "f1b5" },
+        { goal: "win", target: 450, n: 2, fen: "q7/8/8/3k4/8/8/8/3B3K w - - 0 1", text: tr("เสียบคิงกับควีนดำ แล้วกินควีน"), hint: "d1f3" },
+        { goal: "win", target: 300, n: 2, fen: "8/8/8/qk6/8/8/8/6KR w - - 0 1", text: tr("ใช้เรือเสียบคิงกับควีน"), hint: "h1h5" },
       ] },
-    { title: "ด่านบอส: นักฆ่าเงียบ", boss: true, look: ["หาตัวที่ยืนเรียงกัน หรือยืนให้ม้าแตะได้ 2 ตัว"], warn: ["ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! ใช้ส้อมหรือเสียบให้ได้กำไร" }],
+    { title: tr("ด่านบอส: นักฆ่าเงียบ"), boss: true, look: [tr("หาตัวที่ยืนเรียงกัน หรือยืนให้ม้าแตะได้ 2 ตัว")], warn: [tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: tr("ด่านบอส! ใช้ส้อมหรือเสียบให้ได้กำไร") }],
       drills: [
-        { goal: "win", target: 800, n: 2, fen: "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: "ได้กำไรให้มากที่สุด" },
-        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/1n1n4/8/2P5/8/4K3 w - - 0 1", text: "ได้กำไรอย่างน้อย 1 ตัว" },
+        { goal: "win", target: 800, n: 2, fen: "q3k3/8/8/1N6/8/8/8/4K3 w - - 0 1", text: tr("ได้กำไรให้มากที่สุด") },
+        { goal: "win", target: 200, n: 3, fen: "4k3/8/8/1n1n4/8/2P5/8/4K3 w - - 0 1", text: tr("ได้กำไรอย่างน้อย 1 ตัว") },
       ] },
   ] },
-  { title: "เปิดเกมแบบมือโปร", rank: 5, lessons: [
-    { title: "3 กฎทอง", look: ["1) ยึดกลางกระดานด้วยเบี้ย e หรือ d", "2) ออกม้าและบิชอปให้ไว", "3) เข้าป้อมให้คิงปลอดภัย"], warn: ["อย่าเดินตัวเดิมซ้ำ", "อย่าเอาควีนออกเร็ว"],
+  { title: tr("เปิดเกมแบบมือโปร"), rank: 5, lessons: [
+    { title: tr("3 กฎทอง"), look: [tr("1) ยึดกลางกระดานด้วยเบี้ย e หรือ d"), tr("2) ออกม้าและบิชอปให้ไว"), tr("3) เข้าป้อมให้คิงปลอดภัย")], warn: [tr("อย่าเดินตัวเดิมซ้ำ"), tr("อย่าเอาควีนออกเร็ว")],
       teach: [
-        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arrows: ["e2e4", "d2d4"], marks: ["e4", "d4", "e5", "d5"], text: "กฎข้อ 1: ยึด 4 ช่องกลาง เพราะหมากที่อยู่กลางเดินได้หลายทาง" },
-        { fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", arrows: ["g1f3", "b1c3", "f1c4"], text: "กฎข้อ 2: ออกม้าและบิชอปมาทางกลาง" },
-        { fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", arrows: ["e1g1", "h1f1"], text: "กฎข้อ 3: เข้าป้อม แตะคิงแล้วแตะ g1 เรือจะข้ามมาเอง" },
+        { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", arrows: ["e2e4", "d2d4"], marks: ["e4", "d4", "e5", "d5"], text: tr("กฎข้อ 1: ยึด 4 ช่องกลาง เพราะหมากที่อยู่กลางเดินได้หลายทาง") },
+        { fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", arrows: ["g1f3", "b1c3", "f1c4"], text: tr("กฎข้อ 2: ออกม้าและบิชอปมาทางกลาง") },
+        { fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", arrows: ["e1g1", "h1f1"], text: tr("กฎข้อ 3: เข้าป้อม แตะคิงแล้วแตะ g1 เรือจะข้ามมาเอง") },
       ],
       drills: [
-        { goal: "pick", ok: ["e2e4", "d2d4"], fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ตาแรก: ยึดกลางกระดาน", hint: "e2e4" },
-        { goal: "pick", ok: ["g1f3", "b1c3", "f1c4", "f1b5"], fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", text: "ออกหมากรอง 1 ตัว", hint: "g1f3" },
-        { goal: "pick", ok: ["e1g1"], fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", text: "เข้าป้อม", hint: "e1g1" },
+        { goal: "pick", ok: ["e2e4", "d2d4"], fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ตาแรก: ยึดกลางกระดาน"), hint: "e2e4" },
+        { goal: "pick", ok: ["g1f3", "b1c3", "f1c4", "f1b5"], fen: "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", text: tr("ออกหมากรอง 1 ตัว"), hint: "g1f3" },
+        { goal: "pick", ok: ["e1g1"], fen: "r3k2r/pppq1ppp/2npbn2/2b1p3/2B1P3/2NP1N2/PPP1QPPP/R1B1K2R w KQkq - 0 1", text: tr("เข้าป้อม"), hint: "e1g1" },
       ] },
-    { title: "กับดักเปิดเกม", look: ["ช่อง f7 ของดำ (และ f2 ของขาว) มีแค่คิงคอยคุ้มกัน จึงเป็นจุดที่โดนโจมตีง่าย", "ถ้าอีกฝ่ายเอาควีนออกมาเร็ว ให้ออกม้าหรือบิชอปไปโจมตีควีน ได้ทั้งไล่ควีนและพัฒนาหมากในตาเดียว"], warn: ["ตอนเล่นดำ ถ้าควีนขาวอยู่ h5 และบิชอปอยู่ c4 อย่าเพิ่งออกม้าไป f6 เพราะควีนจะกิน f7 รุกฆาตทันที ต้องกัน f7 ก่อน"],
+    { title: tr("กับดักเปิดเกม"), look: [tr("ช่อง f7 ของดำ (และ f2 ของขาว) มีแค่คิงคอยคุ้มกัน จึงเป็นจุดที่โดนโจมตีง่าย"), tr("ถ้าอีกฝ่ายเอาควีนออกมาเร็ว ให้ออกม้าหรือบิชอปไปโจมตีควีน ได้ทั้งไล่ควีนและพัฒนาหมากในตาเดียว")], warn: [tr("ตอนเล่นดำ ถ้าควีนขาวอยู่ h5 และบิชอปอยู่ c4 อย่าเพิ่งออกม้าไป f6 เพราะควีนจะกิน f7 รุกฆาตทันที ต้องกัน f7 ก่อน")],
       teach: [
-        { fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", arrows: ["h5f7", "c4f7"], marks: ["f7"], text: "กลลวง 4 ตา: ควีนกับบิชอปขาวรุมช่อง f7 ถ้าดำไม่กัน จะโดน Qxf7 รุกฆาต" },
+        { fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", arrows: ["h5f7", "c4f7"], marks: ["f7"], text: tr("กลลวง 4 ตา: ควีนกับบิชอปขาวรุมช่อง f7 ถ้าดำไม่กัน จะโดน Qxf7 รุกฆาต") },
       ],
       drills: [
-        { goal: "defend", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", text: "คุณเล่นฝ่ายดำ กันรุกฆาตให้ได้ โดยไม่เสียหมาก", hint: "g7g6" },
-        { goal: "pick", ok: ["g1f3"], fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3", text: "ควีนดำรีบออกมาที่ h4 เร็วเกินไป เดินม้าออกไปโจมตีควีน จะได้ไล่ควีนและออกหมากไปพร้อมกัน", hint: "g1f3" },
+        { goal: "defend", n: 1, fen: "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", text: tr("คุณเล่นฝ่ายดำ กันรุกฆาตให้ได้ โดยไม่เสียหมาก"), hint: "g7g6" },
+        { goal: "pick", ok: ["g1f3"], fen: "rnb1kbnr/pppp1ppp/8/4p3/4P2q/8/PPPP1PPP/RNBQKBNR w KQkq - 2 3", text: tr("ควีนดำรีบออกมาที่ h4 เร็วเกินไป เดินม้าออกไปโจมตีควีน จะได้ไล่ควีนและออกหมากไปพร้อมกัน"), hint: "g1f3" },
       ] },
-    { title: "ด่านบอส: เปิดเกมจริง", boss: true, look: ["ยึดกลาง ออกม้าบิชอป 3 ตัว แล้วเข้าป้อม"], warn: ["ห้ามเสียหมาก", "ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ด่านบอส! เล่นจริงกับคอมพิวเตอร์ ภายใน 10 ตา ต้องออกม้าหรือบิชอป 3 ตัว และเข้าป้อม โดยไม่เสียหมาก" }],
+    { title: tr("ด่านบอส: เปิดเกมจริง"), boss: true, look: [tr("ยึดกลาง ออกม้าบิชอป 3 ตัว แล้วเข้าป้อม")], warn: [tr("ห้ามเสียหมาก"), tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ด่านบอส! เล่นจริงกับคอมพิวเตอร์ ภายใน 10 ตา ต้องออกม้าหรือบิชอป 3 ตัว และเข้าป้อม โดยไม่เสียหมาก") }],
       drills: [
-        { goal: "opening", n: 10, level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ออกม้า/บิชอป 3 ตัว + เข้าป้อม ภายใน 10 ตา ห้ามเสียหมาก" },
+        { goal: "opening", n: 10, level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ออกม้า/บิชอป 3 ตัว + เข้าป้อม ภายใน 10 ตา ห้ามเสียหมาก") },
       ] },
   ] },
-  { title: "รุกฆาต 2 ตา", rank: 6, lessons: [
-    { title: "คิดล่วงหน้า 2 ตา", look: ["ตาแรกบีบคิงให้ไม่มีที่ไป ตาที่สองรุกฆาต", "บางทีต้องยอมเสียตัวใหญ่ก่อน (สละ) เพื่อรุกฆาต"], warn: ["ระวังทำให้คิงข้าศึกอับ (ไม่มีทางเดินแต่ไม่โดนรุก = เสมอ)"],
+  { title: tr("รุกฆาต 2 ตา"), rank: 6, lessons: [
+    { title: tr("คิดล่วงหน้า 2 ตา"), look: [tr("ตาแรกบีบคิงให้ไม่มีที่ไป ตาที่สองรุกฆาต"), tr("บางทีต้องยอมเสียตัวใหญ่ก่อน (สละ) เพื่อรุกฆาต")], warn: [tr("ระวังทำให้คิงข้าศึกอับ (ไม่มีทางเดินแต่ไม่โดนรุก = เสมอ)")],
       teach: [
-        { fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", arrows: ["a2a7", "b1b8"], text: "บันไดเรือ: เรือตัวแรกปิดแถว 7 แล้วเรือตัวที่สองรุกฆาตที่แถว 8" },
-        { fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", arrows: ["b3g8", "h6f7"], marks: ["g8"], text: "สละควีน: ควีนรุกที่ g8 เรือดำต้องกิน แล้วม้า f7 รุกฆาตเพราะคิงโดนหมากตัวเองล้อม (ม้าอุดอู้)" },
+        { fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", arrows: ["a2a7", "b1b8"], text: tr("บันไดเรือ: เรือตัวแรกปิดแถว 7 แล้วเรือตัวที่สองรุกฆาตที่แถว 8") },
+        { fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", arrows: ["b3g8", "h6f7"], marks: ["g8"], text: tr("สละควีน: ควีนรุกที่ g8 เรือดำต้องกิน แล้วม้า f7 รุกฆาตเพราะคิงโดนหมากตัวเองล้อม (ม้าอุดอู้)") },
       ],
       drills: [
-        { goal: "mate", n: 2, fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", text: "รุกฆาตใน 2 ตา", hint: "a2a7" },
-        { goal: "mate", n: 2, fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", text: "รุกฆาตใน 2 ตา (ต้องกล้าสละ)", hint: "b3g8" },
+        { goal: "mate", n: 2, fen: "6k1/8/8/8/8/8/R7/1R4K1 w - - 0 1", text: tr("รุกฆาตใน 2 ตา"), hint: "a2a7" },
+        { goal: "mate", n: 2, fen: "5r1k/6pp/7N/8/8/1Q6/8/7K w - - 0 1", text: tr("รุกฆาตใน 2 ตา (ต้องกล้าสละ)"), hint: "b3g8" },
       ] },
-    { title: "ด่านบอส: 2 ตาจบ", boss: true, look: ["ลองคิดว่าข้าศึกจะตอบยังไง ทุกทาง"], warn: ["ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: "ด่านบอส! รุกฆาตใน 2 ตา" }],
+    { title: tr("ด่านบอส: 2 ตาจบ"), boss: true, look: [tr("ลองคิดว่าข้าศึกจะตอบยังไง ทุกทาง")], warn: [tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/8/8/8/8/8 w - - 0 1", text: tr("ด่านบอส! รุกฆาตใน 2 ตา") }],
       drills: [
-        { goal: "mate", n: 2, fen: "7k/8/8/8/8/8/1R6/R5K1 w - - 0 1", text: "รุกฆาตใน 2 ตา" },
-        { goal: "mate", n: 2, fen: "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6", text: "ดำเพิ่งกินควีนเรา แต่เรารุกฆาตใน 2 ตาได้!" },
-      ] },
-  ] },
-  { title: "ปิดเกม (Endgame)", rank: 7, lessons: [
-    { title: "เบี้ยเข้าเมือง", look: ["เบี้ยที่ถึงแถวสุดท้ายเปลี่ยนเป็นควีนได้", "นับตา: เบี้ยเราถึงก่อน หรือคิงข้าศึกตามทัน"], warn: ["อย่าปล่อยให้เบี้ยโดนกินระหว่างทาง"],
-      teach: [{ fen: "8/8/8/1P6/8/8/8/6k1 w - - 0 1", arrows: ["b5b8"], marks: ["b8"], text: "เบี้ยวิ่งไปแถวสุดท้ายแล้วเลือกเป็นควีน คิงดำอยู่ไกล ตามไม่ทัน" }],
-      drills: [
-        { goal: "promote", n: 3, fen: "8/8/8/1P6/8/8/8/K5k1 w - - 0 1", text: "พาเบี้ยเข้าเมืองให้เป็นควีน", hint: "b5b6" },
-        { goal: "promote", n: 6, fen: "7k/7p/8/8/8/8/P7/K7 w - - 0 1", text: "แข่งกันวิ่ง! ใครเข้าเมืองก่อน", hint: "a2a4" },
-      ] },
-    { title: "รุกฆาตด้วยควีน", look: ["ใช้ควีนขังคิงข้าศึกไว้ในกล่องที่เล็กลงเรื่อยๆ (ห่างแบบม้าเดิน)", "พาคิงเรามาช่วย แล้วรุกฆาตที่ขอบกระดาน"], warn: ["ระวังอับ! ถ้าคิงข้าศึกไม่โดนรุกแต่ไม่มีที่เดิน = เสมอ", "อย่าเอาควีนไปยืนข้างคิงข้าศึกโดยไม่มีคนคุ้ม"],
-      teach: [{ fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", arrows: ["a1c3", "e1e2"], text: "ขั้นตอน: ควีนบีบคิงดำไปที่ขอบกระดาน แล้วเดินคิงเรามาใกล้ จากนั้นรุกฆาต" }],
-      drills: [
-        { goal: "mate", n: 16, fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", text: "รุกฆาตด้วยควีนกับคิง ภายใน 16 ตา", hint: "a1c3" },
-      ] },
-    { title: "ด่านบอส: เรือปิดเกม", boss: true, look: ["เรือขังคิงทีละแถว คิงเราเดินเข้าไปประกบ"], warn: ["อย่าให้คิงข้าศึกเข้าใกล้เรือเรา", "ด่านบอสไม่มีคำใบ้"],
-      teach: [{ fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", arrows: ["a1a4"], text: "ด่านบอส! เรือกับคิงต้องช่วยกัน เรือปิดแถว คิงเราเดินเข้าไปประกบคิงข้าศึก แล้วเรือรุกฆาตที่ขอบ" }],
-      drills: [
-        { goal: "mate", n: 30, fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", text: "รุกฆาตด้วยเรือกับคิง ภายใน 30 ตา" },
+        { goal: "mate", n: 2, fen: "7k/8/8/8/8/8/1R6/R5K1 w - - 0 1", text: tr("รุกฆาตใน 2 ตา") },
+        { goal: "mate", n: 2, fen: "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6", text: tr("ดำเพิ่งกินควีนเรา แต่เรารุกฆาตใน 2 ตาได้!") },
       ] },
   ] },
-  { title: "ด่านเทพ", rank: 8, lessons: [
-    { title: "ล้มคอมพิวเตอร์", boss: true, look: ["ใช้ทุกอย่าง: ยึดกลาง ออกหมาก เข้าป้อม หาของฟรี และอย่าแจกฟรี"], warn: ["คอมไม่พลาดง่ายๆ ตรวจทุกตาว่าโดนจ่ออะไรอยู่", "ด่านเทพไม่มีคำใบ้"],
-      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ด่านสุดท้าย! ชนะคอมพิวเตอร์ให้ได้ทั้ง 3 ระดับ แล้วคุณคือเทพหมากรุก" }],
+  { title: tr("ปิดเกม (Endgame)"), rank: 7, lessons: [
+    { title: tr("เบี้ยเข้าเมือง"), look: [tr("เบี้ยที่ถึงแถวสุดท้ายเปลี่ยนเป็นควีนได้"), tr("นับตา: เบี้ยเราถึงก่อน หรือคิงข้าศึกตามทัน")], warn: [tr("อย่าปล่อยให้เบี้ยโดนกินระหว่างทาง")],
+      teach: [{ fen: "8/8/8/1P6/8/8/8/6k1 w - - 0 1", arrows: ["b5b8"], marks: ["b8"], text: tr("เบี้ยวิ่งไปแถวสุดท้ายแล้วเลือกเป็นควีน คิงดำอยู่ไกล ตามไม่ทัน") }],
       drills: [
-        { goal: "beat", level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Easy" },
-        { goal: "beat", level: 2, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Normal" },
-        { goal: "beat", level: 3, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: "ชนะคอมพิวเตอร์ระดับ Hard" },
+        { goal: "promote", n: 3, fen: "8/8/8/1P6/8/8/8/K5k1 w - - 0 1", text: tr("พาเบี้ยเข้าเมืองให้เป็นควีน"), hint: "b5b6" },
+        { goal: "promote", n: 6, fen: "7k/7p/8/8/8/8/P7/K7 w - - 0 1", text: tr("แข่งกันวิ่ง! ใครเข้าเมืองก่อน"), hint: "a2a4" },
+      ] },
+    { title: tr("รุกฆาตด้วยควีน"), look: [tr("ใช้ควีนขังคิงข้าศึกไว้ในกล่องที่เล็กลงเรื่อยๆ (ห่างแบบม้าเดิน)"), tr("พาคิงเรามาช่วย แล้วรุกฆาตที่ขอบกระดาน")], warn: [tr("ระวังอับ! ถ้าคิงข้าศึกไม่โดนรุกแต่ไม่มีที่เดิน = เสมอ"), tr("อย่าเอาควีนไปยืนข้างคิงข้าศึกโดยไม่มีคนคุ้ม")],
+      teach: [{ fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", arrows: ["a1c3", "e1e2"], text: tr("ขั้นตอน: ควีนบีบคิงดำไปที่ขอบกระดาน แล้วเดินคิงเรามาใกล้ จากนั้นรุกฆาต") }],
+      drills: [
+        { goal: "mate", n: 16, fen: "8/8/8/3k4/8/8/8/Q3K3 w - - 0 1", text: tr("รุกฆาตด้วยควีนกับคิง ภายใน 16 ตา"), hint: "a1c3" },
+      ] },
+    { title: tr("ด่านบอส: เรือปิดเกม"), boss: true, look: [tr("เรือขังคิงทีละแถว คิงเราเดินเข้าไปประกบ")], warn: [tr("อย่าให้คิงข้าศึกเข้าใกล้เรือเรา"), tr("ด่านบอสไม่มีคำใบ้")],
+      teach: [{ fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", arrows: ["a1a4"], text: tr("ด่านบอส! เรือกับคิงต้องช่วยกัน เรือปิดแถว คิงเราเดินเข้าไปประกบคิงข้าศึก แล้วเรือรุกฆาตที่ขอบ") }],
+      drills: [
+        { goal: "mate", n: 30, fen: "8/8/8/4k3/8/8/8/R3K3 w - - 0 1", text: tr("รุกฆาตด้วยเรือกับคิง ภายใน 30 ตา") },
+      ] },
+  ] },
+  { title: tr("ด่านเทพ"), rank: 8, lessons: [
+    { title: tr("ล้มคอมพิวเตอร์"), boss: true, look: [tr("ใช้ทุกอย่าง: ยึดกลาง ออกหมาก เข้าป้อม หาของฟรี และอย่าแจกฟรี")], warn: [tr("คอมไม่พลาดง่ายๆ ตรวจทุกตาว่าโดนจ่ออะไรอยู่"), tr("ด่านเทพไม่มีคำใบ้")],
+      teach: [{ fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ด่านสุดท้าย! ชนะคอมพิวเตอร์ให้ได้ทั้ง 3 ระดับ แล้วคุณคือเทพหมากรุก") }],
+      drills: [
+        { goal: "beat", level: 1, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ชนะคอมพิวเตอร์ระดับ Easy") },
+        { goal: "beat", level: 2, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ชนะคอมพิวเตอร์ระดับ Normal") },
+        { goal: "beat", level: 3, fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", text: tr("ชนะคอมพิวเตอร์ระดับ Hard") },
       ] },
   ] },
 ];
@@ -3153,17 +3207,17 @@ const TJ = {
     const stuck = !moves.length && !mated;
     if (d.goal === "collect") {
       if (!st.board.some(p => p && p[0] === them && p[1] !== "K")) return ["ok"];
-      return left <= 0 ? ["fail", "ตาหมดแล้ว แต่ยังเก็บไม่ครบ ลองวางลำดับใหม่"] : ["self"];
+      return left <= 0 ? ["fail", tr("ตาหมดแล้ว แต่ยังเก็บไม่ครบ ลองวางลำดับใหม่")] : ["self"];
     }
     if (d.goal === "pick") return d.ok.includes(uci(m)) ? ["ok"] : ["fail", null];
     if (mated) return ["ok"];
-    if (stuck) return ["fail", "อับ! คิงข้าศึกไม่มีทางเดินแต่ไม่โดนรุก เกมเลยเสมอ ต้องเว้นช่องให้มันหายใจ"];
+    if (stuck) return ["fail", tr("อับ! คิงข้าศึกไม่มีทางเดินแต่ไม่โดนรุก เกมเลยเสมอ ต้องเว้นช่องให้มันหายใจ")];
     if (d.goal === "keep") return TJ.value(st, side) >= c.start - 100 ? ["ok"] : ["fail", null];
     if (d.goal === "defend") return TJ.noMateIn1(st) && TJ.value(st, side) >= c.start - 150 ? ["ok"] : ["fail", null];
     if (d.goal === "mate") {
-      if (left <= 0) return ["fail", "ตาหมดแล้ว ยังรุกฆาตไม่สำเร็จ"];
-      if (left <= 2 && !TJ.stillMates(st, left)) return ["fail", "ตานี้ปล่อยให้คิงข้าศึกหนีรอด"];
-      if (d.n > 2 && TJ.value(st, side) < c.start - 300) return ["fail", "ระวัง! หมากเรากำลังจะโดนกิน"];
+      if (left <= 0) return ["fail", tr("ตาหมดแล้ว ยังรุกฆาตไม่สำเร็จ")];
+      if (left <= 2 && !TJ.stillMates(st, left)) return ["fail", tr("ตานี้ปล่อยให้คิงข้าศึกหนีรอด")];
+      if (d.n > 2 && TJ.value(st, side) < c.start - 300) return ["fail", tr("ระวัง! หมากเรากำลังจะโดนกิน")];
       return ["go"];
     }
     if (d.goal === "win") {
@@ -3173,16 +3227,16 @@ const TJ = {
       return left <= 0 ? ["fail", null] : ["go"];
     }
     if (d.goal === "promote") {
-      if (m.promo) return TJ.value(st, side) >= c.start - 50 ? ["ok"] : ["fail", "ควีนใหม่โดนกินทันที"];
-      if (TJ.count(st.board, side, "P") < c.pawns) return ["fail", "เบี้ยโดนกินแล้ว"];
-      return left <= 0 ? ["fail", "ตาหมดแล้ว เบี้ยยังไม่ถึงแถวสุดท้าย"] : ["go"];
+      if (m.promo) return TJ.value(st, side) >= c.start - 50 ? ["ok"] : ["fail", tr("ควีนใหม่โดนกินทันที")];
+      if (TJ.count(st.board, side, "P") < c.pawns) return ["fail", tr("เบี้ยโดนกินแล้ว")];
+      return left <= 0 ? ["fail", tr("ตาหมดแล้ว เบี้ยยังไม่ถึงแถวสุดท้าย")] : ["go"];
     }
     if (d.goal === "opening") {
-      if (TJ.value(st, side) < c.start - 150) return ["fail", "เสียหมากแล้ว! เปิดเกมต้องระวังของฟรี"];
+      if (TJ.value(st, side) < c.start - 150) return ["fail", tr("เสียหมากแล้ว! เปิดเกมต้องระวังของฟรี")];
       const r = side === "w" ? 56 : 0;
       const out = [[1, "N"], [2, "B"], [5, "B"], [6, "N"]].filter(([f, t]) => st.board[r + f] !== side + t).length;
       if (c.castled && out >= 3) return ["ok"];
-      return left <= 0 ? ["fail", "ครบ 10 ตาแล้ว ยังออกหมากหรือเข้าป้อมไม่ครบ"] : ["go"];
+      return left <= 0 ? ["fail", tr("ครบ 10 ตาแล้ว ยังออกหมากหรือเข้าป้อมไม่ครบ")] : ["go"];
     }
     if (d.goal === "beat") return ["go"];
     return ["go"];
@@ -3214,10 +3268,10 @@ const Train = {
   rank() { let k = 0; while (k < COURSE.length && this.chapterDone(k)) k++; return k; },
   totalStars() { return Object.values(this.best()).reduce((s, v) => s + v, 0); },
   status() {
-    if (this.phase === "teach") return "ดูลูกศรบนกระดาน แล้วกด ถัดไป";
-    if (this.done) return "ผ่านแล้ว!";
-    if (this.wait) return G.thinking ? "ข้าศึกกำลังคิด…" : "ดูว่าเกิดอะไรขึ้น…";
-    return "ภารกิจ: " + this.drill().text;
+    if (this.phase === "teach") return tr("ดูลูกศรบนกระดาน แล้วกด ถัดไป");
+    if (this.done) return tr("ผ่านแล้ว!");
+    if (this.wait) return G.thinking ? tr("ข้าศึกกำลังคิด…") : tr("ดูว่าเกิดอะไรขึ้น…");
+    return tr("ภารกิจ: ") + this.drill().text;
   },
 
   /* --- road map --- */
@@ -3225,13 +3279,13 @@ const Train = {
     clearTimeout(this.timer);
     const rank = this.rank(), all = COURSE.reduce((s, ch) => s + ch.lessons.length * 3, 0);
     $("roadRank").textContent = rank;
-    $("roadRankName").textContent = "ยศตอนนี้: " + RANKS[rank];
-    $("roadStars").textContent = "ดาว " + this.totalStars() + " / " + all + (rank < COURSE.length ? " · ผ่านบท " + (rank + 1) + " เพื่อเลื่อนเป็น " + RANKS[rank + 1] : " · สูงสุดแล้ว!");
+    $("roadRankName").textContent = tr("ยศตอนนี้: ") + RANKS[rank];
+    $("roadStars").textContent = tr("ดาว ") + this.totalStars() + " / " + all + (rank < COURSE.length ? tr(" · ผ่านบท ") + (rank + 1) + tr(" เพื่อเลื่อนเป็น ") + RANKS[rank + 1] : tr(" · สูงสุดแล้ว!"));
     $("roadMeter").style.width = Math.round(rank / COURSE.length * 100) + "%";
     $("lessonList").innerHTML = COURSE.map((ch, ci) => {
       const open = this.chapterOpen(ci), done = this.chapterDone(ci);
       return `<li class="chap ${open ? "" : "locked"} ${done ? "done" : ""}">
-        <div class="chap-head"><span class="n">${open ? ci + 1 : "🔒"}</span><span><b>บทที่ ${ci + 1}: ${esc(ch.title)}</b><small>ผ่านแล้วได้ยศ ${esc(RANKS[ch.rank])}</small></span></div>
+        <div class="chap-head"><span class="n">${open ? ci + 1 : "🔒"}</span><span><b>${T("บทที่", "Chapter")} ${ci + 1}: ${esc(ch.title)}</b><small>${T("ผ่านแล้วได้ยศ", "Pass to earn the rank")} ${esc(RANKS[ch.rank])}</small></span></div>
         <div class="chap-lessons">${ch.lessons.map((L, li) => {
           const ok = this.lessonOpen(ci, li), st = this.lessonStars(ci, li);
           return `<button data-c="${ci}" data-l="${li}" ${ok ? "" : "disabled"} class="${L.boss ? "boss" : ""}"><span>${L.boss ? "👑 " : ""}${esc(L.title)}</span><span class="stars">${ok ? STAR(st) : "🔒"}</span></button>`;
@@ -3261,7 +3315,7 @@ const Train = {
     }
     if (window.speechSynthesis && thaiVoice) {
       const b = document.createElement("button");
-      b.className = "btn say"; b.textContent = "🔊"; b.setAttribute("aria-label", "อ่านออกเสียง");
+      b.className = "btn say"; b.textContent = "🔊"; b.setAttribute("aria-label", tr("อ่านออกเสียง"));
       b.addEventListener("click", () => voice($("coachText").textContent, 1));
       $("coachActs").appendChild(b);
     }
@@ -3272,7 +3326,7 @@ const Train = {
   },
   card() {
     const ch = this.chapter(), L = this.lesson();
-    $("lsNum").textContent = this.custom ? ch.title : "บทที่ " + (this.ci + 1) + ": " + ch.title;
+    $("lsNum").textContent = this.custom ? ch.title : tr("บทที่ ") + (this.ci + 1) + ": " + ch.title;
     $("lsRank").textContent = RANKS[this.rank()];
     $("lsTitle").textContent = (L.boss ? "👑 " : "") + L.title;
     $("lsLook").innerHTML = L.look.map(t => `<li>${esc(t)}</li>`).join("");
@@ -3296,9 +3350,9 @@ const Train = {
     G.look = (s.marks || []).map(sqIdx);
     G.arrows = (s.arrows || []).map(a => [sqIdx(a.slice(0, 2)), sqIdx(a.slice(2, 4))]);
     this.feedback("");
-    this.coach("สอน " + (this.step + 1) + "/" + L.teach.length + " · " + L.title, s.text, [
-      ...(this.step > 0 ? [["ย้อน", () => { this.step--; this.teach(); }]] : []),
-      [last ? "เริ่มโจทย์" : "ถัดไป", () => { if (last) this.startDrill(0); else { this.step++; this.teach(); } }, "go"],
+    this.coach(tr("สอน ") + (this.step + 1) + "/" + L.teach.length + " · " + L.title, s.text, [
+      ...(this.step > 0 ? [[tr("ย้อน"), () => { this.step--; this.teach(); }]] : []),
+      [last ? tr("เริ่มโจทย์") : tr("ถัดไป"), () => { if (last) this.startDrill(0); else { this.step++; this.teach(); } }, "go"],
     ]);
     this.card(); closeAll();
     if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
@@ -3317,10 +3371,10 @@ const Train = {
     G.look = null; G.arrows = null;
     if (!keepFb) this.feedback("");
     const acts = [];
-    if (!L.boss) acts.push(["คำใบ้", () => this.hint()]);
-    acts.push(["เริ่มใหม่", () => this.startDrill(this.di, false)]);
-    const extra = d.goal === "collect" ? " (เหลือ " + d.n + " ตา)" : d.goal === "mate" && d.n > 1 ? "" : "";
-    this.coach((this.custom ? "โจทย์ประจำวัน" : (L.boss ? "👑 ด่านบอส " : "โจทย์ ") + (di + 1) + "/" + L.drills.length) + (this.c.side === "b" ? " · คุณเล่นฝ่ายดำ" : ""), d.text + extra, acts);
+    if (!L.boss) acts.push([tr("คำใบ้"), () => this.hint()]);
+    acts.push([tr("เริ่มใหม่"), () => this.startDrill(this.di, false)]);
+    const extra = d.goal === "collect" ? tr(" (เหลือ ") + d.n + tr(" ตา)") : d.goal === "mate" && d.n > 1 ? "" : "";
+    this.coach((this.custom ? tr("โจทย์ประจำวัน") : (L.boss ? tr("👑 ด่านบอส ") : tr("โจทย์ ")) + (di + 1) + "/" + L.drills.length) + (this.c.side === "b" ? tr(" · คุณเล่นฝ่ายดำ") : ""), d.text + extra, acts);
     this.card(); closeAll();
     if (typeof Battle !== "undefined" && Battle.resetView) Battle.resetView();
     render();
@@ -3330,10 +3384,10 @@ const Train = {
     const d = this.drill();
     const r = TJ.judge(d, this.c, G.st, m);
     if (r[0] === "ok") this.pass();
-    else if (G.over && G.over.type === "draw") this.fail("เกมเสมอ ยังไม่ผ่าน");
+    else if (G.over && G.over.type === "draw") this.fail(tr("เกมเสมอ ยังไม่ผ่าน"));
     else if (r[0] === "fail") this.fail(r[1]);
     else if (r[0] === "self") {
-      if (d.goal === "collect") $("coachText").textContent = d.text + " (เหลือ " + (d.n - this.c.used) + " ตา)";
+      if (d.goal === "collect") $("coachText").textContent = d.text + tr(" (เหลือ ") + (d.n - this.c.used) + tr(" ตา)");
       render();
     } else {
       this.wait = true; G.thinking = true; render();
@@ -3342,8 +3396,8 @@ const Train = {
         G.thinking = false; this.wait = false;
         if (!rep) { render(); return; }
         doMove(rep);
-        if (G.over) this.fail(G.over.type === "draw" ? "เกมเสมอ ยังไม่ผ่าน" : "โดนรุกฆาต! ลองใหม่อีกครั้ง");
-        else if (d.goal === "mate" && d.n > 2) $("coachText").textContent = d.text + " (เหลือ " + (d.n - this.c.used) + " ตา)";
+        if (G.over) this.fail(G.over.type === "draw" ? tr("เกมเสมอ ยังไม่ผ่าน") : tr("โดนรุกฆาต! ลองใหม่อีกครั้ง"));
+        else if (d.goal === "mate" && d.n > 2) $("coachText").textContent = d.text + tr(" (เหลือ ") + (d.n - this.c.used) + tr(" ตา)");
       }, d.goal === "beat" ? 250 : 550);
     }
   },
@@ -3352,22 +3406,22 @@ const Train = {
     const stars = this.hinted ? 1 : this.mistakes === 0 ? 3 : this.mistakes === 1 ? 2 : 1;
     this.results[this.di] = Math.max(this.results[this.di] || 0, stars);
     const L = this.lesson(), last = this.di === L.drills.length - 1;
-    this.feedback("ผ่าน! " + STAR(stars) + (stars === 3 ? " สุดยอด ไม่พลาดเลย" : this.hinted ? " (ใช้คำใบ้)" : ""), true);
+    this.feedback(tr("ผ่าน! ") + STAR(stars) + (stars === 3 ? tr(" สุดยอด ไม่พลาดเลย") : this.hinted ? tr(" (ใช้คำใบ้)") : ""), true);
     sfx.promote();
     if (this.custom) this.custom.done(stars);
     else if (last) this.lessonDone();
-    else this.coach($("coachStep").textContent, "เก่งมาก ไปโจทย์ต่อไปกัน", [["โจทย์ถัดไป", () => this.startDrill(this.di + 1), "go"]]);
+    else this.coach($("coachStep").textContent, tr("เก่งมาก ไปโจทย์ต่อไปกัน"), [[tr("โจทย์ถัดไป"), () => this.startDrill(this.di + 1), "go"]]);
     this.card(); render();
   },
   fail(why) {
     if (this.done) return;
     this.mistakes++; this.wait = true;
     const d = this.drill();
-    const generic = { win: "ยังไม่ได้กำไร หรือโดนกินคืน ลองดูใหม่", keep: "ยังเสียหมากอยู่ ดูว่าข้าศึกจ่อกินอะไร", defend: "ยังกันไม่อยู่ หรือเสียหมาก", pick: "ยังไม่ใช่ ลองอ่านกล่อง ควรดูตรงไหน อีกที", mate: "ยังไม่ใช่รุกฆาต ข้าศึกยังหนีได้" };
-    this.feedback("✗ " + (why || generic[d.goal] || "ยังไม่ผ่าน"), false);
+    const generic = { win: tr("ยังไม่ได้กำไร หรือโดนกินคืน ลองดูใหม่"), keep: tr("ยังเสียหมากอยู่ ดูว่าข้าศึกจ่อกินอะไร"), defend: tr("ยังกันไม่อยู่ หรือเสียหมาก"), pick: tr("ยังไม่ใช่ ลองอ่านกล่อง ควรดูตรงไหน อีกที"), mate: tr("ยังไม่ใช่รุกฆาต ข้าศึกยังหนีได้") };
+    this.feedback("✗ " + (why || generic[d.goal] || tr("ยังไม่ผ่าน")), false);
     render();
     if (d.goal === "beat") {
-      this.coach($("coachStep").textContent, d.text, [["เล่นใหม่", () => this.startDrill(this.di, true), "go"], ["แผนที่", () => this.openList()]]);
+      this.coach($("coachStep").textContent, d.text, [[tr("เล่นใหม่"), () => this.startDrill(this.di, true), "go"], [tr("แผนที่"), () => this.openList()]]);
       return;
     }
     const back = () => { this.timer = setTimeout(() => { if (this.phase === "drill") this.startDrill(this.di, true); }, 2600); };
@@ -3383,10 +3437,10 @@ const Train = {
     best[key] = Math.max(best[key] || 0, stars); lsSet("chess-road", best);
     track("road_lesson", { lesson: key, stars });
     const next = this.li + 1 < this.chapter().lessons.length ? [this.ci, this.li + 1] : this.ci + 1 < COURSE.length && this.chapterDone(this.ci) ? [this.ci + 1, 0] : null;
-    this.coach("จบบท: " + L.title, "ได้ " + STAR(stars) + (stars < 3 ? " ทำใหม่ได้ถ้าอยากได้ 3 ดาว" : " เต็ม!"), [
-      ...(next ? [["บทต่อไป", () => this.start(...next), "go"]] : []),
-      ["ทำอีกครั้ง", () => this.start(this.ci, this.li)],
-      ["แผนที่", () => this.openList()],
+    this.coach(tr("จบบท: ") + L.title, tr("ได้ ") + STAR(stars) + (stars < 3 ? tr(" ทำใหม่ได้ถ้าอยากได้ 3 ดาว") : tr(" เต็ม!")), [
+      ...(next ? [[tr("บทต่อไป"), () => this.start(...next), "go"]] : []),
+      [tr("ทำอีกครั้ง"), () => this.start(this.ci, this.li)],
+      [tr("แผนที่"), () => this.openList()],
     ]);
     const after = this.rank();
     if (after > before) setTimeout(() => this.rankUp(after), 700);
@@ -3394,10 +3448,10 @@ const Train = {
   rankUp(k) {
     $("ruBadge").textContent = k;
     $("ruBadge").classList.toggle("top", k === COURSE.length);
-    $("ruTitle").textContent = k === COURSE.length ? "คุณคือเทพหมากรุก!" : "เลื่อนยศ!";
-    $("ruText").textContent = "ยศใหม่: " + RANKS[k] + (k < COURSE.length ? " บทต่อไปเปิดแล้ว" : " ผ่านครบทุกด่าน สุดยอดจริงๆ");
+    $("ruTitle").textContent = k === COURSE.length ? tr("คุณคือเทพหมากรุก!") : tr("เลื่อนยศ!");
+    $("ruText").textContent = tr("ยศใหม่: ") + RANKS[k] + (k < COURSE.length ? tr(" บทต่อไปเปิดแล้ว") : tr(" ผ่านครบทุกด่าน สุดยอดจริงๆ"));
     show("rankup"); musicSting("rank");
-    if (prefs.taunts !== "off") voice(k === COURSE.length ? "ทำความเคารพ ท่านคือเทพหมากรุก" : "ยินดีด้วยครับ เลื่อนยศเป็น " + RANKS[k], 1);
+    if (prefs.taunts !== "off") voice(k === COURSE.length ? tr("ทำความเคารพ ท่านคือเทพหมากรุก") : tr("ยินดีด้วยครับ เลื่อนยศเป็น ") + RANKS[k], 1);
   },
   hint() {
     if (this.phase !== "drill" || this.done || this.wait || this.lesson().boss) return;
@@ -3433,24 +3487,25 @@ const Daily = {
   },
   thaiDate(key) {
     const [y, m, d] = key.split("-").map(Number);
-    return d + " " + ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."][m - 1] + " " + (y + 543 - 2500);
+    if (LANG === "en") return d + " " + ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][m - 1] + " " + y;
+    return d + " " + [tr("ม.ค."), tr("ก.พ."), tr("มี.ค."), tr("เม.ย."), tr("พ.ค."), tr("มิ.ย."), tr("ก.ค."), tr("ส.ค."), tr("ก.ย."), tr("ต.ค."), tr("พ.ย."), tr("ธ.ค.")][m - 1] + " " + (y + 543 - 2500);
   },
-  title(p) { return (p[0].split(" ")[1] === "w" ? "ขาว" : "ดำ") + "เดิน รุกฆาต" + (p[1] === 1 ? "ในตาเดียว" : "ใน " + p[1] + " ตา"); },
+  title(p) { return (p[0].split(" ")[1] === "w" ? tr("ขาว") : tr("ดำ")) + tr("เดิน รุกฆาต") + (p[1] === 1 ? tr("ในตาเดียว") : tr("ใน ") + p[1] + tr(" ตา")); },
   link(key, method) { return HOME_URL + "?puzzle=" + key + "&utm_source=" + method + "&utm_medium=share&utm_campaign=puzzle"; },
   async open(key) {
     key = /^\d{4}-\d\d-\d\d$/.test(key || "") && key <= this.today() ? key : this.today();
-    try { await this.load(); } catch (e) { $("status").textContent = "โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง"; return; }
+    try { await this.load(); } catch (e) { $("status").textContent = tr("โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง"); return; }
     const p = this.pick(key), no = this.dayNo(key) + 1;
     if (Net.link) Net.leave();
     clearTimeout(Train.timer);
     Train.ci = -1; Train.li = 0; Train.results = [];
     Train.custom = {
       key,
-      chapter: { title: "โจทย์ประจำวัน #" + no + " · " + this.thaiDate(key) },
+      chapter: { title: tr("โจทย์ประจำวัน #") + no + " · " + this.thaiDate(key) },
       lesson: {
         title: this.title(p),
-        look: ["หาตาที่รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินตัวที่รุกไม่ได้", p[1] > 1 ? "ตาแรกไม่จำเป็นต้องรุก แต่ต้องทำให้ตาต่อไปรุกฆาตได้แน่ๆ ไม่ว่าอีกฝ่ายจะตอบยังไง" : "ลองดูทุกตาที่รุกได้ทีละตา"],
-        warn: ["รุกแล้วคิงยังหนีได้ ไม่นับ", "ใช้คำใบ้ได้ แต่จะได้ 1 ดาว"],
+        look: [tr("หาตาที่รุกแล้วคิงหนีไม่ได้ บังไม่ได้ กินตัวที่รุกไม่ได้"), p[1] > 1 ? tr("ตาแรกไม่จำเป็นต้องรุก แต่ต้องทำให้ตาต่อไปรุกฆาตได้แน่ๆ ไม่ว่าอีกฝ่ายจะตอบยังไง") : tr("ลองดูทุกตาที่รุกได้ทีละตา")],
+        warn: [tr("รุกแล้วคิงยังหนีได้ ไม่นับ"), tr("ใช้คำใบ้ได้ แต่จะได้ 1 ดาว")],
         drills: [{ goal: "mate", n: p[1], fen: p[0], text: this.title(p), hint: p[2].split(" ")[0] }],
       },
       done: stars => this.done(key, stars),
@@ -3464,25 +3519,25 @@ const Daily = {
     all[key] = Math.max(all[key] || 0, stars); lsSet("chess-daily", all);
     const streak = this.streak();
     if (first) track("puzzle_solved", { day: this.dayNo(key) + 1, stars, streak });
-    Train.coach("โจทย์ประจำวัน", "แก้ได้แล้ว! " + STAR(stars) + (streak > 1 ? " · แก้ติดต่อกัน " + streak + " วัน" : "") + " พรุ่งนี้มีโจทย์ใหม่นะ", [
-      ["ชวนเพื่อนมาแก้", () => this.share(key, stars), "go"],
-      ["ลองใหม่", () => this.open(key)],
-      ["เมนู", () => Train.exit()],
+    Train.coach(tr("โจทย์ประจำวัน"), tr("แก้ได้แล้ว! ") + STAR(stars) + (streak > 1 ? tr(" · แก้ติดต่อกัน ") + streak + tr(" วัน") : "") + tr(" พรุ่งนี้มีโจทย์ใหม่นะ"), [
+      [tr("ชวนเพื่อนมาแก้"), () => this.share(key, stars), "go"],
+      [tr("ลองใหม่"), () => this.open(key)],
+      [tr("เมนู"), () => Train.exit()],
     ]);
   },
   async share(key, stars) {
-    const text = "แก้โจทย์หมากรุกประจำวัน " + this.thaiDate(key) + " ได้ " + STAR(stars) + " คุณแก้ได้ไหม?";
+    const text = tr("แก้โจทย์หมากรุกประจำวัน ") + this.thaiDate(key) + tr(" ได้ ") + STAR(stars) + tr(" คุณแก้ได้ไหม?");
     track("share", { method: "puzzle" });
     try {
-      if (navigator.share) { await navigator.share({ title: "โจทย์หมากรุกประจำวัน", text, url: this.link(key, "native") }); return; }
+      if (navigator.share) { await navigator.share({ title: tr("โจทย์หมากรุกประจำวัน"), text, url: this.link(key, "native") }); return; }
       await navigator.clipboard.writeText(text + " " + this.link(key, "copy"));
-      $("coachText").textContent = "คัดลอกลิงก์แล้ว เอาไปวางให้เพื่อนได้เลย";
+      $("coachText").textContent = tr("คัดลอกลิงก์แล้ว เอาไปวางให้เพื่อนได้เลย");
     } catch (e) {}
   },
   syncButton() {
     const b = $("openDaily"); if (!b) return;
     const ok = !!this.solved()[this.today()], k = this.streak();
-    b.innerHTML = "Daily puzzle · โจทย์ประจำวัน" + (ok ? " ✓" : "") + (k > 1 ? `<small>ติดต่อกัน ${k} วัน</small>` : "");
+    b.innerHTML = tr("Daily puzzle · โจทย์ประจำวัน") + (ok ? " ✓" : "") + (k > 1 ? `<small>${T(`ติดต่อกัน ${k} วัน`, `${k}-day streak`)}</small>` : "");
   },
 };
 $("openDaily").addEventListener("click", () => Daily.open());
@@ -3523,23 +3578,32 @@ function drawArrows() {
 
 /* ---------- Tutorial: a few slides before the first game ---------- */
 const TUT = [
-  { t: "ยินดีต้อนรับสู่ Chess Game", b: `<p>เป้าหมายคือ <b>รุกฆาต</b> คิงของอีกฝ่าย คือจ่อกินคิงจนมันไม่มีทางหนี</p><p>ฝ่ายขาวเดินก่อน แล้วผลัดกันเดินทีละตา หมากที่โดนกินจะออกจากกระดาน</p><p>อ่าน 6 หน้าสั้นๆ นี้ก่อน หรือกด ข้าม ก็ได้ ดูซ้ำได้จากปุ่ม How to play ในเมนู</p>` },
-  { t: "วิธีเดิน", b: `<ol><li>แตะหมากของคุณ</li><li>จุดเล็กคือช่องที่เดินได้ วงแดงคือกินได้</li><li>แตะช่องนั้นเพื่อเดิน</li></ol><p>ถ้าแตะหมากที่เดินไม่ได้ เกมจะบอกเหตุผล และหมากที่เดินได้จะเรืองแสงสีฟ้า</p>` },
-  { t: "หมากแต่ละตัว", b: `<div class="pcs">${[["K", "คิง: เดิน 1 ช่องทุกทิศ ต้องปกป้องให้ดี"], ["Q", "ควีน: ไปไกลได้ทั้งแนวตรงและแนวทแยง ตัวที่แรงที่สุด"], ["R", "เรือ: ไปไกลได้ตามแนวตรง"], ["B", "บิชอป: ไปไกลได้ตามแนวทแยง"], ["N", "ม้า: เดินเป็นรูปตัว L กระโดดข้ามหมากได้"], ["P", "เบี้ย: เดินหน้า 1 ช่อง (ตาแรก 2 ช่อง) กินทแยงหน้า"]].map(([k, d]) => `<div><span class="pc">${GLYPH[k]}</span><span>${d}</span></div>`).join("")}</div>` },
-  { t: "กฎที่ควรรู้", b: `<ul><li><b>รุก (Check)</b> คิงโดนจ่อ ต้องแก้ทันที โดยหนี บัง หรือกินตัวที่รุก</li><li><b>เข้าป้อม</b> แตะคิงแล้วแตะช่องที่ห่าง 2 ช่อง เรือจะข้ามมาเอง</li><li><b>เบี้ยถึงแถวสุดท้าย</b> เลือกเปลี่ยนเป็นควีน เรือ บิชอป หรือม้า</li><li>กินผ่าน (en passant) และการเสมอแบบต่างๆ เกมตัดสินให้อัตโนมัติ</li></ul>` },
-  { t: "ปุ่มในเกม", b: `<ul><li><b>Undo</b> ย้อนตา, <b>Hint</b> ให้คอมช่วยคิด, <b>Resign</b> ยอมแพ้</li><li><b>3D / 2D</b> สลับสนามรบกับกระดานแบน ลากเพื่อหมุนกล้อง</li><li><b>จ่าสมชาย</b> จะโผล่มาเตือนเวลาเดินเสี่ยงหรือเสียหมาก ปิดได้ใน Settings</li></ul>` },
-  { t: "เลือกโหมดเล่น", b: `<ul><li><b>Friend</b> เล่นกับเพื่อนบนเครื่องเดียวกัน</li><li><b>Computer</b> เล่นกับคอม 3 ระดับ</li><li><b>Online</b> เล่นกับเพื่อนคนละเครื่อง สร้างห้องแล้วส่งรหัสให้เพื่อน</li><li><b>Road to master</b> เส้นทางสู่เทพหมากรุก เรียนทีละขั้นตั้งแต่เดินหมากจนล้มคอมได้ ไล่ยศจากทหารเกณฑ์</li><li><b>Leaderboard</b> ใส่ชื่อก่อนเล่น แล้วชื่อจะขึ้นกระดานคะแนน</li></ul><p>มือใหม่แนะนำให้เริ่มที่ Road to master</p>` },
+  { t: tr("ยินดีต้อนรับสู่ Chess Game"), b: `<p>เป้าหมายคือ <b>รุกฆาต</b> คิงของอีกฝ่าย คือจ่อกินคิงจนมันไม่มีทางหนี</p><p>ฝ่ายขาวเดินก่อน แล้วผลัดกันเดินทีละตา หมากที่โดนกินจะออกจากกระดาน</p><p>อ่าน 6 หน้าสั้นๆ นี้ก่อน หรือกด ข้าม ก็ได้ ดูซ้ำได้จากปุ่ม How to play ในเมนู</p>` },
+  { t: tr("วิธีเดิน"), b: `<ol><li>แตะหมากของคุณ</li><li>จุดเล็กคือช่องที่เดินได้ วงแดงคือกินได้</li><li>แตะช่องนั้นเพื่อเดิน</li></ol><p>ถ้าแตะหมากที่เดินไม่ได้ เกมจะบอกเหตุผล และหมากที่เดินได้จะเรืองแสงสีฟ้า</p>` },
+  { t: tr("หมากแต่ละตัว"), b: `<div class="pcs">${[["K", tr("คิง: เดิน 1 ช่องทุกทิศ ต้องปกป้องให้ดี")], ["Q", tr("ควีน: ไปไกลได้ทั้งแนวตรงและแนวทแยง ตัวที่แรงที่สุด")], ["R", tr("เรือ: ไปไกลได้ตามแนวตรง")], ["B", tr("บิชอป: ไปไกลได้ตามแนวทแยง")], ["N", tr("ม้า: เดินเป็นรูปตัว L กระโดดข้ามหมากได้")], ["P", tr("เบี้ย: เดินหน้า 1 ช่อง (ตาแรก 2 ช่อง) กินทแยงหน้า")]].map(([k, d]) => `<div><span class="pc">${GLYPH[k]}</span><span>${d}</span></div>`).join("")}</div>` },
+  { t: tr("กฎที่ควรรู้"), b: `<ul><li><b>รุก (Check)</b> คิงโดนจ่อ ต้องแก้ทันที โดยหนี บัง หรือกินตัวที่รุก</li><li><b>เข้าป้อม</b> แตะคิงแล้วแตะช่องที่ห่าง 2 ช่อง เรือจะข้ามมาเอง</li><li><b>เบี้ยถึงแถวสุดท้าย</b> เลือกเปลี่ยนเป็นควีน เรือ บิชอป หรือม้า</li><li>กินผ่าน (en passant) และการเสมอแบบต่างๆ เกมตัดสินให้อัตโนมัติ</li></ul>` },
+  { t: tr("ปุ่มในเกม"), b: `<ul><li><b>Undo</b> ย้อนตา, <b>Hint</b> ให้คอมช่วยคิด, <b>Resign</b> ยอมแพ้</li><li><b>3D / 2D</b> สลับสนามรบกับกระดานแบน ลากเพื่อหมุนกล้อง</li><li><b>จ่าสมชาย</b> จะโผล่มาเตือนเวลาเดินเสี่ยงหรือเสียหมาก ปิดได้ใน Settings</li></ul>` },
+  { t: tr("เลือกโหมดเล่น"), b: `<ul><li><b>Friend</b> เล่นกับเพื่อนบนเครื่องเดียวกัน</li><li><b>Computer</b> เล่นกับคอม 3 ระดับ</li><li><b>Online</b> เล่นกับเพื่อนคนละเครื่อง สร้างห้องแล้วส่งรหัสให้เพื่อน</li><li><b>Road to master</b> เส้นทางสู่เทพหมากรุก เรียนทีละขั้นตั้งแต่เดินหมากจนล้มคอมได้ ไล่ยศจากทหารเกณฑ์</li><li><b>Leaderboard</b> ใส่ชื่อก่อนเล่น แล้วชื่อจะขึ้นกระดานคะแนน</li></ul><p>มือใหม่แนะนำให้เริ่มที่ Road to master</p>` },
 ];
+const TUT_EN = [
+  { t: "Welcome to Chess Game", b: `<p>The goal is to <b>checkmate</b> the other king: attack it so it has no way to escape.</p><p>White moves first, then you take turns one move at a time. Captured pieces leave the board.</p><p>Read these 6 short pages, or tap Skip. You can see them again from How to play in the menu.</p>` },
+  { t: "How to move", b: `<ol><li>Tap one of your pieces</li><li>Small dots are squares it can move to, red rings are captures</li><li>Tap that square to move</li></ol><p>If you tap a piece that can't move, the game tells you why, and the pieces that can move glow blue.</p>` },
+  { t: "The pieces", b: `<div class="pcs">${[["K", "King: moves 1 square any way. Keep it safe"], ["Q", "Queen: goes far along lines and diagonals. The strongest piece"], ["R", "Rook: goes far along straight lines"], ["B", "Bishop: goes far along diagonals"], ["N", "Knight: moves in an L and can jump over pieces"], ["P", "Pawn: moves forward 1 square (2 on its first move), captures diagonally forward"]].map(([k, d]) => `<div><span class="pc">${GLYPH[k]}</span><span>${d}</span></div>`).join("")}</div>` },
+  { t: "Rules to know", b: `<ul><li><b>Check</b>: the king is attacked. Deal with it right away: move away, block, or capture the attacker</li><li><b>Castling</b>: tap the king, then the square 2 away. The rook jumps over by itself</li><li><b>Pawn on the last row</b>: choose a queen, rook, bishop or knight</li><li>En passant and the different kinds of draw are handled automatically</li></ul>` },
+  { t: "Game buttons", b: `<ul><li><b>Undo</b> takes back a move, <b>Hint</b> lets the computer think for you, <b>Resign</b> gives up</li><li><b>3D / 2D</b> switches between the battlefield and the flat board. Drag to turn the camera</li><li><b>Sergeant Somchai</b> pops up to warn you about risky moves and lost pieces. Turn him off in Settings</li></ul>` },
+  { t: "Choose a mode", b: `<ul><li><b>Friend</b>: play a friend on the same device</li><li><b>Computer</b>: play the computer at 3 levels</li><li><b>Online</b>: play a friend on another device. Create a room and send them the code</li><li><b>Road to master</b>: learn step by step, from moving pieces to beating the computer, rising through the ranks</li><li><b>Leaderboard</b>: enter your name before playing and it shows up on the board</li></ul><p>New players: start with Road to master.</p>` },
+];
+const TUT_USE = LANG === "th" ? TUT : TUT_EN;
 const Tutorial = {
   i: 0,
   open() { this.i = 0; this.draw(); show("tutorial"); },
   draw() {
-    const s = TUT[this.i], last = this.i === TUT.length - 1;
+    const s = TUT_USE[this.i], last = this.i === TUT_USE.length - 1;
     $("tutTitle").textContent = s.t;
     $("tutBody").innerHTML = s.b;
-    $("tutDots").innerHTML = TUT.map((_, k) => `<i class="${k === this.i ? "on" : ""}"></i>`).join("");
+    $("tutDots").innerHTML = TUT_USE.map((_, k) => `<i class="${k === this.i ? "on" : ""}"></i>`).join("");
     $("tutBack").disabled = this.i === 0;
-    $("tutNext").textContent = last ? "เริ่มเล่น" : "ถัดไป";
+    $("tutNext").textContent = last ? tr("เริ่มเล่น") : tr("ถัดไป");
   },
   close() { if (!lsGet("chess-tut", 0)) track("tutorial_done", { step: this.i + 1 }); lsSet("chess-tut", 1); hide("tutorial"); if (G.mode !== "online" && G.mode !== "train" && !G.history.length) show("menu"); },
 };
@@ -3591,9 +3655,9 @@ const Leader = {
   open() { closeAll(); show("leader"); this.load(); },
   load() {
     $("segLeader").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === this.tab)));
-    if (this.tab === "local") { drawBoard(lsGet("chess-history", []), "ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่", true); return; }
+    if (this.tab === "local") { drawBoard(lsGet("chess-history", []), tr("ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่"), true); return; }
     // Show the last copy at once; Google Apps Script often takes a few seconds to answer.
-    const empty = "ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม";
+    const empty = tr("ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม");
     const cached = lsGet("chess-board-cache", null);
     if (cached) drawBoard(cached, empty);
     else $("lbBody").innerHTML = '<p class="empty">กำลังโหลดคะแนน…</p>';
@@ -3718,7 +3782,7 @@ Net.host = async function () {
         const done = () => { $("copyLink").textContent = "Link copied"; };
         try { navigator.clipboard.writeText(roomLink(code)).then(done, () => prompt("Copy this link", roomLink(code))); } catch (e) { prompt("Copy this link", roomLink(code)); }
       });
-      if ($("shareLink")) $("shareLink").addEventListener("click", () => navigator.share({ title: "Chess Game", text: "มาเล่นหมากรุกกัน รหัสห้อง " + code, url: roomLink(code) }).catch(() => {}));
+      if ($("shareLink")) $("shareLink").addEventListener("click", () => navigator.share({ title: "Chess Game", text: tr("มาเล่นหมากรุกกัน รหัสห้อง ") + code, url: roomLink(code) }).catch(() => {}));
       return;
     } catch (e) {
       if (gen !== Net.gen) return;
@@ -3832,7 +3896,7 @@ function startOnline(color, names, clock) {
   [prefs.mode, prefs.clock] = keep;
   G.names = { w: String(names.w || "Player 1").slice(0, 24), b: String(names.b || "Player 2").slice(0, 24) };
   for (const c of ["w", "b"]) {
-    $(c === "w" ? "nameW" : "nameB").innerHTML = esc(G.names[c]) + "<small>" + (c === "w" ? "White" : "Black") + (c === color ? " · You" : " · Online") + "</small>";
+    $(c === "w" ? "nameW" : "nameB").innerHTML = esc(tr(G.names[c])) + "<small>" + tr(c === "w" ? "White" : "Black") + " · " + tr(c === color ? "You" : "Online") + "</small>";
   }
   $("avW").innerHTML = AVATAR.p1; $("avB").innerHTML = AVATAR.p2;
   closeAll();
@@ -4488,9 +4552,9 @@ sfx.boom = () => {
 function syncViewButton() {
   const on = Battle.active;
   $("viewBtn").textContent = on ? "2D" : "3D";
-  $("viewBtn").setAttribute("aria-label", on ? "Switch to the flat 2D board" : "Switch to the 3D battlefield");
+  $("viewBtn").setAttribute("aria-label", tr(on ? "Switch to the flat 2D board" : "Switch to the 3D battlefield"));
   $("followBtn").setAttribute("aria-pressed", String(Battle.follow));
-  $("followBtn").textContent = Battle.follow ? "Follow camera: on" : "Follow camera: off";
+  $("followBtn").textContent = tr(Battle.follow ? "Follow camera: on" : "Follow camera: off");
 }
 if (!Battle.ok) $("viewBtn").hidden = true;
 $("viewBtn").addEventListener("click", () => {
