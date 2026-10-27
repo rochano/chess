@@ -1186,7 +1186,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.25-r</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.27-a</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2991,7 +2991,9 @@ const Shop = {
   // How the game felt for this player: stress built up during the game, the result, and recent losses.
   mood() {
     const me = myColor(), o = G.over;
-    if (!me || !o) return null;
+    if (!o) return null;
+    // two players on one device: no "you", so suggest something for whoever played
+    if (!me) return o.type === "draw" ? "learn" : "won";
     const stress = (G.stress && G.stress[me]) || 0;
     const lost = o.type !== "draw" && o.winner !== me;
     const streak = lsGet("chess-losses", 0);
@@ -3005,21 +3007,23 @@ const Shop = {
   async after() {
     $("shop").hidden = true; Atmo.clear();
     const me = myColor(), o = G.over;
-    if (!me || !o || G.mode === "train") return;
+    if (!o || G.mode === "train") return;
     if (this.forceId) { const id = this.forceId; this.forceId = null; return this.showItem((await this.load()).find(i => i.id === id), "lost", true); }
-    const lost = o.type !== "draw" && o.winner !== me;
-    lsSet("chess-losses", lost ? lsGet("chess-losses", 0) + 1 : 0);
+    const lost = !!me && o.type !== "draw" && o.winner !== me;
+    if (me) lsSet("chess-losses", lost ? lsGet("chess-losses", 0) + 1 : 0);
     this.games++;
     if (prefs.shop === "off" || LANG !== "th") return;
     const mood = this.mood();
-    // Not every game: tense or lost moods can show every other game, good moods one game in four.
-    const gap = mood === "tense" || mood === "lost" ? 2 : 4;
+    // After a loss or a tense game: every game. After a win or a draw: every other game.
+    const gap = mood === "tense" || mood === "lost" ? 1 : 2;
     if (this.games - this.lastShown < gap) return;
     const want = mood === "stalemate" ? "learn" : mood;
-    const pool = (await this.load()).filter(i => i.moods.includes(want));
+    let pool = (await this.load()).filter(i => i.moods.includes(want));
+    if (pool.length > 1) pool = pool.filter(i => i.id !== this.lastId); // not the same product twice in a row
     if (!pool.length) return;
     this.lastShown = this.games;
-    return this.showItem(pool[Math.floor(Math.random() * pool.length)], mood);
+    const it = pool[Math.floor(Math.random() * pool.length)]; this.lastId = it.id;
+    return this.showItem(it, mood);
   },
   async showItem(it, mood, preview = false) {
     if (!it) return;
