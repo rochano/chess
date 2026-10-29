@@ -182,7 +182,7 @@ window.frame = t => {
   drawBoard(t);
   // prompt under the board
   if (t < T.reveal) text("คิดออกแล้วพิมพ์คำตอบในคอมเมนต์!", W / 2, 1650, 42, INK, "center");
-  else text("เล่นฟรีที่ rochano.github.io/chess", W / 2, 1650, 42, INK, "center");
+  else text("แตะลิงก์ใต้คลิป เล่นโจทย์นี้เองได้ฟรี", W / 2, 1650, 42, INK, "center");
   // reveal banner
   if (t >= T.reveal && t < T.firstMove) {
     const a = Math.sin(clamp((t - T.reveal) / (T.firstMove - T.reveal), 0, 1) * Math.PI);
@@ -202,9 +202,11 @@ window.frame = t => {
     g.save(); g.globalAlpha = a; g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
     g.drawImage(logo, W / 2 - 110, 360, 220, 220);
     text("โจทย์ใหม่ทุกวัน", W / 2, 700, 92, INK, "center");
-    text("ลองแก้เองในเกม เล่นฟรี ไม่ต้องสมัคร", W / 2, 810, 46, SOFT, "center", 700);
+    text("เล่นโจทย์นี้เองในเกม ฟรี ไม่ต้องสมัคร", W / 2, 810, 46, SOFT, "center", 700);
     rr(150, 900, 780, 130, 30, "#F5C344", INK, 8); text("rochano.github.io/chess", W / 2, 968, 54, INK, "center");
-    g.drawImage(moods.happy, W / 2 - 240, 1100, 480, 420);
+    // the Short's "related video" link sits just under the title, so point there
+    text("▼ แตะลิงก์ใต้ชื่อคลิป ▼", W / 2, 1100, 48, "#D24A40", "center");
+    g.drawImage(moods.happy, W / 2 - 220, 1150, 440, 385);
     text("กดติดตามไว้ พรุ่งนี้มาแก้ด้วยกัน", W / 2, 1580, 46, INK, "center");
     g.restore();
   }
