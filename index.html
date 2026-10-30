@@ -638,6 +638,13 @@ select {
 .netmsg .code { font-family: var(--font-display); font-size: 34px; letter-spacing: 0.18em; line-height: 1; color: var(--ink); }
 .netmsg .acts { display: flex; gap: 8px; flex-wrap: wrap; }
 .netmsg .chip { box-shadow: 0 2px 0 var(--ink); }
+.netmsg .qrbox { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.netmsg .qr { width: 132px; height: 132px; padding: 6px; background: #fff; border: 2.5px solid var(--ink); border-radius: 10px; box-sizing: border-box; display: grid; place-items: center; color: #1a1a1a; font-size: 12px; }
+.netmsg .qr svg { width: 100%; height: 100%; display: block; }
+.netmsg .qrbox .code { font-size: 28px; }
+.friendqr { margin: 6px 0 0; font-weight: 700; font-size: 13px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.friendqr[hidden] { display: none; }
+.friendqr .chip { box-shadow: 0 2px 0 var(--ink); }
 
 /* Tutorial */
 .tut-dots { display: flex; gap: 6px; justify-content: center; }
@@ -1020,6 +1027,7 @@ select {
         <button data-v="cpu" aria-pressed="false">Computer</button>
         <button data-v="online" aria-pressed="false">Online</button>
       </div>
+      <p class="friendqr" id="friendQR" hidden><span id="friendQRTx">Each on your own phone?</span><button class="chip" id="friendQRBtn">Show a QR code</button></p>
     </div>
     <div class="field" id="levelField" hidden>
       <span class="lbl">Computer strength</span>
@@ -1186,7 +1194,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.27-a</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.10.30-a</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3116,6 +3124,7 @@ function syncMenu() {
     3: "Hard: looks four moves ahead and always plays the best move it finds. It thinks for up to two seconds.",
   }[prefs.level] || "");
   $("onlineField").hidden = prefs.mode !== "online";
+  $("friendQR").hidden = prefs.mode !== "friend";
   $("newGame").hidden = prefs.mode === "online";
   $("inNameB").hidden = prefs.mode !== "friend";
   $("inNameW").placeholder = tr(prefs.mode === "friend" ? "White" : "Your name");
@@ -4370,6 +4379,18 @@ function netHandlers(gen) {
 }
 function roomCode() { const a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let c = ""; for (let k = 0; k < 5; k++) c += a[Math.floor(Math.random() * a.length)]; return c; }
 function roomLink(code) { return location.origin + location.pathname + "?room=" + code; }
+// QR for the room link: the friend scans it with the phone camera and lands straight in the room (?room=CODE joins on load).
+function loadQR() {
+  if (window.qrcode) return Promise.resolve();
+  const load = src => new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = () => (window.qrcode ? res() : rej()); s.onerror = rej; document.head.appendChild(s); });
+  return load("https://unpkg.com/qrcode-generator@1.4.4/qrcode.js").catch(() => load("https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"));
+}
+function qrSvg(text) {
+  const q = qrcode(0, "M"); q.addData(text); q.make();
+  const n = q.getModuleCount(); let d = "";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += "M" + c + " " + r + "h1v1h-1z";
+  return `<svg viewBox="-1 -1 ${n + 2} ${n + 2}" shape-rendering="crispEdges" role="img" aria-label="QR"><path d="${d}" fill="#1a1a1a"/></svg>`;
+}
 Net.host = async function () {
   track("online_room", { action: "create" });
   Net.leave(); const gen = ++Net.gen;
@@ -4380,9 +4401,10 @@ Net.host = async function () {
       const link = await netOpen("host", code, netHandlers(gen));
       if (gen !== Net.gen) { link.close(); return; }
       Net.link = link; Net.code = code;
-      netMsg(`<span>Room code</span><span class="code">${code}</span><span>Send this code or the link to your friend. The game starts when they join. You play White.</span><span class="acts"><button class="chip" id="copyLink">Copy link</button>${navigator.share ? '<button class="chip" id="shareLink">Share</button>' : ""}</span>`);
+      netMsg(`<div class="qrbox"><div class="qr" id="roomQR">…</div><div style="display:grid;gap:6px"><span>${T("ให้เพื่อนสแกน QR ด้วยกล้องมือถือ เข้าห้องได้ทันที", "Your friend scans this with their phone camera and joins right away.")}</span><span>${T("รหัสห้อง", "Room code")}</span><span class="code">${code}</span></div></div><span>${T("หรือส่งรหัส/ลิงก์ให้เพื่อน เกมเริ่มเมื่อเพื่อนเข้าห้อง คุณเล่นฝ่ายขาว", "Or send the code or link. The game starts when they join. You play White.")}</span><span class="acts"><button class="chip" id="copyLink">${T("คัดลอกลิงก์", "Copy link")}</button>${navigator.share ? '<button class="chip" id="shareLink">Share</button>' : ""}</span>`);
+      loadQR().then(() => { const el = $("roomQR"); if (el && Net.code === code) el.innerHTML = qrSvg(roomLink(code)); }).catch(() => { const el = $("roomQR"); if (el) el.textContent = T("โหลด QR ไม่ได้", "QR unavailable"); });
       $("copyLink").addEventListener("click", () => {
-        const done = () => { $("copyLink").textContent = "Link copied"; };
+        const done = () => { $("copyLink").textContent = T("คัดลอกแล้ว", "Link copied"); };
         try { navigator.clipboard.writeText(roomLink(code)).then(done, () => prompt("Copy this link", roomLink(code))); } catch (e) { prompt("Copy this link", roomLink(code)); }
       });
       if ($("shareLink")) $("shareLink").addEventListener("click", () => navigator.share({ title: "Chess Game", text: tr("มาเล่นหมากรุกกัน รหัสห้อง ") + code, url: roomLink(code) }).catch(() => {}));
@@ -4530,6 +4552,9 @@ document.addEventListener("visibilitychange", () => {
   else { Net.send({ t: "ping" }); if (Net.live && Net.connected) Net.lastSeen = Math.max(Net.lastSeen, Date.now() - 6000); }
 });
 $("netCreate").addEventListener("click", () => Net.host());
+$("friendQRBtn").addEventListener("click", () => { prefs.mode = "online"; savePrefs(); syncMenu(); track("online_room", { action: "qr_from_friend" }); Net.host(); });
+$("friendQRTx").textContent = T("อยู่คนละเครื่อง?", "Each on your own phone?");
+$("friendQRBtn").textContent = T("สร้าง QR ให้เพื่อนสแกน", "Show a QR code");
 $("netJoin").addEventListener("click", () => Net.join($("netCode").value));
 $("netCode").addEventListener("keydown", e => { if (e.key === "Enter") Net.join($("netCode").value); });
 
