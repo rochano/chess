@@ -82,6 +82,14 @@ function doGet(e) {
     try { cache.put("rows", json, 60); } catch (err) {} // over 100 KB is not cached
     return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
   }
+  // ?action=shop returns the product tips from the "Shop" tab (see getShop below).
+  if (e && e.parameter && e.parameter.action === "shop") {
+    const cache = CacheService.getScriptCache(), hit = cache.get("shop");
+    if (hit) return ContentService.createTextOutput(hit).setMimeType(ContentService.MimeType.JSON);
+    const json = JSON.stringify({ items: shopItems() });
+    try { cache.put("shop", json, 300); } catch (err) {}
+    return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
+  }
   // Anyone can open this URL, so it does not show where the sheet is.
   return HtmlService.createHtmlOutput(
     '<p style="font:16px sans-serif">Score sheet is ready. Games recorded: ' + Math.max(0, sheet.getLastRow() - 1) + '</p>'
@@ -92,4 +100,44 @@ function doGet(e) {
 function clean(v) {
   const s = String(v == null ? "" : v).slice(0, 60);
   return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+
+// Product tips shown after a game. One row per product; the game shows a row only between
+// "From" and "Until" (either can be empty) and only when "Show" is not "no".
+// Moods: tense, lost, won, learn (or Thai: เครียด, แพ้, ชนะ, เรียนรู้), separated by commas.
+// The first time, the tab is made and filled with the products the game already had.
+const SHOP_HEADERS = ["Show", "ID", "Title", "Note", "Moods", "Shopee link", "Image URL", "From", "Until"];
+const SHOP_JSON = "https://rochano.github.io/chess/shop.json";
+const MOOD_TH = { "เครียด": "tense", "แพ้": "lost", "ชนะ": "won", "เรียนรู้": "learn" };
+
+function getShop() {
+  const book = getBook();
+  let sheet = book.getSheetByName("Shop");
+  if (sheet) return sheet;
+  sheet = book.insertSheet("Shop");
+  sheet.appendRow(SHOP_HEADERS);
+  sheet.getRange(1, 1, 1, SHOP_HEADERS.length).setFontWeight("bold");
+  sheet.setFrozenRows(1);
+  try {
+    const d = JSON.parse(UrlFetchApp.fetch(SHOP_JSON).getContentText());
+    const rows = d.items.filter(i => i.affiliate && i.url).map(i => ["yes", i.id, i.title, i.note || "", i.moods.join(", "), i.url, i.img || "", "", ""]);
+    if (rows.length) sheet.getRange(2, 1, rows.length, SHOP_HEADERS.length).setValues(rows);
+  } catch (err) {}
+  sheet.getRange(2, 8, 500, 2).setNumberFormat("yyyy-mm-dd");
+  return sheet;
+}
+
+function shopItems() {
+  const sheet = getShop(), last = sheet.getLastRow();
+  if (last < 2) return [];
+  const day = v => v instanceof Date ? Utilities.formatDate(v, "Asia/Bangkok", "yyyy-MM-dd") : String(v || "").trim();
+  return sheet.getRange(2, 1, last - 1, SHOP_HEADERS.length).getValues()
+    .filter(r => String(r[0]).trim().toLowerCase() !== "no" && /^https:\/\//.test(String(r[5])) && r[2])
+    .map((r, k) => ({
+      id: String(r[1] || "row" + (k + 2)).trim(), title: String(r[2]).slice(0, 80), note: String(r[3]).slice(0, 160),
+      moods: String(r[4]).split(/[,\s]+/).map(m => MOOD_TH[m] || m.toLowerCase()).filter(m => ["tense", "lost", "won", "learn"].indexOf(m) >= 0),
+      url: String(r[5]).trim(), img: /^https:\/\//.test(String(r[6])) ? String(r[6]).trim() : "",
+      from: day(r[7]), until: day(r[8]), affiliate: true,
+    }))
+    .filter(i => i.moods.length);
 }
