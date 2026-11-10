@@ -3194,7 +3194,7 @@ const Share = {
     const g = c.getContext("2d", { willReadFrequently: true }); g.scale(S / 1080, S / 1080);
     const grab = f => { this.play(g, f, P); return g.getImageData(0, 0, S, S).data; };
     // One palette for every frame, taken from a picked-piece frame and the end, which hold all the colours in use.
-    const picks = frames.filter(x => x[0].sel != null).map(x => x[0]), samples = [picks[0], picks[picks.length - 1], frames[0][0], frames[frames.length - 1][0]].map(grab);
+    const picks = frames.filter(x => x[0].sel != null).map(x => x[0]), samples = [picks[0], picks[picks.length - 1], frames[0][0], frames[frames.length - 1][0]].filter(Boolean).map(grab); // no picked frames when every move was the computer's or a friend's online
     const all = new Uint8ClampedArray(samples[0].length * samples.length); samples.forEach((d, i) => all.set(d, i * d.length));
     const palette = quantize(all, 255), CLEAR = palette.length, gif = GIFEncoder();
     let prev = null;
