@@ -2953,15 +2953,11 @@ const Share = {
       const [x, y] = at(i), up = f.lift === i ? 1 : 0, s = up ? 1.06 : 1;
       g.save(); g.translate(x + q / 2, y + q / 2 - 1.6 - up * 13); g.scale(s, s);
       g.font = Math.round(q * 0.816) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle";
-      if (p[0] === "w") {
-        g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 4.4; g.lineJoin = "round";
-        g.lineWidth = 6.7; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], 0, 3); g.shadowColor = "transparent";
-        g.fillStyle = P.white; g.fillText(GLYPH[p[1]], 0, 3);
-      } else {
-        g.shadowColor = "rgba(255,238,205,.45)"; g.shadowBlur = 6; g.fillStyle = P.black; g.fillText(GLYPH[p[1]], 0, 3);
-        g.shadowColor = "rgba(0,0,0,.3)"; g.shadowBlur = 0; g.shadowOffsetY = 4.4; g.lineWidth = 4; g.strokeStyle = "#111214"; g.strokeText(GLYPH[p[1]], 0, 3);
-        g.shadowColor = "transparent"; g.fillText(GLYPH[p[1]], 0, 3);
-      }
+      // no drop shadows: in a 256-colour GIF they turn into smudges
+      g.lineJoin = "round";
+      if (p[0] === "w") { g.lineWidth = 6.7; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], 0, 3); g.fillStyle = P.white; g.fillText(GLYPH[p[1]], 0, 3); }
+      else { g.lineWidth = 8; g.strokeStyle = "rgba(255,238,205,.55)"; g.strokeText(GLYPH[p[1]], 0, 3); // thin light rim instead of the game's glow, so black stays visible on dark squares
+        g.lineWidth = 4; g.strokeStyle = "#111214"; g.strokeText(GLYPH[p[1]], 0, 3); g.fillStyle = P.black; g.fillText(GLYPH[p[1]], 0, 3); }
       g.restore();
     }
     for (const d of f.dots || []) { // where the picked piece can go
