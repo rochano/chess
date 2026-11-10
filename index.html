@@ -471,6 +471,12 @@ html.intro-on .battle-hud { display: none; }
 .menu-more > .field { grid-template-columns: minmax(0, 1fr); }
 .menu-hd { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
 .scrim > .card { margin-block: auto; }
+#recap { z-index: 25; }
+.recap-box { position: relative; height: min(60vh, 560px); aspect-ratio: 9 / 16; max-width: 100%; margin: 0 auto; border: 3px solid var(--ink); border-radius: 18px; overflow: hidden; background: var(--paper-2); display: grid; place-items: center; }
+.recap-box video, .recap-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: var(--paper); }
+.recap-box video[hidden], .recap-box img[hidden], .recap-wait[hidden] { display: none; }
+.recap-wait { position: relative; z-index: 1; margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--card); border: 2px solid var(--ink); font-weight: 800; font-size: 14px; }
+.recap-box img:not([hidden]) ~ .recap-wait { align-self: end; margin-bottom: 14px; }
 .scrim { place-items: start center; }
 /* Short, wide screens (laptops): the two sections sit side by side so the menu fits without scrolling */
 @media (min-width: 760px) and (max-height: 820px) {
@@ -1198,7 +1204,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.10-d</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-a</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1257,6 +1263,15 @@ select {
     <h2 id="ruTitle">เลื่อนยศ!</h2>
     <p id="ruText"></p>
     <div class="btns"><button class="btn go" id="ruOk">ไปต่อ</button></div>
+  </div>
+</div>
+
+<!-- Recap: the replay video, then share it -->
+<div class="scrim" id="recap" hidden>
+  <div class="card center" role="dialog" aria-labelledby="recapTitle">
+    <h2 id="recapTitle"></h2>
+    <div class="recap-box"><video id="recapVid" playsinline controls loop hidden></video><img id="recapGif" alt="" hidden><p class="recap-wait" id="recapWait"></p></div>
+    <div class="row2"><button class="btn" id="recapClose"></button><button class="btn go" id="recapShare"></button></div>
   </div>
 </div>
 
@@ -1670,6 +1685,8 @@ const G = {
 /* ---------- Sound ---------- */
 // Everything is synthesised with Web Audio, so the page ships no audio files.
 let audio = null, sfxBus = null, musicBus = null, noiseBuf = null, master = null;
+// While the replay video's soundtrack is rendered, audio is an OfflineAudioContext and sounds are placed sfxAt seconds in.
+let sfxAt = 0, sfxOff = false;
 function ctx() {
   if (!audio) {
     audio = new (window.AudioContext || window.webkitAudioContext)();
@@ -1686,6 +1703,7 @@ function ctx() {
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     orchLoad(SFX_INST); // sound effects use real instrument samples, so fetch them as soon as sound starts
   }
+  if (sfxOff) return audio;
   // Safari can also leave it "interrupted" (another tab played sound, or the Mac slept).
   if (audio.state !== "running" && audio.state !== "closed") { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); }
   return audio;
@@ -1699,7 +1717,7 @@ function env(g, t, peak, attack, dur) {
 function clack(vol, when = 0, pitch = 1) {
   if (vol <= 0) return;
   try {
-    const a = ctx(), t = a.currentTime + when;
+    const a = ctx(), t = a.currentTime + sfxAt + when;
     const n = a.createBufferSource(); n.buffer = noiseBuf;
     const bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2200 * pitch; bp.Q.value = 3;
     const ng = a.createGain(); env(ng, t, 0.9 * vol, 0.002, 0.05);
@@ -1716,7 +1734,7 @@ const mv = () => prefs.volMove / 100, al = () => prefs.volAlert / 100;
 const SFX_INST = ["orchestral_harp", "pizzicato_strings", "timpani", "french_horn", "cello"];
 function splay(name, n, dur, vol, when = 0) {
   if (vol <= 0) return;
-  try { const a = ctx(); play(name, a.currentTime + when, n, dur, vol, sfxBus); } catch (e) {}
+  try { const a = ctx(); play(name, a.currentTime + sfxAt + when, n, dur, vol, sfxBus); } catch (e) {}
 }
 const sfx = {
   select: () => clack(mv() * 0.35, 0, 1.6),
@@ -2007,7 +2025,7 @@ function scheduleBar(t) {
 // Short phrases: winning (orchestra fanfare), losing (cello), a draw (flute), a rank-up.
 function musicSting(kind) {
   try {
-    const a = ctx(), t = a.currentTime + 0.05;
+    const a = ctx(), t = a.currentTime + sfxAt + 0.05;
     orchLoad(["trumpet", "french_horn", "timpani", "string_ensemble_1", "cello", "contrabass", "flute"]);
     if (kind === "win" || kind === "rank") {
       line("trumpet", t, [[72, 0, 0.5], [76, 0.5, 0.5], [79, 1, 0.5], [84, 1.5, 3]], 0.22, 0.45);
@@ -2806,7 +2824,7 @@ setInterval(() => {
 }, 100);
 
 /* ---------- Overlays ---------- */
-const overlays = ["menu", "settings", "credits", "confirm", "promo", "result", "tutorial", "train", "leader", "rankup"];
+const overlays = ["menu", "settings", "credits", "confirm", "promo", "result", "tutorial", "train", "leader", "rankup", "recap"];
 function anyOverlay() { return overlays.some(id => !$(id).hidden); }
 function show(id) { $(id).hidden = false; const f = $(id).querySelector("button, select, input"); if (f) f.focus({ preventScroll: true }); }
 function hide(id) { $(id).hidden = true; }
@@ -3110,14 +3128,14 @@ const Share = {
       for (let t = 0; t < wait; t += 250) frames.push([{ ...base, clock: { side, text: mmss((t + 250) * scale) }, clk: startClk && { ...startClk, [side]: startClk[side] - t * scale } }, Math.min(250, wait - t)]);
       if (pick > 0) {
         const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
-        frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove }, pick]);
+        frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove, snd: "select" }, pick]);
       }
       const land = { board: after.board, last: m, check: kingIn(after), turn: after.turn, caps: capsAt(k + 1), status: statusOf(after, k + 1), clk: clkAfter };
-      frames.push([{ ...land, lift: m.to, drop: { to: m.to, t: 1 } }, DROP]);
+      frames.push([{ ...land, lift: m.to, drop: { to: m.to, t: 1 }, snd: { before, after, m, over: k === H.length - 1 && !!G.over && G.over.type !== "resign" && G.over.type !== "flag" } }, DROP]);
       if (k === H.length - 1) frames.push([land, 400]);
     }
     const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
-    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), turn: G.st.turn, caps: G.captured, status: trS(o.text), clk: G.tc ? { ...G.clocks } : null }, this.END]);
+    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), turn: G.st.turn, caps: G.captured, status: trS(o.text), clk: G.tc ? { ...G.clocks } : null, snd: "end" }, this.END]);
     return { P, frames };
   },
   async replay() {
@@ -3142,7 +3160,7 @@ const Share = {
     // a landing piece settles in three steps, like the game's short lift
     for (let i = frames.length - 1; i >= 0; i--) {
       const [f, ms] = frames[i]; if (!f.drop) continue;
-      frames.splice(i, 1, [{ ...f, drop: { to: f.drop.to, t: 0 } }, 60], [{ ...f, drop: { to: f.drop.to, t: 0.5 } }, 60], [{ ...f, drop: { to: f.drop.to, t: 1 } }, Math.max(20, ms - 120)]);
+      frames.splice(i, 1, [{ ...f, drop: { to: f.drop.to, t: 0 } }, 60], [{ ...f, snd: null, drop: { to: f.drop.to, t: 0.5 } }, 60], [{ ...f, snd: null, drop: { to: f.drop.to, t: 1 } }, Math.max(20, ms - 120)]);
     }
     // One palette for every frame, taken from a picked-piece frame and the end, which hold all the colours in use.
     const picks = frames.filter(x => x[0].sel != null).map(x => x[0]), samples = [picks[0], picks[picks.length - 1], frames[0][0], frames[frames.length - 1][0]].filter(Boolean).map(grab); // no picked frames when every move was the computer's or a friend's online
@@ -3176,8 +3194,23 @@ const Share = {
     }
     if (!codec) return null;
     const { Muxer, ArrayBufferTarget } = await this.loadMux();
-    const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: FPS }, fastStart: "in-memory" });
+    // sound, where the phone can encode AAC (otherwise the video stays silent)
+    const total = v.frames.reduce((a, f) => a + f[1], 0), SR = 48000, ac = { codec: "mp4a.40.2", sampleRate: SR, numberOfChannels: 2, bitrate: 160000 };
+    let sound = null;
+    try { if (window.AudioEncoder && window.AudioData && (await AudioEncoder.isConfigSupported(ac)).supported) sound = await this.soundtrack(v.frames, total); } catch (e) { console.warn("replay sound", e); sound = null; }
+    const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: FPS }, audio: sound ? { codec: "aac", sampleRate: SR, numberOfChannels: 2 } : undefined, fastStart: "in-memory", firstTimestampBehavior: "offset" });
     let err = null;
+    if (sound) {
+      const aenc = new AudioEncoder({ output: (chunk, meta) => muxer.addAudioChunk(chunk, meta), error: e => { err = e; } });
+      aenc.configure(ac);
+      const L = sound.getChannelData(0), R = sound.getChannelData(1), len = Math.min(L.length, Math.round(SR * total / 1000)), step = SR / 2;
+      for (let i = 0; i < len; i += step) {
+        const n = Math.min(step, len - i), data = new Float32Array(n * 2); data.set(L.subarray(i, i + n), 0); data.set(R.subarray(i, i + n), n);
+        const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(i * 1e6 / SR), data });
+        aenc.encode(ad); ad.close();
+      }
+      await aenc.flush(); aenc.close();
+    }
     const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { err = e; } });
     enc.configure({ codec, width: W, height: H, bitrate: rate, bitrateMode: "variable", latencyMode: "quality", framerate: FPS, avc: { format: "avc" } });
     const c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -3198,6 +3231,44 @@ const Share = {
     muxer.finalize();
     return new Blob([muxer.target.buffer], { type: "video/mp4" });
   },
+  // The game's own sounds, placed where they happen in the replay: the piece picked up, each move landing
+  // (check, capture, castle, promotion), and the end of the game with its fanfare. Rendered offline, faster than real time.
+  async soundtrack(frames, ms) {
+    const Off = window.OfflineAudioContext || window.webkitOfflineAudioContext; if (!Off) return null;
+    ctx(); // the instrument samples are decoded by the game's audio context
+    const need = SFX_INST.concat(["trumpet", "french_horn", "timpani", "string_ensemble_1", "cello", "contrabass", "flute"]); orchLoad(need);
+    const have = n => ORCH.buf[n] && Object.keys(ORCH.buf[n]).length >= INST[n].notes.length - 2;
+    for (let k = 0; k < 40 && !need.every(have); k++) await new Promise(r => setTimeout(r, 100));
+    const SR = 48000, off = new Off(2, Math.ceil(SR * (ms / 1000 + 0.5)), SR);
+    const keep = { audio, sfxBus, musicBus, out: ORCH.out, vm: prefs.volMove, va: prefs.volAlert };
+    try {
+      audio = off; sfxOff = true; ORCH.out = null;
+      sfxBus = off.createGain(); sfxBus.connect(off.destination);
+      musicBus = off.createGain(); musicBus.gain.value = 0.55; musicBus.connect(off.destination);
+      prefs.volMove = Math.max(prefs.volMove, 70); prefs.volAlert = Math.max(prefs.volAlert, 70);
+      let t = 0, ended = false;
+      for (const [f, d] of frames) {
+        const s = f.snd; sfxAt = t / 1000; t += d;
+        if (!s) continue;
+        if (s === "select") sfx.select();
+        else if (s === "end") {
+          if (!ended) sfx.end();
+          const o = G.over, me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win");
+        } else {
+          const { after, m, over } = s;
+          if (over) { sfx.end(); ended = true; } else if (inCheck(after.board, after.turn)) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (after.captured) sfx.capture(); else sfx.move();
+        }
+      }
+    } finally {
+      audio = keep.audio; sfxBus = keep.sfxBus; musicBus = keep.musicBus; ORCH.out = keep.out; prefs.volMove = keep.vm; prefs.volAlert = keep.va;
+      sfxOff = false; sfxAt = 0;
+    }
+    const buf = await off.startRendering();
+    let peak = 0; for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
+    const gain = peak > 0 ? Math.min(3, 0.9 / peak) : 1; // as loud as it can be without clipping
+    if (gain !== 1) for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= gain; }
+    return buf;
+  },
   // On phones the video goes out when it is ready (it plays everywhere); the GIF is the fallback, and what LINE gets.
   phone() { return !!(navigator.share && navigator.canShare && matchMedia("(pointer: coarse)").matches); },
   mp4File() { return this.vidBlob ? new File([this.vidBlob], "chess-replay.mp4", { type: "video/mp4" }) : null; },
@@ -3213,7 +3284,7 @@ const Share = {
       if (file && navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files, text: text + " " + url }); return; }
       if (navigator.share) { await navigator.share({ title: "Chess Game", text, url }); return; }
       // Desktop without a share sheet: save the replay (or the picture) and copy the link.
-      const save = gifBlob ? { b: gifBlob, n: "chess-replay.gif" } : file ? { b: file, n: file.name } : null;
+      const save = this.vidBlob ? { b: this.vidBlob, n: "chess-replay.mp4" } : gifBlob ? { b: gifBlob, n: "chess-replay.gif" } : file ? { b: file, n: file.name } : null;
       if (save) { const a = document.createElement("a"); a.href = URL.createObjectURL(save.b); a.download = save.n; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
       this.copy(true);
     } catch (e) {}
@@ -3438,7 +3509,44 @@ syncShop();
 $("shopField").hidden = LANG !== "th";
 $("lang").value = prefs.lang || "auto";
 $("lang").addEventListener("change", e => { prefs.lang = e.target.value === "auto" ? "" : e.target.value; savePrefs(); track("language", { lang: e.target.value }); location.reload(); });
-$("shareGo").addEventListener("click", () => Share.go());
+$("shareGo").addEventListener("click", () => Recap.open());
+/* ---------- Recap: after a game, watch the replay video first; the share button is under it ---------- */
+const Recap = {
+  url: null, of: null,
+  open() {
+    $("recapTitle").textContent = T("รีแคปเกมนี้", "Game recap");
+    $("recapShare").textContent = T("แชร์", "Share"); $("recapClose").textContent = T("ปิด", "Close");
+    show("recap"); track("recap", { opponent: G.mode });
+    // the replay brings its own sound, so the after-game music steps aside
+    if (audio && musicBus) { musicBus.gain.cancelScheduledValues(audio.currentTime); musicBus.gain.setTargetAtTime(0, audio.currentTime, 0.2); }
+    this.fill();
+  },
+  src(b) { if (this.of !== b) { if (this.url) URL.revokeObjectURL(this.url); this.url = b ? URL.createObjectURL(b) : null; this.of = b; } return this.url; },
+  fill() {
+    if ($("recap").hidden) return;
+    const v = $("recapVid"), img = $("recapGif"), w = $("recapWait");
+    if (Share.vidBlob) {
+      img.hidden = true; w.hidden = true; v.hidden = false;
+      if (v.getAttribute("src") !== this.src(Share.vidBlob)) v.src = this.url;
+      v.currentTime = 0; v.muted = false;
+      const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => {}); });
+      return;
+    }
+    v.hidden = true;
+    if (Share.gifBlob) { img.src = this.src(Share.gifBlob); img.hidden = false; }
+    const vj = Share.vidJob, gj = Share.gifJob;
+    w.hidden = !(vj || gj); w.textContent = T("กำลังทำวิดีโอ…", "Making the video…");
+    if (!Share.gifBlob && gj) gj.then(() => { if (!Share.vidBlob && Share.gifBlob && !$("recap").hidden) { img.src = this.src(Share.gifBlob); img.hidden = false; } });
+    if (vj) vj.then(() => { if (Share.vidBlob) this.fill(); else w.hidden = true; });
+  },
+  close() {
+    const v = $("recapVid"); try { v.pause(); } catch (e) {}
+    hide("recap");
+    if (audio && musicBus && prefs.music) musicBus.gain.setTargetAtTime(musicLevel(), audio.currentTime, 0.4);
+  },
+};
+$("recapClose").addEventListener("click", () => Recap.close());
+$("recapShare").addEventListener("click", () => { try { $("recapVid").pause(); } catch (e) {} Share.go(); });
 $("shareLine").addEventListener("click", () => Share.open("line"));
 $("shareFb").addEventListener("click", () => Share.open("facebook"));
 $("shareCopy").addEventListener("click", () => Share.copy());
@@ -3448,6 +3556,7 @@ function showResult() {
   Streamer.end();
   const shopReady = Shop.after();
   Share.prepare();
+  $("shareGo").textContent = T("🎬 รีแคป", "🎬 Recap");
   { const me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win"); }
   reportResult();
   const me = myColor(), youLost = !!me && o.winner !== me;
