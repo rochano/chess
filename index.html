@@ -3133,7 +3133,8 @@ const Share = {
       // for the video's play screen
       card: v("--card") || "#FBF7EE", paper2: v("--paper-2") || "#E8DFCB", leaf: v("--leaf") || "#6E8B4E", ember: v("--ember") || "#E07A3E", slate: v("--slate") || "#7D8995", flag: v("--flag") || "#D24A40",
       view: ($("viewBtn").textContent || "3D").trim(),
-      sub: { w: ($("nameW").querySelector("small") || {}).textContent || tr("White"), b: ($("nameB").querySelector("small") || {}).textContent || tr("Black") },
+      // the labels under the names, upper-cased like the CSS does in the game
+      sub: { w: (($("nameW").querySelector("small") || {}).textContent || tr("White")).toUpperCase(), b: (($("nameB").querySelector("small") || {}).textContent || tr("Black")).toUpperCase() },
       icon: { sun: await this.svgImg(ICON.sun, v("--ink") || "#2F2620"), moon: await this.svgImg(ICON.moon, "#F4E7B8"), music: await this.svgImg($("musicBtn").innerHTML, v("--card") || "#FBF7EE"), gear: await this.svgImg($("openSettings").innerHTML, v("--card") || "#FBF7EE") },
     };
     const nm = el => { const t = $(el) && $(el).firstChild; return t && t.nodeType === 3 && t.textContent.trim(); };
