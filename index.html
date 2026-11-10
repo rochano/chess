@@ -1198,7 +1198,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.10-c</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.10-d</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3169,7 +3169,7 @@ const Share = {
   // is also made as a silent MP4: 1080 x 1920 at 30 fps, encoded on the phone with WebCodecs, faster than real time.
   async video() {
     const v = this._vid; if (!v || !window.VideoEncoder || !window.VideoFrame) return null;
-    const W = 1080, H = 1920, FPS = 30, rate = 5e6;
+    const W = 1080, H = 1920, FPS = 30, rate = 16e6; // high: the picture is mostly still, and Facebook/IG compress it again
     let codec = null;
     for (const c of ["avc1.640028", "avc1.4d0028", "avc1.42E028", "avc1.42001f"]) {
       try { if ((await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate: rate, framerate: FPS })).supported) { codec = c; break; } } catch (e) {}
@@ -3179,7 +3179,7 @@ const Share = {
     const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: FPS }, fastStart: "in-memory" });
     let err = null;
     const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { err = e; } });
-    enc.configure({ codec, width: W, height: H, bitrate: rate, framerate: FPS, avc: { format: "avc" } });
+    enc.configure({ codec, width: W, height: H, bitrate: rate, bitrateMode: "variable", latencyMode: "quality", framerate: FPS, avc: { format: "avc" } });
     const c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d"); g.setTransform(W / this.W, 0, 0, H / this.H, 0, 0);
     let n = 0, t = 0;
@@ -3188,7 +3188,7 @@ const Share = {
       while (n * 1000 / FPS < t) { // hold the picture for as many video frames as the GIF frame lasts
         if (err) throw err;
         const vf = new VideoFrame(c, { timestamp: Math.round(n * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
-        enc.encode(vf, { keyFrame: n % (FPS * 2) === 0 }); vf.close(); n++;
+        enc.encode(vf, { keyFrame: n % FPS === 0 }); vf.close(); n++;
         while (enc.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 5));
       }
       await new Promise(r => setTimeout(r));
