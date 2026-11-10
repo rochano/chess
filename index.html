@@ -2869,6 +2869,14 @@ const Share = {
     if (!this.logo) { try { const img = new Image(); img.src = "img/logo.svg"; await img.decode(); this.logo = img; } catch (e) { this.logo = false; } }
   },
   font: "'Baloo 2', 'Nunito', system-ui, sans-serif",
+  // Centre a piece by its drawn shape, not its advance width: on iPhones the pawn's "text style" marker (U+FE0E)
+  // adds width, which pushed pawns to the right of their squares. Use with textAlign "center".
+  ink: {},
+  inkDx(g, ch) {
+    const k = g.font + ch; if (k in this.ink) return this.ink[k];
+    const m = g.measureText(ch), L = m.actualBoundingBoxLeft, R = m.actualBoundingBoxRight;
+    return (this.ink[k] = isFinite(L) && isFinite(R) && R + L > 0 ? (L - R) / 2 : 0);
+  },
   async picture() {
     await this.art();
     const S = 1080, c = document.createElement("canvas"); c.width = c.height = S;
@@ -2888,7 +2896,7 @@ const Share = {
       g.fillRect(x0 + vf * q, y0 + vr * q, q, q);
       const p = G.st.board[i]; if (!p) continue;
       g.font = Math.round(q * 0.82) + "px 'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
-      const cx = x0 + vf * q + q / 2, cy = y0 + vr * q + q / 2 + q * 0.04;
+      const cx = x0 + vf * q + q / 2 + this.inkDx(g, GLYPH[p[1]]), cy = y0 + vr * q + q / 2 + q * 0.04;
       g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? ink : "#F3EDE0"; g.strokeText(GLYPH[p[1]], cx, cy);
       g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(GLYPH[p[1]], cx, cy);
     }
@@ -2975,7 +2983,7 @@ const Share = {
       const p = f.board[i]; if (!p) continue;
       const [x, y] = at(i), up = f.lift === i ? 1 : 0, s = up ? 1.06 : 1;
       g.save(); g.translate(x + q / 2, y + q / 2 - 1.6 - up * 13); g.scale(s, s);
-      g.font = Math.round(q * 0.816) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle";
+      g.font = Math.round(q * 0.816) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle"; g.translate(this.inkDx(g, GLYPH[p[1]]) / s, 0);
       // no drop shadows: in a 256-colour GIF they turn into smudges
       g.lineJoin = "round";
       if (p[0] === "w") { g.lineWidth = 6.7; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], 0, 3); g.fillStyle = P.white; g.fillText(GLYPH[p[1]], 0, 3); }
@@ -3064,7 +3072,7 @@ const Share = {
     }
     for (const [p, x, y, up] of list) {
       const ch = GLYPH[p[1]];
-      g.save(); g.translate(x + q / 2, y + q / 2 + 0.06 * q - 0.2 * cq - up * 2.2 * cq); if (up) g.scale(1 + up * 0.06, 1 + up * 0.06);
+      g.save(); g.translate(x + q / 2 + this.inkDx(g, ch), y + q / 2 + 0.06 * q - 0.2 * cq - up * 2.2 * cq); if (up) g.scale(1 + up * 0.06, 1 + up * 0.06);
       if (p[0] === "w") {
         g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 0.55 * cq;
         g.lineWidth = 0.84 * cq; g.strokeStyle = ink; g.strokeText(ch, 0, 0);
@@ -3106,7 +3114,7 @@ const Share = {
         g.font = "36px " + P.pieceFont; let cx = x + 140;
         for (const p of caps.slice().sort((a, b) => VAL[b[1]] - VAL[a[1]])) {
           if (p[0] === "w") { g.lineWidth = 4; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], cx, y + 162); g.fillStyle = P.white; } else g.fillStyle = P.black;
-          g.fillText(GLYPH[p[1]], cx, y + 162); cx += g.measureText(GLYPH[p[1]]).width * 0.82;
+          g.fillText(GLYPH[p[1]], cx, y + 162); { const m = g.measureText(GLYPH[p[1]]), w = (m.actualBoundingBoxRight || 0) + (m.actualBoundingBoxLeft || 0); cx += (w > 0 ? w + 3 : m.width * 0.82); }
         }
       } else { g.fillStyle = P.soft; g.font = "700 24px " + body; g.fillText(tr("No captures yet"), x + 140, y + 160); }
       if (f.clk) {
