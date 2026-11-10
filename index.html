@@ -2901,8 +2901,9 @@ const Share = {
      Long thinks are shortened to a few seconds, but the clock shows the real time taken.
      Built when the result appears (iOS only opens the share sheet straight after a tap, so it must be ready by then).
      The encoder (gifenc, 9 KB) is fetched only when needed. */
-  PLIES: 7,
-  MAX_THINK: 4500, // ms of GIF time for one think, however long it really was
+  PLIES: 5,
+  LENGTH: 14400, // the whole replay stays under 15 s (a little spare for the recorder): long thinks are shortened to fit, the clock still shows the real time
+  END: 3000, // how long the result stays up at the end
   gifJob: null,
   loadGif() {
     if (!this._gifenc) this._gifenc = import("https://unpkg.com/gifenc@1.0.3/dist/gifenc.esm.js").catch(() => import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"));
@@ -3005,10 +3006,12 @@ const Share = {
     const mmss = ms => { const s = Math.max(1, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     const kingIn = st => inCheck(st.board, st.turn) ? st.board.indexOf(st.turn + "K") : -1;
     const frames = []; // [frame, delay ms]
+    // time left for thinking once the fixed parts are counted (video lead-in 0.9 s, piece landings, the end card, fade-out 0.7 s)
+    const cap = Math.max(600, (this.LENGTH - 900 - 700 - this.END - n * 90 - (n - 1) * 120 - 400) / n);
     for (let k = first; k < H.length; k++) {
       const before = H[k].st, after = k + 1 < H.length ? H[k + 1].st : G.st, m = k + 1 < H.length ? H[k + 1].last : G.last;
       const last = H[k].last, side = before.turn, check = kingIn(before);
-      const real = H[k].think || 2500, show = Math.min(Math.max(real, 700), this.MAX_THINK), scale = real / show;
+      const real = H[k].think || 2500, show = Math.min(Math.max(real, 600), cap), scale = real / show;
       // the last part of the think is the piece sitting picked up, with its moves showing
       const pick = Math.min(Math.max(H[k].pick || Math.min(900, show * 0.4), 350), show * 0.6, 2500), wait = show - pick;
       const base = { board: before.board, last, check };
@@ -3016,10 +3019,10 @@ const Share = {
       const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
       frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, snd: "select" }, pick]);
       frames.push([{ board: after.board, last: m, lift: m.to, check: kingIn(after), snd: { before, after, m } }, 90]);
-      frames.push([{ board: after.board, last: m, check: kingIn(after) }, k === H.length - 1 ? 700 : 120]);
+      frames.push([{ board: after.board, last: m, check: kingIn(after) }, k === H.length - 1 ? 400 : 120]);
     }
     const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
-    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end" }, 3500]);
+    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end" }, this.END]);
     return { P, frames };
   },
   async replay() {
