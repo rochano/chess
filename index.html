@@ -475,7 +475,19 @@ html.intro-on .battle-hud { display: none; }
 .recap-box { position: relative; height: min(60vh, 560px); aspect-ratio: 9 / 16; max-width: 100%; margin: 0 auto; border: 3px solid var(--ink); border-radius: 18px; overflow: hidden; background: var(--paper-2); display: grid; place-items: center; }
 .recap-box video, .recap-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: var(--paper); }
 .recap-box video[hidden], .recap-box img[hidden], .recap-wait[hidden] { display: none; }
-#shareGo { font-size: 17px; padding: 11px 34px; border-width: 2.5px; box-shadow: 0 3px 0 var(--ink); background: var(--sun); }
+/* the recap entry looks like a video card (dark, with a moving preview), not like another button */
+.recap-tile { width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 14px 8px 8px; text-align: left;
+  background: #2F2620; color: #F6EBD3; border: 2.5px solid var(--ink); border-radius: 16px; box-shadow: 0 3px 0 rgba(47, 38, 32, 0.45); cursor: pointer; }
+.recap-tile:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(47, 38, 32, 0.45); }
+.rt-thumb { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: #4B3528; display: block; }
+.rt-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.rt-thumb img[hidden] { display: none; }
+.rt-play { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: rgba(245, 195, 68, 0.95); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+.rt-play::after { content: ""; position: absolute; left: 11px; top: 8px; border-left: 11px solid #2F2620; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+.rt-txt { display: grid; gap: 2px; min-width: 0; }
+.rt-txt b { font-family: var(--font-display); font-weight: 800; font-size: 17px; line-height: 1.15; }
+.rt-txt small { font-size: 12.5px; font-weight: 700; color: rgba(246, 235, 211, 0.72); line-height: 1.3; }
+.rt-go { font-size: 28px; font-weight: 800; color: var(--sun); line-height: 1; }
 .recap-wait { position: relative; z-index: 1; margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--card); border: 2px solid var(--ink); font-weight: 800; font-size: 14px; }
 .recap-box img:not([hidden]) ~ .recap-wait { align-self: end; margin-bottom: 14px; }
 .scrim { place-items: start center; }
@@ -1205,7 +1217,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-f</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-g</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1309,7 +1321,7 @@ select {
       <button class="btn go" id="resAgain">Play again</button>
     </div>
     <div class="share-row">
-      <button class="chip" id="shareGo">Share</button>
+      <button class="recap-tile" id="shareGo"><span class="rt-thumb"><img id="recapThumb" alt="" hidden><i class="rt-play" aria-hidden="true"></i></span><span class="rt-txt"><b id="rtTitle"></b><small id="rtSub"></small></span><span class="rt-go" aria-hidden="true">›</span></button>
     </div>
     <div class="shop" id="shop" hidden>
       <p class="shop-say" id="shopSay"></p>
@@ -3516,7 +3528,7 @@ $("lang").addEventListener("change", e => { prefs.lang = e.target.value === "aut
 $("shareGo").addEventListener("click", () => Recap.open());
 /* ---------- Recap: after a game, watch the replay video first; the share button is under it ---------- */
 const Recap = {
-  url: null, of: null,
+  url: null, of: null, thumb: null,
   open() {
     $("recapTitle").textContent = T("รีแคปเกมนี้", "Game recap");
     $("recapShare").textContent = T("แชร์", "Share"); $("recapClose").textContent = T("ปิด", "Close");
@@ -3560,7 +3572,9 @@ function showResult() {
   Streamer.end();
   const shopReady = Shop.after();
   Share.prepare();
-  $("shareGo").textContent = T("🎬 รีแคป", "🎬 Recap");
+  $("rtTitle").textContent = T("ดูรีแคปเกมนี้", "Watch the recap");
+  $("rtSub").textContent = T("วิดีโอ 4 ตาสุดท้าย แชร์ให้เพื่อนดูได้", "The last 4 moves as a video to share");
+  { const th = $("recapThumb"); th.hidden = true; const job = Share.gifJob; if (job) job.then(b => { if (b && Share.gifJob === job) { if (Recap.thumb) URL.revokeObjectURL(Recap.thumb); th.src = Recap.thumb = URL.createObjectURL(b); th.hidden = false; } }); }
   { const me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win"); }
   reportResult();
   const me = myColor(), youLost = !!me && o.winner !== me;
