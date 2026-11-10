@@ -477,7 +477,9 @@ html.intro-on .battle-hud { display: none; }
 .recap-box video[hidden], .recap-box img[hidden], .recap-wait[hidden] { display: none; }
 #recap .share-lbl { padding-top: 2px; margin-bottom: -6px; }
 .share-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn.sbtn { background: var(--sun); font-size: 16px; padding: 10px 8px; min-height: 48px; }
+.btn.sbtn { background: rgba(251, 247, 238, 0.92); font-family: inherit; font-size: 15px; letter-spacing: 0; text-transform: none; border-radius: 999px; padding: 10px 8px; min-height: 48px; }
+.btn.sbtn.line { background: #06C755; color: #fff; }
+.btn.sbtn.fb { background: #1877F2; color: #fff; }
 .recap-wait { position: relative; z-index: 1; margin: 0; padding: 6px 12px; border-radius: 999px; background: var(--card); border: 2px solid var(--ink); font-weight: 800; font-size: 14px; }
 .recap-box img:not([hidden]) ~ .recap-wait { align-self: end; margin-bottom: 14px; }
 .scrim { place-items: start center; }
@@ -1207,7 +1209,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-c</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-d</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -1277,8 +1279,8 @@ select {
     <span class="share-lbl">ชวนเพื่อนมาเล่น</span>
     <div class="share-grid">
       <button class="btn sbtn" id="recapShare"></button>
-      <button class="btn sbtn" id="shareLine">LINE</button>
-      <button class="btn sbtn" id="shareFb">Facebook</button>
+      <button class="btn sbtn line" id="shareLine">LINE</button>
+      <button class="btn sbtn fb" id="shareFb">Facebook</button>
       <button class="btn sbtn" id="shareCopy">Copy link</button>
     </div>
     <button class="btn" id="recapClose"></button>
