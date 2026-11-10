@@ -1311,7 +1311,7 @@ select {
 <div class="scrim" id="movie" hidden>
   <div class="card movie-card" role="dialog" aria-labelledby="movieTitle">
     <h2 id="movieTitle">Replay video</h2>
-    <canvas id="movieCv" width="720" height="1280"></canvas>
+    <canvas id="movieCv" width="1080" height="1920"></canvas>
     <p class="movie-msg" id="movieMsg"></p>
     <button class="btn go" id="movieShare" hidden>Share video</button>
     <div class="row2">
@@ -3317,7 +3317,7 @@ const Movie = {
       // the full orchestra, like the game at its most intense: horns on the theme, tremolo strings, trumpets, timpani
       MUSIC.force = { theme: "battle", level: 3 }; clearInterval(MUSIC.timer); MUSIC.timer = null; MUSIC.theme = "battle"; MUSIC.bar = 0; startMusic();
       const stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
-      const type = this.mime(), rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 3000000 } : undefined), chunks = [];
+      const type = this.mime(), rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 8000000 } : undefined), chunks = [];
       rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
       const stopped = new Promise(r => { rec.onstop = r; });
       rec.start(500);
