@@ -3090,7 +3090,7 @@ const Share = {
 };
 /* ---------- Replay video: the last moves at real pace, over the game's full-orchestra battle music ----------
    Phones don't let a web page film its own screen, so the game draws the play screen on a canvas and records
-   that canvas together with the music bus only (no clicks, no sergeant voice) using MediaRecorder.
+   that canvas together with its own music and piece sounds (no sergeant voice) using MediaRecorder.
    It records in real time, starting quietly when the result appears; the Share button sends it. */
 const Movie = {
   ok() { return !!(window.MediaRecorder && HTMLCanvasElement.prototype.captureStream && (window.AudioContext || window.webkitAudioContext) && window.MediaStream); },
@@ -3113,10 +3113,23 @@ const Movie = {
   },
   // Share tapped before the video is done: show it being made, then share with one more tap.
   waitThenShare() { this.wait = true; show("movie"); this.ui(); },
-  sound(snd) { // music only: a fanfare when the winner lands the last move
-    if (snd !== "end") return;
-    const o = G.over, me = myColor();
-    if (o.type !== "draw" && (!me || o.winner === me)) musicSting("win");
+  // Piece sounds like in the game, sent only to the video: the sfx bus is swapped just for the call (nodes connect when made).
+  sound(snd) {
+    if (!snd || !this.sfx) return;
+    if (snd === "end") { const o = G.over, me = myColor(); if (o.type !== "draw" && (!me || o.winner === me)) musicSting("win"); return; }
+    const keep = sfxBus, vm = prefs.volMove, va = prefs.volAlert;
+    sfxBus = this.sfx; prefs.volMove = Math.max(vm, 70); prefs.volAlert = Math.max(va, 60);
+    try {
+      if (snd === "select") sfx.select();
+      else {
+        const { before, after, m } = snd, p = before.board[m.from];
+        if (inCheck(after.board, after.turn)) { sfx.move(); sfx.check(); }
+        else if (after.board[m.to][1] !== p[1]) sfx.promote();
+        else if (p[1] === "K" && Math.abs((m.to & 7) - (m.from & 7)) === 2) sfx.castle();
+        else if (after.captured) sfx.capture();
+        else sfx.move();
+      }
+    } finally { sfxBus = keep; prefs.volMove = vm; prefs.volAlert = va; }
   },
   async record(cv, over) {
     this.busy = true;
@@ -3127,7 +3140,7 @@ const Movie = {
       const { P, frames } = await Share.timeline();
       const S = cv.width, g = cv.getContext("2d"); g.setTransform(S / 1080, 0, 0, S / 1080, 0, 0);
       Share.play(g, frames[0][0], P);
-      const band = NEEDS.battle || [];
+      const band = [...new Set((NEEDS.battle || []).concat(SFX_INST))];
       orchLoad(band);
       const have = n => ORCH.buf[n] && Object.keys(ORCH.buf[n]).length >= INST[n].notes.length - 2;
       // also lets the result fanfare finish before the music is borrowed
@@ -3137,6 +3150,7 @@ const Movie = {
       const bus = a.createGain(), lim = a.createDynamicsCompressor(); dest = a.createMediaStreamDestination();
       lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = 0.005; lim.release.value = 0.25;
       bus.connect(lim); lim.connect(dest);
+      this.sfx = a.createGain(); this.sfx.connect(dest);
       musicBus = bus; ORCH.out = null;
       // the full orchestra, like the game at its most intense: horns on the theme, tremolo strings, trumpets, timpani
       MUSIC.force = { theme: "battle", level: 3 }; clearInterval(MUSIC.timer); MUSIC.timer = null; MUSIC.theme = "battle"; MUSIC.bar = 0; startMusic();
@@ -3162,7 +3176,7 @@ const Movie = {
       return live() ? new Blob(chunks, { type: (rec.mimeType || type || "video/webm").split(";")[0] }) : null;
     } finally {
       try { if (dest) musicBus.disconnect(); } catch (e) {}
-      musicBus = keep.bus; ORCH.out = keep.out; MUSIC.force = null; this.busy = false;
+      musicBus = keep.bus; ORCH.out = keep.out; MUSIC.force = null; this.busy = false; this.sfx = null;
       clearInterval(MUSIC.timer); MUSIC.timer = null;
       if (wasMusic) startMusic();
     }
