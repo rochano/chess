@@ -3055,7 +3055,8 @@ const Share = {
     g.font = Math.round(10.2 * cq) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
     // A moving piece glides from its square to the new one (eased); what it takes stays until it arrives.
     const sl = f.slide, board = sl ? sl.board : f.board, list = [];
-    for (let i = 0; i < 64; i++) if (board[i] && !(sl && (i === sl.from || i === sl.to))) list.push([board[i], ...at(i), false]);
+    const dr = f.drop, lift = dr ? (1 - dr.t) ** 2 : 0; // lands with an ease-out, like the game's .pc.lift
+    for (let i = 0; i < 64; i++) if (board[i] && !(sl && (i === sl.from || i === sl.to))) list.push([board[i], ...at(i), dr && i === dr.to ? lift : 0]);
     if (sl) {
       const e = sl.t < .5 ? 2 * sl.t * sl.t : 1 - (-2 * sl.t + 2) ** 2 / 2, [ax, ay] = at(sl.from), [bx, by] = at(sl.to);
       if (sl.victim) list.push([sl.victim, bx, by, false]);
@@ -3143,25 +3144,32 @@ const Share = {
     const mmss = ms => { const s = Math.max(1, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     const kingIn = st => inCheck(st.board, st.turn) ? st.board.indexOf(st.turn + "K") : -1;
     const frames = []; // [frame, delay ms]
-    // time left for thinking once the fixed parts are counted (video lead-in 0.9 s, piece landings, the end card, fade-out 0.7 s)
-    // Every move gets the same, unhurried slot (about 2 s), so viewers can follow: quick moves are slowed down to it.
-    const cap = Math.max(1500, (this.LENGTH - 300 - 700 - this.END - n * 280 - (n - 1) * 120 - 400) / n);
+    // The real pace of the game: each move takes as long as it really took, the piece is picked up for as long as it
+    // really was, and it lands the way it does in the game (a short lift). Only if the moves together would run past
+    // LENGTH are the longest thinks trimmed (the idle waiting, never the moves themselves); the clock keeps the real time.
+    const DROP = 180, room = this.LENGTH - 300 - 700 - this.END - 400 - n * DROP;
+    const reals = []; for (let k = first; k < H.length; k++) reals.push(Math.max(400, H[k].think || 2000));
+    let cap = Infinity;
+    if (reals.reduce((a, b) => a + b, 0) > room) { // water-fill: the largest cap that makes everything fit
+      const sorted = reals.slice().sort((a, b) => a - b); let used = 0;
+      for (let i = 0; i < sorted.length; i++) { const c = (room - used) / (sorted.length - i); if (sorted[i] >= c) { cap = Math.max(400, c); break; } used += sorted[i]; }
+    }
     for (let k = first; k < H.length; k++) {
       const before = H[k].st, after = k + 1 < H.length ? H[k + 1].st : G.st, m = k + 1 < H.length ? H[k + 1].last : G.last;
       const last = H[k].last, side = before.turn, check = kingIn(before);
-      const real = H[k].think || 2500, show = cap, scale = real / show;
-      // the last part of the think is the piece sitting picked up, with its moves showing
-      const pick = Math.round(show * 0.45), wait = show - pick; // the picked piece and its dots stay up long enough to read
+      const real = reals[k - first], show = Math.min(real, cap), scale = real / show;
+      const pick = Math.min(H[k].pick || 0, show * 0.8), wait = show - pick; // the computer never picks a piece up: it just moves
       const atMove = clkAt(k), startClk = atMove && { ...atMove, [side]: atMove[side] + real };
       const clkAfter = atMove && { ...atMove, [side]: atMove[side] + (G.tc.inc || 0) };
       const base = { board: before.board, last, check, turn: side, caps: H[k].captured, status: statusOf(before, k) };
-      for (let t = 0; t < wait; t += 500) frames.push([{ ...base, clock: { side, text: mmss((t + 500) * scale) }, clk: startClk && { ...startClk, [side]: startClk[side] - t * scale } }, Math.min(500, wait - t)]);
-      const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
-      frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove, snd: "select" }, pick]);
+      for (let t = 0; t < wait; t += 250) frames.push([{ ...base, clock: { side, text: mmss((t + 250) * scale) }, clk: startClk && { ...startClk, [side]: startClk[side] - t * scale } }, Math.min(250, wait - t)]);
+      if (pick > 0) {
+        const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
+        frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove, snd: "select" }, pick]);
+      }
       const land = { board: after.board, last: m, check: kingIn(after), turn: after.turn, caps: capsAt(k + 1), status: statusOf(after, k + 1), clk: clkAfter };
-      // the piece glides over (the video animates it; the GIF shows it lifted on arrival), then lands with its sound
-      frames.push([{ ...land, lift: m.to, slide: { board: before.board, from: m.from, to: m.to, p: before.board[m.from], victim: before.board[m.to], t: 1 } }, 280]);
-      frames.push([{ ...land, snd: { before, after, m } }, k === H.length - 1 ? 400 : 120]);
+      frames.push([{ ...land, lift: m.to, drop: { to: m.to, t: 1 }, snd: { before, after, m } }, DROP]);
+      if (k === H.length - 1) frames.push([land, 400]);
     }
     const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
     frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end", turn: G.st.turn, caps: G.captured, status: trS(o.text), clk: G.tc ? { ...G.clocks } : null }, this.END]);
@@ -3311,6 +3319,7 @@ const Movie = {
         // repaint about 30 times a second, so the video runs smoothly and the sliding piece moves evenly
         while (live() && performance.now() < end) {
           if (f.slide) f.slide.t = Math.min(1, (performance.now() - start) / ms);
+          if (f.drop) f.drop.t = Math.min(1, (performance.now() - start) / ms);
           Share.screen(g, f, P);
           await new Promise(r => { const id = setTimeout(r, 40); if (window.requestAnimationFrame) requestAnimationFrame(() => { clearTimeout(id); r(); }); });
         }
@@ -3320,6 +3329,7 @@ const Movie = {
       for (const [f, ms] of frames) {
         if (!live()) break;
         if (f.slide) f.slide.t = 0;
+        if (f.drop) f.drop.t = 0;
         Share.screen(g, f, P); this.sound(f.snd);
         await hold(f, ms);
       }
