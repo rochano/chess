@@ -1198,7 +1198,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.05-d</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.10-a</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -2851,15 +2851,29 @@ const Share = {
   },
   font: "'Baloo 2', 'Nunito', system-ui, sans-serif",
   // Centre a piece by its drawn shape, not its advance width: on iPhones the pawn's "text style" marker (U+FE0E)
-  // adds width, which pushed pawns to the right of their squares. Use with textAlign "center".
+  // adds width, which pushed pawns to the right of their squares. Safari's text metrics don't show it reliably,
+  // so the glyph is drawn once off screen and its ink is measured pixel by pixel. Use with textAlign "center".
   ink: {},
   inkDx(g, ch) {
     const k = g.font + ch; if (k in this.ink) return this.ink[k];
-    const m = g.measureText(ch), L = m.actualBoundingBoxLeft, R = m.actualBoundingBoxRight;
-    return (this.ink[k] = isFinite(L) && isFinite(R) && R + L > 0 ? (L - R) / 2 : 0);
+    let dx = 0;
+    try {
+      const px = parseFloat(/(\d+(\.\d+)?)px/.exec(g.font)[1]), w = Math.ceil(px * 3), h = Math.ceil(px * 2);
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const t = c.getContext("2d", { willReadFrequently: true }); t.font = g.font; t.textAlign = "center"; t.textBaseline = "middle"; t.fillStyle = "#000";
+      t.fillText(ch, w / 2, h / 2);
+      const d = t.getImageData(0, 0, w, h).data; let L = w, R = -1;
+      for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) if (d[(y * w + x) * 4 + 3] > 40) { if (x < L) L = x; R = x; break; }
+      if (R >= L) dx = w / 2 - (L + R + 1) / 2;
+    } catch (e) { dx = 0; }
+    return (this.ink[k] = dx);
   },
+  // The game's piece font has its own pawn, so once that font is loaded the marker is left out of drawings altogether.
+  symFont: false,
+  hasSym() { try { return document.fonts.check("40px 'Noto Sans Symbols 2'", "♟"); } catch (e) { return false; } },
+  glyph(t) { const ch = GLYPH[t]; return this.symFont ? ch.replace("\uFE0E", "") : ch; },
   async picture() {
-    await this.art();
+    await this.art(); this.symFont = this.hasSym();
     const S = 1080, c = document.createElement("canvas"); c.width = c.height = S;
     const g = c.getContext("2d"), dark = ["#F1E4C3", "#B58863"]; // lighter than the in-game wood so both colours of pieces stand out
     g.fillStyle = "#F3EDE0"; g.fillRect(0, 0, S, S);
@@ -2877,9 +2891,9 @@ const Share = {
       g.fillRect(x0 + vf * q, y0 + vr * q, q, q);
       const p = G.st.board[i]; if (!p) continue;
       g.font = Math.round(q * 0.82) + "px 'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
-      const cx = x0 + vf * q + q / 2 + this.inkDx(g, GLYPH[p[1]]), cy = y0 + vr * q + q / 2 + q * 0.04;
-      g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? ink : "#F3EDE0"; g.strokeText(GLYPH[p[1]], cx, cy);
-      g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(GLYPH[p[1]], cx, cy);
+      const cx = x0 + vf * q + q / 2 + this.inkDx(g, this.glyph(p[1])), cy = y0 + vr * q + q / 2 + q * 0.04;
+      g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? ink : "#F3EDE0"; g.strokeText(this.glyph(p[1]), cx, cy);
+      g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(this.glyph(p[1]), cx, cy);
     }
     g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 34px " + font;
     g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, S - 36);
@@ -2983,7 +2997,7 @@ const Share = {
       list.push([sl.p, ax + (bx - ax) * e, ay + (by - ay) * e, Math.sin(Math.PI * sl.t)]);
     }
     for (const [p, x, y, up] of list) {
-      const ch = GLYPH[p[1]];
+      const ch = this.glyph(p[1]);
       g.save(); g.translate(x + q / 2 + this.inkDx(g, ch), y + q / 2 + 0.06 * q - 0.2 * cq - up * 2.2 * cq); if (up) g.scale(1 + up * 0.06, 1 + up * 0.06);
       if (p[0] === "w") {
         g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 0.55 * cq;
@@ -2992,7 +3006,7 @@ const Share = {
       } else {
         g.shadowColor = "rgba(0,0,0,.3)"; g.shadowOffsetY = 0.55 * cq; g.fillStyle = P.black; g.fillText(ch, 0, 0);
         // the game's soft light glow; in a 256-colour GIF a blur turns to smudges, so a crisp light rim stands in
-        if (P.gif) { g.shadowColor = "transparent"; g.shadowOffsetY = 0; g.lineWidth = 1.3 * cq; g.strokeStyle = "rgba(255,238,205,.5)"; g.strokeText(ch, 0, 0); }
+        if (P.gif) { g.shadowColor = "transparent"; g.shadowOffsetY = 0; g.lineWidth = 1.1 * cq; g.strokeStyle = "rgba(255,238,205,.25)"; g.strokeText(ch, 0, 0); }
         else { g.shadowOffsetY = 0; g.shadowColor = "rgba(255,238,205,.45)"; g.shadowBlur = 0.7 * cq; g.fillText(ch, 0, 0); }
         g.shadowColor = "transparent"; g.shadowBlur = 0; g.lineWidth = 0.5 * cq; g.strokeStyle = "#111214"; g.strokeText(ch, 0, 0); g.fillText(ch, 0, 0);
       }
@@ -3027,8 +3041,8 @@ const Share = {
       if (caps.length) {
         g.font = "36px " + P.pieceFont; let cx = x + 140;
         for (const p of caps.slice().sort((a, b) => VAL[b[1]] - VAL[a[1]])) {
-          if (p[0] === "w") { g.lineWidth = 4; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], cx, y + 162); g.fillStyle = P.white; } else g.fillStyle = P.black;
-          g.fillText(GLYPH[p[1]], cx, y + 162); { const m = g.measureText(GLYPH[p[1]]), w = (m.actualBoundingBoxRight || 0) + (m.actualBoundingBoxLeft || 0); cx += (w > 0 ? w + 3 : m.width * 0.82); }
+          if (p[0] === "w") { g.lineWidth = 4; g.strokeStyle = ink; g.strokeText(this.glyph(p[1]), cx, y + 162); g.fillStyle = P.white; } else g.fillStyle = P.black;
+          g.fillText(this.glyph(p[1]), cx, y + 162); { const m = g.measureText(this.glyph(p[1])), w = (m.actualBoundingBoxRight || 0) + (m.actualBoundingBoxLeft || 0); cx += (w > 0 ? w + 3 : m.width * 0.82); }
         }
       } else { g.fillStyle = P.soft; g.font = "700 24px " + body; g.fillText(tr("No captures yet"), x + 140, y + 160); }
       if (f.clk) {
@@ -3044,6 +3058,7 @@ const Share = {
     // Fonts must be in before the first frame, or the pieces change shape halfway through (3D players never loaded them).
     const fonts = document.fonts ? Promise.all(["40px 'Noto Sans Symbols 2'", "800 40px 'Baloo 2'", "700 20px 'Baloo 2'"].map(f => document.fonts.load(f, "♚♛♜♝♞♟Chess Game"))).catch(() => {}) : null;
     await Promise.all([this.art(), fonts]);
+    this.symFont = this.hasSym();
     const n = Math.min(this.PLIES, G.history.length), H = G.history, first = H.length - n;
     const css = getComputedStyle($("app")), v = k => css.getPropertyValue(k).trim();
     const P = {
@@ -3112,9 +3127,9 @@ const Share = {
       return out;
     };
 
-    // The play screen as on a phone (portrait), sharp enough to read: 720 x 1280.
+    // The play screen as on a phone (portrait), one pixel per unit (828 x 1472) so lines and pieces stay crisp.
     P.gif = true;
-    const W = 720, Hh = 1280, c = document.createElement("canvas"); c.width = W; c.height = Hh;
+    const W = this.W, Hh = this.H, c = document.createElement("canvas"); c.width = W; c.height = Hh;
     const g = c.getContext("2d", { willReadFrequently: true }); g.setTransform(W / this.W, 0, 0, Hh / this.H, 0, 0);
     const grab = f => { this.screen(g, f, P); return g.getImageData(0, 0, W, Hh).data; };
     // a landing piece settles in three steps, like the game's short lift
