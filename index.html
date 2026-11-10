@@ -1217,7 +1217,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-g</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-h</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3230,7 +3230,13 @@ const Share = {
     const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { err = e; } });
     enc.configure({ codec, width: W, height: H, bitrate: rate, bitrateMode: "variable", latencyMode: "quality", framerate: FPS, avc: { format: "avc" } });
     const c = document.createElement("canvas"); c.width = W; c.height = H;
-    const g = c.getContext("2d"); g.setTransform(W / this.W, 0, 0, H / this.H, 0, 0);
+    // Reels and Shorts fill a taller phone screen, cutting about a tenth off each side, and lay their buttons over the
+    // bottom: so the play screen sits at 80% in the middle (a little high) on the same dotted paper, and nothing is lost.
+    const g = c.getContext("2d"), k = 0.8 * W / this.W, ox = (W - this.W * k) / 2, oy = Math.round((H - this.H * k) * 0.4);
+    g.fillStyle = v.P.paper; g.fillRect(0, 0, W, H);
+    g.fillStyle = "rgba(47,38,32,.07)";
+    for (let y = 14 * k; y < H; y += 28 * k) for (let x = (ox % (28 * k)) + 14 * k - 28 * k; x < W; x += 28 * k) { g.beginPath(); g.arc(x, y, 2 * k, 0, 7); g.fill(); }
+    g.setTransform(k, 0, 0, k, ox, oy);
     let n = 0, t = 0;
     for (const [f, ms] of v.frames) {
       this.screen(g, f, v.P); t += ms;
