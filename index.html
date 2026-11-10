@@ -2901,8 +2901,8 @@ const Share = {
      Long thinks are shortened to a few seconds, but the clock shows the real time taken.
      Built when the result appears (iOS only opens the share sheet straight after a tap, so it must be ready by then).
      The encoder (gifenc, 9 KB) is fetched only when needed. */
-  PLIES: 5,
-  LENGTH: 14400, // the whole replay stays under 15 s (a little spare for the recorder): long thinks are shortened to fit, the clock still shows the real time
+  PLIES: 4,
+  LENGTH: 13900, // the whole replay stays under 15 s (a little spare for the recorder): long thinks are shortened to fit, the clock still shows the real time
   END: 2500, // how long the result stays up at the end
   gifJob: null,
   loadGif() {
@@ -2997,6 +2997,21 @@ const Share = {
   W: 828, H: 1472,
   screen(g, f, P) {
     const ink = P.ink, disp = this.font, body = "'Nunito', system-ui, sans-serif", S = this.W;
+    // Paper, header buttons and the wooden frame never change: drawn once, then copied in every frame (30 a second).
+    if (!P.bg || P.bg.width !== g.canvas.width) {
+      const c = document.createElement("canvas"); c.width = g.canvas.width; c.height = g.canvas.height;
+      const b = c.getContext("2d"); b.setTransform(g.getTransform()); this.screenBg(b, P); P.bg = c;
+    }
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(P.bg, 0, 0); g.restore();
+    g.fillStyle = P.card; g.strokeStyle = ink; g.lineWidth = 5; g.beginPath(); g.arc(455, 78, 39, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = f.turn === "b" ? "#3C4A63" : "#F5C344"; g.lineWidth = 4; g.beginPath(); g.arc(455, 78, 27, 0, 7); g.fill(); g.stroke();
+    const ic = P.icon[f.turn === "b" ? "moon" : "sun"]; if (ic) g.drawImage(ic, 437, 60, 36, 36);
+    const FX = 32, FY = 156, FW = 748, band = 44, B = FX + 6 + band, BY = FY + 6 + band, BS = FW - 2 * (6 + band), q = BS / 8, cq = BS / 100, flip = P.flip;
+    this.screenBoard(g, f, P, B, BY, q, cq, flip);
+    this.screenRest(g, f, P, flip);
+  },
+  screenBg(g, P) {
+    const ink = P.ink, disp = this.font, S = this.W;
     g.fillStyle = P.paper; g.fillRect(0, 0, S, this.H);
     g.fillStyle = "rgba(47,38,32,.07)";
     for (let y = 14; y < this.H; y += 28) for (let x = 14; x < S; x += 28) { g.beginPath(); g.arc(x, y, 2, 0, 7); g.fill(); }
@@ -3005,9 +3020,6 @@ const Share = {
     if (this.logo) g.drawImage(this.logo, 32, 54, 48, 48);
     g.fillStyle = ink; g.font = "800 40px " + disp; g.fillText("Chess Game", 92, 93);
     const btn = (x, bg) => { g.fillStyle = ink; g.beginPath(); g.roundRect(x, 42, 84, 84, 24); g.fill(); g.fillStyle = bg; g.beginPath(); g.roundRect(x, 36, 84, 84, 24); g.fill(); g.strokeStyle = ink; g.lineWidth = 5; g.stroke(); };
-    g.fillStyle = P.card; g.strokeStyle = ink; g.lineWidth = 5; g.beginPath(); g.arc(455, 78, 39, 0, 7); g.fill(); g.stroke();
-    g.fillStyle = f.turn === "b" ? "#3C4A63" : "#F5C344"; g.lineWidth = 4; g.beginPath(); g.arc(455, 78, 27, 0, 7); g.fill(); g.stroke();
-    const ic = P.icon[f.turn === "b" ? "moon" : "sun"]; if (ic) g.drawImage(ic, 437, 60, 36, 36);
     btn(512, P.leaf); if (P.icon.music) g.drawImage(P.icon.music, 532, 56, 44, 44);
     btn(612, P.ember); g.fillStyle = P.card; g.font = "800 32px " + disp; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(P.view, 654, 80); g.textAlign = "left"; g.textBaseline = "alphabetic";
     btn(712, P.slate); if (P.icon.gear) g.drawImage(P.icon.gear, 732, 56, 44, 44);
@@ -3027,6 +3039,9 @@ const Share = {
       g.fillText(rank, B - band / 2, BY + k * q + q / 2); g.fillText(rank, B + BS + band / 2, BY + k * q + q / 2);
     }
     g.fillStyle = ink; g.fillRect(B - 4, BY - 4, BS + 8, BS + 8);
+  },
+  screenBoard(g, f, P, B, BY, q, cq, flip) {
+    const ink = P.ink;
     const at = i => { const r = i >> 3, c = i & 7; return [B + (flip ? 7 - c : c) * q, BY + (flip ? 7 - r : r) * q]; };
     const glow = (i, rgb) => { const [x, y] = at(i), gr = g.createRadialGradient(x + q / 2, y + q / 2, 0, x + q / 2, y + q / 2, q * 0.72); gr.addColorStop(0, `rgba(${rgb},.95)`); gr.addColorStop(0.42, `rgba(${rgb},.95)`); gr.addColorStop(0.83, `rgba(${rgb},.38)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(x, y, q, q); };
     for (let i = 0; i < 64; i++) {
@@ -3038,10 +3053,17 @@ const Share = {
     }
     // pieces, styled like .pc.w / .pc.b in the game
     g.font = Math.round(10.2 * cq) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
-    for (let i = 0; i < 64; i++) {
-      const p = f.board[i]; if (!p) continue;
-      const [x, y] = at(i), up = f.lift === i, ch = GLYPH[p[1]];
-      g.save(); g.translate(x + q / 2, y + q / 2 + 0.06 * q - 0.2 * cq - (up ? 1.6 * cq : 0)); if (up) g.scale(1.06, 1.06);
+    // A moving piece glides from its square to the new one (eased); what it takes stays until it arrives.
+    const sl = f.slide, board = sl ? sl.board : f.board, list = [];
+    for (let i = 0; i < 64; i++) if (board[i] && !(sl && (i === sl.from || i === sl.to))) list.push([board[i], ...at(i), false]);
+    if (sl) {
+      const e = sl.t < .5 ? 2 * sl.t * sl.t : 1 - (-2 * sl.t + 2) ** 2 / 2, [ax, ay] = at(sl.from), [bx, by] = at(sl.to);
+      if (sl.victim) list.push([sl.victim, bx, by, false]);
+      list.push([sl.p, ax + (bx - ax) * e, ay + (by - ay) * e, Math.sin(Math.PI * sl.t)]);
+    }
+    for (const [p, x, y, up] of list) {
+      const ch = GLYPH[p[1]];
+      g.save(); g.translate(x + q / 2, y + q / 2 + 0.06 * q - 0.2 * cq - up * 2.2 * cq); if (up) g.scale(1 + up * 0.06, 1 + up * 0.06);
       if (p[0] === "w") {
         g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 0.55 * cq;
         g.lineWidth = 0.84 * cq; g.strokeStyle = ink; g.strokeText(ch, 0, 0);
@@ -3059,6 +3081,9 @@ const Share = {
       if (d.take) { g.strokeStyle = "rgba(210,74,64,.75)"; g.lineWidth = 0.8 * cq; g.arc(x + q / 2, y + q / 2, q * 0.44 - 0.4 * cq, 0, 7); g.stroke(); }
       else { g.fillStyle = dark ? "rgba(251,245,230,.45)" : "rgba(47,38,32,.38)"; g.arc(x + q / 2, y + q / 2, q * 0.15, 0, 7); g.fill(); }
     }
+  },
+  screenRest(g, f, P, flip) {
+    const ink = P.ink, disp = this.font, body = "'Nunito', system-ui, sans-serif", S = this.W;
     // status line under the board (the result in red at the end, with where to play)
     g.textAlign = "center"; g.textBaseline = "middle";
     if (f.banner) {
@@ -3120,7 +3145,7 @@ const Share = {
     const frames = []; // [frame, delay ms]
     // time left for thinking once the fixed parts are counted (video lead-in 0.9 s, piece landings, the end card, fade-out 0.7 s)
     // Every move gets the same, unhurried slot (about 2 s), so viewers can follow: quick moves are slowed down to it.
-    const cap = Math.max(1500, (this.LENGTH - 300 - 700 - this.END - n * 90 - (n - 1) * 120 - 400) / n);
+    const cap = Math.max(1500, (this.LENGTH - 300 - 700 - this.END - n * 280 - (n - 1) * 120 - 400) / n);
     for (let k = first; k < H.length; k++) {
       const before = H[k].st, after = k + 1 < H.length ? H[k + 1].st : G.st, m = k + 1 < H.length ? H[k + 1].last : G.last;
       const last = H[k].last, side = before.turn, check = kingIn(before);
@@ -3134,8 +3159,9 @@ const Share = {
       const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
       frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove, snd: "select" }, pick]);
       const land = { board: after.board, last: m, check: kingIn(after), turn: after.turn, caps: capsAt(k + 1), status: statusOf(after, k + 1), clk: clkAfter };
-      frames.push([{ ...land, lift: m.to, snd: { before, after, m } }, 90]);
-      frames.push([land, k === H.length - 1 ? 400 : 120]);
+      // the piece glides over (the video animates it; the GIF shows it lifted on arrival), then lands with its sound
+      frames.push([{ ...land, lift: m.to, slide: { board: before.board, from: m.from, to: m.to, p: before.board[m.from], victim: before.board[m.to], t: 1 } }, 280]);
+      frames.push([{ ...land, snd: { before, after, m } }, k === H.length - 1 ? 400 : 120]);
     }
     const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
     frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end", turn: G.st.turn, caps: G.captured, status: trS(o.text), clk: G.tc ? { ...G.clocks } : null }, this.END]);
@@ -3281,12 +3307,19 @@ const Movie = {
       let left = frames.reduce((t, f) => t + f[1], 0) + 1600;
       const hold = async (f, ms) => { // keep repainting, so the video has steady frames during long thinks
         const end = performance.now() + ms;
-        while (live() && performance.now() < end) { Share.screen(g, f, P); await new Promise(r => setTimeout(r, Math.min(100, end - performance.now()))); }
+        const start = performance.now();
+        // repaint about 30 times a second, so the video runs smoothly and the sliding piece moves evenly
+        while (live() && performance.now() < end) {
+          if (f.slide) f.slide.t = Math.min(1, (performance.now() - start) / ms);
+          Share.screen(g, f, P);
+          await new Promise(r => { const id = setTimeout(r, 40); if (window.requestAnimationFrame) requestAnimationFrame(() => { clearTimeout(id); r(); }); });
+        }
         left -= ms; this.left = Math.max(1, Math.ceil(left / 1000)); this.ui();
       };
       await hold(frames[0][0], 300);
       for (const [f, ms] of frames) {
         if (!live()) break;
+        if (f.slide) f.slide.t = 0;
         Share.screen(g, f, P); this.sound(f.snd);
         await hold(f, ms);
       }
