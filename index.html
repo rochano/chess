@@ -515,7 +515,7 @@ html.intro-on .battle-hud { display: none; }
 .btn.danger { background: var(--flag); color: var(--card); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .movie-card { max-width: min(560px, 94vw); }
-.movie-card canvas { width: 100%; height: auto; border-radius: 12px; border: 2.5px solid var(--ink); display: block; }
+.movie-card canvas { width: auto; max-width: 100%; height: min(56vh, 520px); margin: 0 auto; border-radius: 12px; border: 2.5px solid var(--ink); display: block; }
 #movieShare { width: 100%; margin-bottom: 10px; }
 .movie-msg { text-align: center; font-weight: 800; color: var(--ink-soft); margin: 10px 0 6px; min-height: 1.3em; }
 .share-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; padding-top: 4px; border-top: 2px dashed var(--paper-2); }
@@ -1311,7 +1311,7 @@ select {
 <div class="scrim" id="movie" hidden>
   <div class="card movie-card" role="dialog" aria-labelledby="movieTitle">
     <h2 id="movieTitle">Replay video</h2>
-    <canvas id="movieCv" width="720" height="720"></canvas>
+    <canvas id="movieCv" width="720" height="1280"></canvas>
     <p class="movie-msg" id="movieMsg"></p>
     <button class="btn go" id="movieShare" hidden>Share video</button>
     <div class="row2">
@@ -2430,7 +2430,7 @@ function doMove(m) {
   // think/pick: how long this move took and how long the piece sat picked up, for the replay GIF
   const now = Date.now();
   G.history.push({ st: G.st, captured: { w: G.captured.w.slice(), b: G.captured.b.slice() }, last: G.last, started: G.started, keysLen: G.keys.length,
-    think: now - (G.turnAt || now), pick: G.selAt && G.selected === m.from ? now - G.selAt : 0 });
+    clk: { w: G.clocks.w, b: G.clocks.b }, think: now - (G.turnAt || now), pick: G.selAt && G.selected === m.from ? now - G.selAt : 0 });
   G.turnAt = now; G.selAt = 0;
   const prevSt = G.st;
   const next = applyMove(G.st, m);
@@ -2903,7 +2903,7 @@ const Share = {
      The encoder (gifenc, 9 KB) is fetched only when needed. */
   PLIES: 5,
   LENGTH: 14400, // the whole replay stays under 15 s (a little spare for the recorder): long thinks are shortened to fit, the clock still shows the real time
-  END: 3000, // how long the result stays up at the end
+  END: 2500, // how long the result stays up at the end
   gifJob: null,
   loadGif() {
     if (!this._gifenc) this._gifenc = import("https://unpkg.com/gifenc@1.0.3/dist/gifenc.esm.js").catch(() => import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"));
@@ -2917,8 +2917,11 @@ const Share = {
     const sub = o.type === "draw" ? (o.stalemate ? T(side(opp(o.stalemate)) + "ไม่มีตาเดิน แต่ไม่โดนรุก", side(opp(o.stalemate)) + " can't move but isn't in check") : T("ไม่มีใครแพ้", "Nobody loses")) : T(side(o.winner) + "ชนะ", side(o.winner) + " wins");
     return title + " · " + sub;
   },
-  svgImg(svg) {
-    return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ')); });
+  svgImg(svg, color) {
+    if (!svg || !/<svg/.test(svg)) return Promise.resolve(null);
+    if (color) svg = svg.replace(/currentColor/g, color);
+    if (!/xmlns=/.test(svg)) svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+    return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); });
   },
   // One frame of the play screen, in 1080x1080 units. f: { board, last, sel, dots, lift, check, hit, clock: {side, text}, banner }
   play(g, f, P) {
@@ -2989,6 +2992,105 @@ const Share = {
     g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 30px " + font;
     g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, 1050);
   },
+  /* The video frame: the phone play screen, in the same layout and proportions (828 x 1472 units, 2x a 414 px wide phone).
+     Header with the turn orb and buttons, the wooden board, the status line, and both player cards with clocks. */
+  W: 828, H: 1472,
+  screen(g, f, P) {
+    const ink = P.ink, disp = this.font, body = "'Nunito', system-ui, sans-serif", S = this.W;
+    g.fillStyle = P.paper; g.fillRect(0, 0, S, this.H);
+    g.fillStyle = "rgba(47,38,32,.07)";
+    for (let y = 14; y < this.H; y += 28) for (let x = 14; x < S; x += 28) { g.beginPath(); g.arc(x, y, 2, 0, 7); g.fill(); }
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+    // header
+    if (this.logo) g.drawImage(this.logo, 32, 54, 48, 48);
+    g.fillStyle = ink; g.font = "800 40px " + disp; g.fillText("Chess Game", 92, 93);
+    const btn = (x, bg) => { g.fillStyle = ink; g.beginPath(); g.roundRect(x, 42, 84, 84, 24); g.fill(); g.fillStyle = bg; g.beginPath(); g.roundRect(x, 36, 84, 84, 24); g.fill(); g.strokeStyle = ink; g.lineWidth = 5; g.stroke(); };
+    g.fillStyle = P.card; g.strokeStyle = ink; g.lineWidth = 5; g.beginPath(); g.arc(455, 78, 39, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = f.turn === "b" ? "#3C4A63" : "#F5C344"; g.lineWidth = 4; g.beginPath(); g.arc(455, 78, 27, 0, 7); g.fill(); g.stroke();
+    const ic = P.icon[f.turn === "b" ? "moon" : "sun"]; if (ic) g.drawImage(ic, 437, 60, 36, 36);
+    btn(512, P.leaf); if (P.icon.music) g.drawImage(P.icon.music, 532, 56, 44, 44);
+    btn(612, P.ember); g.fillStyle = P.card; g.font = "800 32px " + disp; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(P.view, 654, 80); g.textAlign = "left"; g.textBaseline = "alphabetic";
+    btn(712, P.slate); if (P.icon.gear) g.drawImage(P.icon.gear, 732, 56, 44, 44);
+    // wooden frame
+    const FX = 32, FY = 156, FW = 748, band = 44, B = FX + 6 + band, BY = FY + 6 + band, BS = FW - 2 * (6 + band), q = BS / 8, cq = BS / 100, flip = P.flip;
+    g.fillStyle = "rgba(47,38,32,.85)"; g.beginPath(); g.roundRect(FX + 12, FY + 12, FW, FW, 24); g.fill();
+    const wg = g.createLinearGradient(0, FY, 0, FY + FW); wg.addColorStop(0, P.wood); wg.addColorStop(1, P.woodDark);
+    g.save(); g.beginPath(); g.roundRect(FX, FY, FW, FW, 24); g.clip(); g.fillStyle = wg; g.fillRect(FX, FY, FW, FW);
+    g.strokeStyle = "rgba(0,0,0,.07)"; g.lineWidth = 4; // grain, like the repeating gradient in the CSS
+    for (let x = FX - 200; x < FX + FW + 200; x += 18) { g.beginPath(); g.moveTo(x, FY); g.lineTo(x + FW * Math.tan(10 * Math.PI / 180), FY + FW); g.stroke(); }
+    g.restore();
+    g.strokeStyle = ink; g.lineWidth = 6; g.beginPath(); g.roundRect(FX + 3, FY + 3, FW - 6, FW - 6, 22); g.stroke();
+    g.fillStyle = "#F6EBD3"; g.font = "700 26px " + disp; g.textAlign = "center"; g.textBaseline = "middle";
+    for (let k = 0; k < 8; k++) {
+      const file = "abcdefgh"[flip ? 7 - k : k], rank = String(flip ? k + 1 : 8 - k);
+      g.fillText(file, B + k * q + q / 2, BY - band / 2); g.fillText(file, B + k * q + q / 2, BY + BS + band / 2);
+      g.fillText(rank, B - band / 2, BY + k * q + q / 2); g.fillText(rank, B + BS + band / 2, BY + k * q + q / 2);
+    }
+    g.fillStyle = ink; g.fillRect(B - 4, BY - 4, BS + 8, BS + 8);
+    const at = i => { const r = i >> 3, c = i & 7; return [B + (flip ? 7 - c : c) * q, BY + (flip ? 7 - r : r) * q]; };
+    const glow = (i, rgb) => { const [x, y] = at(i), gr = g.createRadialGradient(x + q / 2, y + q / 2, 0, x + q / 2, y + q / 2, q * 0.72); gr.addColorStop(0, `rgba(${rgb},.95)`); gr.addColorStop(0.42, `rgba(${rgb},.95)`); gr.addColorStop(0.83, `rgba(${rgb},.38)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(x, y, q, q); };
+    for (let i = 0; i < 64; i++) {
+      const [x, y] = at(i), dark = ((i >> 3) + (i & 7)) % 2;
+      g.fillStyle = dark ? P.dark : P.light; g.fillRect(x, y, q + 0.5, q + 0.5);
+      if (f.last && (f.last.from === i || f.last.to === i)) { g.fillStyle = "rgba(245,195,68,.38)"; g.fillRect(x, y, q, q); }
+      if (f.sel === i) { g.fillStyle = "rgba(245,195,68,.6)"; g.fillRect(x, y, q, q); g.strokeStyle = ink; g.lineWidth = cq; g.strokeRect(x + cq / 2, y + cq / 2, q - cq, q - cq); }
+      if (f.hit === i) glow(i, "229,72,77"); else if (f.check === i) glow(i, "255,216,77");
+    }
+    // pieces, styled like .pc.w / .pc.b in the game
+    g.font = Math.round(10.2 * cq) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round";
+    for (let i = 0; i < 64; i++) {
+      const p = f.board[i]; if (!p) continue;
+      const [x, y] = at(i), up = f.lift === i, ch = GLYPH[p[1]];
+      g.save(); g.translate(x + q / 2, y + q / 2 + 0.06 * q - 0.2 * cq - (up ? 1.6 * cq : 0)); if (up) g.scale(1.06, 1.06);
+      if (p[0] === "w") {
+        g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 0.55 * cq;
+        g.lineWidth = 0.84 * cq; g.strokeStyle = ink; g.strokeText(ch, 0, 0);
+        g.shadowColor = "transparent"; g.fillStyle = P.white; g.fillText(ch, 0, 0);
+      } else {
+        g.shadowColor = "rgba(0,0,0,.3)"; g.shadowOffsetY = 0.55 * cq; g.fillStyle = P.black; g.fillText(ch, 0, 0);
+        g.shadowOffsetY = 0; g.shadowColor = "rgba(255,238,205,.45)"; g.shadowBlur = 0.7 * cq; g.fillText(ch, 0, 0);
+        g.shadowColor = "transparent"; g.shadowBlur = 0; g.lineWidth = 0.5 * cq; g.strokeStyle = "#111214"; g.strokeText(ch, 0, 0); g.fillText(ch, 0, 0);
+      }
+      g.restore();
+    }
+    for (const d of f.dots || []) {
+      const [x, y] = at(d.to), dark = ((d.to >> 3) + (d.to & 7)) % 2;
+      g.beginPath();
+      if (d.take) { g.strokeStyle = "rgba(210,74,64,.75)"; g.lineWidth = 0.8 * cq; g.arc(x + q / 2, y + q / 2, q * 0.44 - 0.4 * cq, 0, 7); g.stroke(); }
+      else { g.fillStyle = dark ? "rgba(251,245,230,.45)" : "rgba(47,38,32,.38)"; g.arc(x + q / 2, y + q / 2, q * 0.15, 0, 7); g.fill(); }
+    }
+    // status line under the board (the result in red at the end, with where to play)
+    g.textAlign = "center"; g.textBaseline = "middle";
+    if (f.banner) {
+      g.fillStyle = "#C0392B"; g.font = "800 38px " + disp; g.fillText(f.status, S / 2, 946, S - 60);
+      g.fillStyle = ink; g.font = "800 28px " + disp; g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, 994);
+    } else { g.fillStyle = P.soft; g.font = "800 30px " + disp; g.fillText(f.status || "", S / 2, 950, S - 60); }
+    // player cards
+    const card = (side, y) => {
+      const x = 32, w = 764, h = 190, on = !f.banner && f.turn === side;
+      if (on) { g.fillStyle = ink; g.beginPath(); g.roundRect(x + 8, y + 8, w, h, 28); g.fill(); }
+      g.fillStyle = on ? "#FFF9E8" : P.card; g.strokeStyle = ink; g.lineWidth = 5; g.beginPath(); g.roundRect(x, y, w, h, 28); g.fill(); g.stroke();
+      g.save(); g.beginPath(); g.roundRect(x + 28, y + 48, 92, 92, 20); g.clip(); g.fillStyle = P.paper2; g.fillRect(x + 28, y + 48, 92, 92); if (P.av[side]) g.drawImage(P.av[side], x + 28, y + 48, 92, 92); g.restore();
+      g.strokeStyle = ink; g.lineWidth = 4; g.beginPath(); g.roundRect(x + 28, y + 48, 92, 92, 20); g.stroke();
+      g.textAlign = "left"; g.textBaseline = "alphabetic";
+      g.fillStyle = ink; g.font = "800 36px " + disp; g.fillText(P.name[side], x + 140, y + 70, f.clk ? 400 : 580);
+      g.fillStyle = P.soft; g.font = "700 24px " + body; g.fillText(P.sub[side], x + 140, y + 104, 400);
+      const caps = (f.caps && f.caps[side]) || [];
+      if (caps.length) {
+        g.font = "36px " + P.pieceFont; let cx = x + 140;
+        for (const p of caps.slice().sort((a, b) => VAL[b[1]] - VAL[a[1]])) {
+          if (p[0] === "w") { g.lineWidth = 4; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], cx, y + 162); g.fillStyle = P.white; } else g.fillStyle = P.black;
+          g.fillText(GLYPH[p[1]], cx, y + 162); cx += g.measureText(GLYPH[p[1]]).width * 0.82;
+        }
+      } else { g.fillStyle = P.soft; g.font = "700 24px " + body; g.fillText(tr("No captures yet"), x + 140, y + 160); }
+      if (f.clk) {
+        const ms = f.clk[side], cx = x + w - 28 - 156, cy = y + 26, low = ms < 20000;
+        g.fillStyle = on ? (low ? P.flag : ink) : P.paper2; g.strokeStyle = ink; g.lineWidth = 4; g.beginPath(); g.roundRect(cx, cy, 156, 88, 16); g.fill(); g.stroke();
+        g.fillStyle = on ? (low ? P.card : P.paper) : (low ? P.flag : ink); g.font = "800 44px " + disp; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(fmt(ms), cx + 78, cy + 47);
+      }
+    };
+    card(flip ? "w" : "b", 1032); card(flip ? "b" : "w", 1250);
+  },
   // The replay as a list of [frame, ms] at the real pace of the game; shared by the GIF and the video.
   async timeline() {
     // Fonts must be in before the first frame, or the pieces change shape halfway through (3D players never loaded them).
@@ -3002,27 +3104,41 @@ const Share = {
       white: v("--white-pc") || "#FBF5E6", black: v("--black-pc") || "#2A2C31", pieceFont: v("--font-piece") || "serif",
       name: { w: tr(G.names.w), b: tr(G.names.b) },
       av: { w: await this.svgImg($("avW").innerHTML), b: await this.svgImg($("avB").innerHTML) },
+      // for the video's play screen
+      card: v("--card") || "#FBF7EE", paper2: v("--paper-2") || "#E8DFCB", leaf: v("--leaf") || "#6E8B4E", ember: v("--ember") || "#E07A3E", slate: v("--slate") || "#7D8995", flag: v("--flag") || "#D24A40",
+      view: ($("viewBtn").textContent || "3D").trim(),
+      sub: { w: ($("nameW").querySelector("small") || {}).textContent || tr("White"), b: ($("nameB").querySelector("small") || {}).textContent || tr("Black") },
+      icon: { sun: await this.svgImg(ICON.sun, v("--ink") || "#2F2620"), moon: await this.svgImg(ICON.moon, "#F4E7B8"), music: await this.svgImg($("musicBtn").innerHTML, v("--card") || "#FBF7EE"), gear: await this.svgImg($("openSettings").innerHTML, v("--card") || "#FBF7EE") },
     };
+    const nm = el => { const t = $(el) && $(el).firstChild; return t && t.nodeType === 3 && t.textContent.trim(); };
+    P.name = { w: nm("nameW") || P.name.w, b: nm("nameB") || P.name.b };
+    const capsAt = k => k < H.length ? H[k].captured : G.captured;
+    const statusOf = (st, k) => trS(inCheck(st.board, st.turn) ? "Check! " + (st.turn === "w" ? "White" : "Black") + " must answer it." : "Move " + (Math.floor(k / 2) + 1));
+    const clkAt = k => G.tc ? (k < H.length && H[k].clk ? { ...H[k].clk } : { ...G.clocks }) : null;
     const mmss = ms => { const s = Math.max(1, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
     const kingIn = st => inCheck(st.board, st.turn) ? st.board.indexOf(st.turn + "K") : -1;
     const frames = []; // [frame, delay ms]
     // time left for thinking once the fixed parts are counted (video lead-in 0.9 s, piece landings, the end card, fade-out 0.7 s)
-    const cap = Math.max(600, (this.LENGTH - 900 - 700 - this.END - n * 90 - (n - 1) * 120 - 400) / n);
+    // Every move gets the same, unhurried slot (about 2 s), so viewers can follow: quick moves are slowed down to it.
+    const cap = Math.max(1500, (this.LENGTH - 300 - 700 - this.END - n * 90 - (n - 1) * 120 - 400) / n);
     for (let k = first; k < H.length; k++) {
       const before = H[k].st, after = k + 1 < H.length ? H[k + 1].st : G.st, m = k + 1 < H.length ? H[k + 1].last : G.last;
       const last = H[k].last, side = before.turn, check = kingIn(before);
-      const real = H[k].think || 2500, show = Math.min(Math.max(real, 600), cap), scale = real / show;
+      const real = H[k].think || 2500, show = cap, scale = real / show;
       // the last part of the think is the piece sitting picked up, with its moves showing
-      const pick = Math.min(Math.max(H[k].pick || Math.min(900, show * 0.4), 350), show * 0.6, 2500), wait = show - pick;
-      const base = { board: before.board, last, check };
-      for (let t = 0; t < wait; t += 1000) frames.push([{ ...base, clock: { side, text: mmss((t + 1000) * scale) } }, Math.min(1000, wait - t)]);
+      const pick = Math.round(show * 0.45), wait = show - pick; // the picked piece and its dots stay up long enough to read
+      const atMove = clkAt(k), startClk = atMove && { ...atMove, [side]: atMove[side] + real };
+      const clkAfter = atMove && { ...atMove, [side]: atMove[side] + (G.tc.inc || 0) };
+      const base = { board: before.board, last, check, turn: side, caps: H[k].captured, status: statusOf(before, k) };
+      for (let t = 0; t < wait; t += 500) frames.push([{ ...base, clock: { side, text: mmss((t + 500) * scale) }, clk: startClk && { ...startClk, [side]: startClk[side] - t * scale } }, Math.min(500, wait - t)]);
       const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
-      frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, snd: "select" }, pick]);
-      frames.push([{ board: after.board, last: m, lift: m.to, check: kingIn(after), snd: { before, after, m } }, 90]);
-      frames.push([{ board: after.board, last: m, check: kingIn(after) }, k === H.length - 1 ? 400 : 120]);
+      frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) }, clk: atMove, snd: "select" }, pick]);
+      const land = { board: after.board, last: m, check: kingIn(after), turn: after.turn, caps: capsAt(k + 1), status: statusOf(after, k + 1), clk: clkAfter };
+      frames.push([{ ...land, lift: m.to, snd: { before, after, m } }, 90]);
+      frames.push([land, k === H.length - 1 ? 400 : 120]);
     }
     const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
-    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end" }, this.END]);
+    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner(), snd: "end", turn: G.st.turn, caps: G.captured, status: trS(o.text), clk: G.tc ? { ...G.clocks } : null }, this.END]);
     return { P, frames };
   },
   async replay() {
@@ -3141,8 +3257,8 @@ const Movie = {
     const live = () => G.over === over;
     try {
       const { P, frames } = await Share.timeline();
-      const S = cv.width, g = cv.getContext("2d"); g.setTransform(S / 1080, 0, 0, S / 1080, 0, 0);
-      Share.play(g, frames[0][0], P);
+      const g = cv.getContext("2d"); g.setTransform(cv.width / Share.W, 0, 0, cv.height / Share.H, 0, 0);
+      Share.screen(g, frames[0][0], P);
       const band = [...new Set((NEEDS.battle || []).concat(SFX_INST))];
       orchLoad(band);
       const have = n => ORCH.buf[n] && Object.keys(ORCH.buf[n]).length >= INST[n].notes.length - 2;
@@ -3165,13 +3281,13 @@ const Movie = {
       let left = frames.reduce((t, f) => t + f[1], 0) + 1600;
       const hold = async (f, ms) => { // keep repainting, so the video has steady frames during long thinks
         const end = performance.now() + ms;
-        while (live() && performance.now() < end) { Share.play(g, f, P); await new Promise(r => setTimeout(r, Math.min(100, end - performance.now()))); }
+        while (live() && performance.now() < end) { Share.screen(g, f, P); await new Promise(r => setTimeout(r, Math.min(100, end - performance.now()))); }
         left -= ms; this.left = Math.max(1, Math.ceil(left / 1000)); this.ui();
       };
-      await hold(frames[0][0], 900);
+      await hold(frames[0][0], 300);
       for (const [f, ms] of frames) {
         if (!live()) break;
-        Share.play(g, f, P); this.sound(f.snd);
+        Share.screen(g, f, P); this.sound(f.snd);
         await hold(f, ms);
       }
       bus.gain.setTargetAtTime(0, a.currentTime, 0.25); await new Promise(r => setTimeout(r, 700));
