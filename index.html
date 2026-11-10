@@ -2366,7 +2366,7 @@ function newGame() {
     w: prefs.nameW.trim() || (G.mode === "cpu" ? "You" : "Player 1"),
     b: G.mode === "cpu" ? "Computer" : prefs.nameB.trim() || "Player 2",
   };
-  G.reported = false; G.startedAt = new Date(); G.stress = { w: 0, b: 0 };
+  G.reported = false; G.startedAt = new Date(); G.stress = { w: 0, b: 0 }; G.turnAt = Date.now(); G.selAt = 0;
   $("nameW").innerHTML = esc(tr(G.names.w)) + "<small>" + tr("White") + "</small>";
   $("nameB").innerHTML = esc(tr(G.names.b)) + "<small>" + tr("Black") + " · " + tr(G.mode === "cpu" ? ["", "Easy", "Normal", "Hard"][G.level] : "Friend") + "</small>";
   $("avW").innerHTML = AVATAR.p1;
@@ -2387,6 +2387,7 @@ function onSquare(i) {
     }
   }
   G.selected = p && p[0] === G.st.turn && G.selected !== i ? i : null;
+  G.selAt = G.selected === null ? 0 : Date.now();
   G.stuck = null;
   if (G.selected !== null && !G.moves.some(m => m.from === G.selected)) {
     // This piece has no legal move: say why and point at the pieces that can move.
@@ -2408,7 +2409,11 @@ function onSquare(i) {
 
 function doMove(m) {
   const mover = G.st.turn;
-  G.history.push({ st: G.st, captured: { w: G.captured.w.slice(), b: G.captured.b.slice() }, last: G.last, started: G.started, keysLen: G.keys.length });
+  // think/pick: how long this move took and how long the piece sat picked up, for the replay GIF
+  const now = Date.now();
+  G.history.push({ st: G.st, captured: { w: G.captured.w.slice(), b: G.captured.b.slice() }, last: G.last, started: G.started, keysLen: G.keys.length,
+    think: now - (G.turnAt || now), pick: G.selAt && G.selected === m.from ? now - G.selAt : 0 });
+  G.turnAt = now; G.selAt = 0;
   const prevSt = G.st;
   const next = applyMove(G.st, m);
   if (G.mode === "train" && Train.passTurn()) { next.turn = mover; next.ep = -1; }
@@ -2839,73 +2844,46 @@ const Share = {
     if (me) return T("แพ้" + foe + " ใน " + moves + " ตา ใครเก่งมาช่วยแก้แค้นที! หมากรุก 3 มิติ เล่นฟรี", "Lost to " + foe + " in " + moves + " moves! Who can avenge me? Free 3D chess");
     return T((o.winner === "w" ? G.names.w : G.names.b) + " ชนะใน " + moves + " ตา มาเล่นหมากรุก 3 มิติด้วยกัน", (o.winner === "w" ? G.names.w : G.names.b) + " won in " + moves + " moves! Come play 3D chess together");
   },
-  // Shared drawing for the share picture and the replay GIF, in a 1080x1080 frame (scaled down for the GIF).
+  // A 1080x1080 picture of the final position, for the phone share sheet.
   logo: null,
   async art() {
     if (!this.logo) { try { const img = new Image(); img.src = "img/logo.svg"; await img.decode(); this.logo = img; } catch (e) { this.logo = false; } }
   },
-  ink: "#2F2620", font: "'Baloo 2', 'Nunito', system-ui, sans-serif",
-  PIC: { B: 760, X0: 160, Y0: 236 }, // the still picture: big board
-  GIF: { B: 656, X0: 212, Y0: 324 }, // the replay: a strip above the board for the move being played
-  cell(i, flip, L) { const r = i >> 3, f = i & 7, q = L.B / 8; return [L.X0 + (flip ? 7 - f : f) * q, L.Y0 + (flip ? 7 - r : r) * q]; },
-  glyph(g, p, cx, cy, q) {
-    g.font = Math.round(q * 0.82) + "px 'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? this.ink : "#F3EDE0"; g.strokeText(GLYPH[p[1]], cx, cy);
-    g.fillStyle = p[0] === "w" ? "#FBF7EE" : this.ink; g.fillText(GLYPH[p[1]], cx, cy);
-  },
-  // f: { L (layout), board, last, flip, hit (red square), pill, slide: {p, from, to, t}, arrow: {from, to}, banner: [title, sub] }
-  frame(g, f) {
-    const S = 1080, ink = this.ink, font = this.font, L = f.L || this.PIC, B = L.B, q = B / 8, dark = ["#F1E4C3", "#B58863"]; // lighter than the in-game wood so both colours of pieces stand out
+  font: "'Baloo 2', 'Nunito', system-ui, sans-serif",
+  async picture() {
+    await this.art();
+    const S = 1080, c = document.createElement("canvas"); c.width = c.height = S;
+    const g = c.getContext("2d"), dark = ["#F1E4C3", "#B58863"]; // lighter than the in-game wood so both colours of pieces stand out
     g.fillStyle = "#F3EDE0"; g.fillRect(0, 0, S, S);
+    const ink = "#2F2620", font = this.font;
     if (this.logo) g.drawImage(this.logo, 60, 48, 96, 96);
-    g.textAlign = "left"; g.textBaseline = "alphabetic";
     g.fillStyle = ink; g.font = "800 56px " + font; g.fillText("Chess Game", 176, 116);
     g.font = "700 34px system-ui, sans-serif"; g.fillStyle = "#6E5E50";
-    g.fillText(this.text().split(/!| มา| ใคร/)[0], 60, 196);
-    if (f.pill || f.banner) { // centred in the strip between the header and the board
-      const t = f.banner ? f.banner.join(" · ") : f.pill, red = !!f.banner;
-      g.font = "800 " + (red ? 40 : 32) + "px " + font; const w = Math.min(S - 80, g.measureText(t).width + 56), h = red ? 70 : 58, y = L.Y0 - 26 - h;
-      g.fillStyle = red ? "#C0392B" : ink; g.beginPath(); g.roundRect((S - w) / 2, y, w, h, h / 2); g.fill();
-      g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = red ? "#FFF7EC" : "#F3EDE0"; g.fillText(t, S / 2, y + h / 2 + 2, S - 120);
-      g.textAlign = "left"; g.textBaseline = "alphabetic";
-    }
-    g.fillStyle = ink; g.fillRect(L.X0 - 14, L.Y0 - 14, B + 28, B + 28);
-    const hide = f.slide ? [f.slide.from, f.slide.to] : [];
+    const line = this.text().split(/!| มา| ใคร/)[0]; g.fillText(line, 60, 196);
+    const B = 760, x0 = (S - B) / 2, y0 = 236, q = B / 8, flip = myColor() === "b";
+    g.fillStyle = ink; g.fillRect(x0 - 14, y0 - 14, B + 28, B + 28);
     for (let i = 0; i < 64; i++) {
-      const [x, y] = this.cell(i, f.flip, L), odd = ((i >> 3) + (i & 7)) % 2;
-      g.fillStyle = odd ? dark[1] : dark[0];
-      if (f.last && (f.last.from === i || f.last.to === i)) g.fillStyle = odd ? "#B8963A" : "#F2D77A";
-      if (f.hit === i) g.fillStyle = "#E0644F";
-      g.fillRect(x, y, q, q);
-      const p = f.board[i]; if (!p || hide.includes(i)) continue;
-      this.glyph(g, p, x + q / 2, y + q / 2 + q * 0.04, q);
-    }
-    if (f.slide) { // the moving piece glides from square to square; whatever it takes stays put until it lands
-      const s = f.slide, [ax, ay] = this.cell(s.from, f.flip, L), [bx, by] = this.cell(s.to, f.flip, L), t = s.t, e = t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
-      if (s.victim) this.glyph(g, s.victim, bx + q / 2, by + q / 2 + q * 0.04, q);
-      this.glyph(g, s.p, ax + (bx - ax) * e + q / 2, ay + (by - ay) * e + q / 2 + q * 0.04, q);
-    }
-    if (f.arrow) {
-      const [ax, ay] = this.cell(f.arrow.from, f.flip, L), [bx, by] = this.cell(f.arrow.to, f.flip, L);
-      const x1 = ax + q / 2, y1 = ay + q / 2, x2 = bx + q / 2, y2 = by + q / 2, an = Math.atan2(y2 - y1, x2 - x1), len = Math.hypot(x2 - x1, y2 - y1) - q * 0.28, h = q * 0.34;
-      g.save(); g.translate(x1, y1); g.rotate(an); g.globalAlpha = 0.72; g.fillStyle = "#D2582A";
-      g.fillRect(q * 0.18, -q * 0.07, len - h - q * 0.18, q * 0.14);
-      g.beginPath(); g.moveTo(len, 0); g.lineTo(len - h, -h * 0.62); g.lineTo(len - h, h * 0.62); g.closePath(); g.fill(); g.restore();
+      const r = i >> 3, f = i & 7, vr = flip ? 7 - r : r, vf = flip ? 7 - f : f;
+      g.fillStyle = (r + f) % 2 ? dark[1] : dark[0];
+      if (G.last && (G.last.from === i || G.last.to === i)) g.fillStyle = (r + f) % 2 ? "#B8963A" : "#F2D77A";
+      g.fillRect(x0 + vf * q, y0 + vr * q, q, q);
+      const p = G.st.board[i]; if (!p) continue;
+      g.font = Math.round(q * 0.82) + "px 'Noto Sans Symbols 2', 'Segoe UI Symbol', serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      const cx = x0 + vf * q + q / 2, cy = y0 + vr * q + q / 2 + q * 0.04;
+      g.lineWidth = 5; g.strokeStyle = p[0] === "w" ? ink : "#F3EDE0"; g.strokeText(GLYPH[p[1]], cx, cy);
+      g.fillStyle = p[0] === "w" ? "#FBF7EE" : ink; g.fillText(GLYPH[p[1]], cx, cy);
     }
     g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 34px " + font;
     g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, S - 36);
-  },
-  // A 1080x1080 picture of the final position, for the phone share sheet.
-  async picture() {
-    await this.art();
-    const c = document.createElement("canvas"); c.width = c.height = 1080;
-    this.frame(c.getContext("2d"), { board: G.st.board, last: G.last, flip: myColor() === "b" });
     return new Promise(res => c.toBlob(b => res(b), "image/png"));
   },
-  /* An animated GIF that replays the last few moves, so friends see how the game was won or lost.
+  /* An animated GIF that replays the last few moves the way they looked on screen: the player picks a piece
+     (the square lights up and the dots show where it can go), then the square it goes to, at the real pace of the game.
+     Long thinks are shortened to a few seconds, but the clock shows the real time taken.
      Built when the result appears (iOS only opens the share sheet straight after a tap, so it must be ready by then).
      The encoder (gifenc, 9 KB) is fetched only when needed. */
   PLIES: 7,
+  MAX_THINK: 4500, // ms of GIF time for one think, however long it really was
   gifJob: null,
   loadGif() {
     if (!this._gifenc) this._gifenc = import("https://unpkg.com/gifenc@1.0.3/dist/gifenc.esm.js").catch(() => import("https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"));
@@ -2917,46 +2895,139 @@ const Share = {
     const side = c => tr(c === "w" ? "ขาว" : "ดำ");
     const title = o.type === "mate" ? T("รุกฆาต!", "Checkmate!") : o.type === "resign" ? T(side(opp(o.winner)) + "ยอมแพ้", side(opp(o.winner)) + " resigns") : o.type === "flag" ? T("หมดเวลา!", "Time's up!") : o.type === "abandon" ? T("ออกจากเกม", "Left the game") : o.stalemate ? T("อับ! เสมอ", "Stalemate!") : T("เสมอ", "Draw");
     const sub = o.type === "draw" ? (o.stalemate ? T(side(opp(o.stalemate)) + "ไม่มีตาเดิน แต่ไม่โดนรุก", side(opp(o.stalemate)) + " can't move but isn't in check") : T("ไม่มีใครแพ้", "Nobody loses")) : T(side(o.winner) + "ชนะ", side(o.winner) + " wins");
-    return [title, sub];
+    return title + " · " + sub;
   },
-  caption(before, after, m, n, total) {
-    const mate = n === total && G.over && G.over.type === "mate";
-    const p = before.board[m.from], c = after.captured, side = tr(p[0] === "w" ? "ขาว" : "ดำ");
-    let s = n + "/" + total + " · " + side + " " + THAI_PIECE[p[1]] + " " + sqName(m.from) + "→" + sqName(m.to);
-    if (c) s += T(" กิน" + THAI_PIECE[c[1]], " takes " + THAI_PIECE[c[1]].toLowerCase());
-    if (m.promo || after.board[m.to][1] !== p[1]) s += T(" เป็น" + THAI_PIECE[after.board[m.to][1]], " =" + THAI_PIECE[after.board[m.to][1]]);
-    if (mate) s += T(" รุกฆาต!", "#");
-    else if (inCheck(after.board, after.turn)) s += T(" รุก!", "+");
-    return s;
+  svgImg(svg) {
+    return new Promise(res => { const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ')); });
+  },
+  // One frame of the play screen, in 1080x1080 units. f: { board, last, sel, dots, lift, check, hit, clock: {side, text}, banner }
+  play(g, f, P) {
+    const S = 1080, ink = P.ink, q = 80, X = 220, Y = 236, font = this.font, flip = P.flip;
+    const at = i => { const r = i >> 3, c = i & 7; return [X + (flip ? 7 - c : c) * q, Y + (flip ? 7 - r : r) * q]; };
+    g.fillStyle = P.paper; g.fillRect(0, 0, S, S);
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+    if (this.logo) g.drawImage(this.logo, 40, 34, 76, 76);
+    g.fillStyle = ink; g.font = "800 48px " + font; g.fillText("Chess Game", 132, 90);
+    if (f.banner) {
+      g.font = "800 34px " + font; const w = Math.min(560, g.measureText(f.banner).width + 48), x = S - 40 - w;
+      g.fillStyle = "#C0392B"; g.beginPath(); g.roundRect(x, 42, w, 62, 31); g.fill();
+      g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#FFF7EC"; g.fillText(f.banner, x + w / 2, 75, w - 30);
+      g.textAlign = "left"; g.textBaseline = "alphabetic";
+    }
+    // Player cards above and below the board, like the side panel in the game.
+    const card = (side, y) => {
+      const x = X - 34, w = 8 * q + 68, h = 62, mine = f.clock && f.clock.side === side;
+      g.fillStyle = mine ? "#FFF6D8" : "#FBF7EE"; g.strokeStyle = ink; g.lineWidth = 3;
+      g.beginPath(); g.roundRect(x, y, w, h, 16); g.fill(); g.stroke();
+      const av = P.av[side]; if (av) { g.save(); g.beginPath(); g.roundRect(x + 10, y + 9, 44, 44, 10); g.clip(); g.drawImage(av, x + 10, y + 9, 44, 44); g.restore(); g.strokeRect(x + 10, y + 9, 44, 44); }
+      g.fillStyle = ink; g.font = "800 28px " + font; g.fillText(P.name[side], x + 68, y + 33, w - 260);
+      g.fillStyle = P.soft; g.font = "700 18px " + font; g.fillText(tr(side === "w" ? "ขาว" : "ดำ"), x + 68, y + 53);
+      if (mine) {
+        g.font = "800 28px " + font; const t = f.clock.text, tw = g.measureText(t).width + 56, cx = x + w - 14 - tw;
+        g.fillStyle = ink; g.beginPath(); g.roundRect(cx, y + 12, tw, 38, 19); g.fill();
+        g.strokeStyle = "#F5C344"; g.lineWidth = 3; g.beginPath(); g.arc(cx + 22, y + 31, 9, 0, 7); g.moveTo(cx + 22, y + 31); g.lineTo(cx + 22, y + 25); g.moveTo(cx + 22, y + 31); g.lineTo(cx + 26, y + 33); g.stroke();
+        g.fillStyle = "#FBF7EE"; g.fillText(t, cx + 40, y + 41);
+      }
+    };
+    card(flip ? "w" : "b", 128); card(flip ? "b" : "w", 932);
+    // Wooden frame with coordinates
+    g.fillStyle = P.wood; g.beginPath(); g.roundRect(X - 34, Y - 34, 8 * q + 68, 8 * q + 68, 14); g.fill();
+    g.strokeStyle = P.woodDark; g.lineWidth = 4; g.stroke();
+    g.fillStyle = "#F6EBD3"; g.font = "700 18px " + font; g.textAlign = "center"; g.textBaseline = "middle";
+    for (let k = 0; k < 8; k++) {
+      const file = "abcdefgh"[flip ? 7 - k : k], rank = String(flip ? k + 1 : 8 - k);
+      g.fillText(file, X + k * q + q / 2, Y - 17); g.fillText(file, X + k * q + q / 2, Y + 8 * q + 17);
+      g.fillText(rank, X - 17, Y + k * q + q / 2); g.fillText(rank, X + 8 * q + 17, Y + k * q + q / 2);
+    }
+    g.fillStyle = ink; g.fillRect(X - 2, Y - 2, 8 * q + 4, 8 * q + 4);
+    const glow = (i, rgb) => { const [x, y] = at(i), gr = g.createRadialGradient(x + q / 2, y + q / 2, 0, x + q / 2, y + q / 2, q * 0.72); gr.addColorStop(0, `rgba(${rgb},.95)`); gr.addColorStop(0.42, `rgba(${rgb},.95)`); gr.addColorStop(0.83, `rgba(${rgb},.38)`); gr.addColorStop(1, `rgba(${rgb},0)`); g.fillStyle = gr; g.fillRect(x, y, q, q); };
+    for (let i = 0; i < 64; i++) {
+      const [x, y] = at(i), dark = ((i >> 3) + (i & 7)) % 2;
+      g.fillStyle = dark ? P.dark : P.light; g.fillRect(x, y, q, q);
+      if (f.last && (f.last.from === i || f.last.to === i)) { g.fillStyle = "rgba(245,195,68,.38)"; g.fillRect(x, y, q, q); }
+      if (f.sel === i) { g.fillStyle = "rgba(245,195,68,.6)"; g.fillRect(x, y, q, q); g.strokeStyle = ink; g.lineWidth = 3.2; g.strokeRect(x + 1.6, y + 1.6, q - 3.2, q - 3.2); }
+      if (f.hit === i) glow(i, "229,72,77"); else if (f.check === i) glow(i, "255,216,77");
+    }
+    for (let i = 0; i < 64; i++) {
+      const p = f.board[i]; if (!p) continue;
+      const [x, y] = at(i), up = f.lift === i ? 1 : 0, s = up ? 1.06 : 1;
+      g.save(); g.translate(x + q / 2, y + q / 2 - 1.6 - up * 13); g.scale(s, s);
+      g.font = Math.round(q * 0.816) + "px " + P.pieceFont; g.textAlign = "center"; g.textBaseline = "middle";
+      if (p[0] === "w") {
+        g.shadowColor = "rgba(47,38,32,.35)"; g.shadowOffsetY = 4.4; g.lineJoin = "round";
+        g.lineWidth = 6.7; g.strokeStyle = ink; g.strokeText(GLYPH[p[1]], 0, 3); g.shadowColor = "transparent";
+        g.fillStyle = P.white; g.fillText(GLYPH[p[1]], 0, 3);
+      } else {
+        g.shadowColor = "rgba(255,238,205,.45)"; g.shadowBlur = 6; g.fillStyle = P.black; g.fillText(GLYPH[p[1]], 0, 3);
+        g.shadowColor = "rgba(0,0,0,.3)"; g.shadowBlur = 0; g.shadowOffsetY = 4.4; g.lineWidth = 4; g.strokeStyle = "#111214"; g.strokeText(GLYPH[p[1]], 0, 3);
+        g.shadowColor = "transparent"; g.fillText(GLYPH[p[1]], 0, 3);
+      }
+      g.restore();
+    }
+    for (const d of f.dots || []) { // where the picked piece can go
+      const [x, y] = at(d.to), dark = ((d.to >> 3) + (d.to & 7)) % 2;
+      g.beginPath();
+      if (d.take) { g.strokeStyle = "rgba(210,74,64,.75)"; g.lineWidth = 6.4; g.arc(x + q / 2, y + q / 2, q * 0.44 - 3.2, 0, 7); g.stroke(); }
+      else { g.fillStyle = dark ? "rgba(251,245,230,.45)" : "rgba(47,38,32,.38)"; g.arc(x + q / 2, y + q / 2, q * 0.15, 0, 7); g.fill(); }
+    }
+    g.textAlign = "center"; g.textBaseline = "alphabetic"; g.fillStyle = ink; g.font = "800 30px " + font;
+    g.fillText(tr("เล่นฟรีที่ rochano.github.io/chess"), S / 2, 1050);
   },
   async replay() {
-    const [lib] = await Promise.all([this.loadGif(), this.art()]);
-    const { GIFEncoder, quantize, applyPalette } = lib;
-    const n = Math.min(this.PLIES, G.history.length), H = G.history, first = H.length - n, flip = myColor() === "b";
-    const steps = [];
-    for (let k = first; k < H.length; k++) steps.push({ before: H[k].st, after: k + 1 < H.length ? H[k + 1].st : G.st, m: k + 1 < H.length ? H[k + 1].last : G.last });
+    // Fonts must be in before the first frame, or the pieces change shape halfway through (3D players never loaded them).
+    const fonts = document.fonts ? Promise.all(["40px 'Noto Sans Symbols 2'", "800 40px 'Baloo 2'", "700 20px 'Baloo 2'"].map(f => document.fonts.load(f, "♚♛♜♝♞♟Chess Game"))).catch(() => {}) : null;
+    const [lib] = await Promise.all([this.loadGif(), this.art(), fonts]);
+    const { GIFEncoder, quantize } = lib;
+    // Exact colour lookup (gifenc's own applyPalette shares one answer per colour bucket, so the same pixel could change between frames and flicker).
+    const near = new Map(), applyPalette = (d, pal) => {
+      const out = new Uint8Array(d.length / 4);
+      for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+        const key = d[i] << 16 | d[i + 1] << 8 | d[i + 2]; let k = near.get(key);
+        if (k === undefined) { let best = 1e9; for (let c = 0; c < pal.length; c++) { const p = pal[c], e = (p[0] - d[i]) ** 2 + (p[1] - d[i + 1]) ** 2 + (p[2] - d[i + 2]) ** 2; if (e < best) { best = e; k = c; } } near.set(key, k); }
+        out[j] = k;
+      }
+      return out;
+    };
+    const n = Math.min(this.PLIES, G.history.length), H = G.history, first = H.length - n;
+    const css = getComputedStyle($("app")), v = k => css.getPropertyValue(k).trim();
+    const P = {
+      flip: myColor() === "b", ink: v("--ink") || "#2F2620", soft: v("--ink-soft") || "#6E5E50", paper: v("--paper") || "#F3EDE0",
+      light: v("--sq-light") || "#F1E4C3", dark: v("--sq-dark") || "#4B3528", wood: v("--wood") || "#8F6A47", woodDark: v("--wood-dark") || "#5B3F28",
+      white: v("--white-pc") || "#FBF5E6", black: v("--black-pc") || "#2A2C31", pieceFont: v("--font-piece") || "serif",
+      name: { w: tr(G.names.w), b: tr(G.names.b) },
+      av: { w: await this.svgImg($("avW").innerHTML), b: await this.svgImg($("avB").innerHTML) },
+    };
+    const mmss = ms => { const s = Math.max(1, Math.round(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    const kingIn = st => inCheck(st.board, st.turn) ? st.board.indexOf(st.turn + "K") : -1;
+    const frames = []; // [frame, delay ms]
+    for (let k = first; k < H.length; k++) {
+      const before = H[k].st, after = k + 1 < H.length ? H[k + 1].st : G.st, m = k + 1 < H.length ? H[k + 1].last : G.last;
+      const last = H[k].last, side = before.turn, check = kingIn(before);
+      const real = H[k].think || 2500, show = Math.min(Math.max(real, 700), this.MAX_THINK), scale = real / show;
+      // the last part of the think is the piece sitting picked up, with its moves showing
+      const pick = Math.min(Math.max(H[k].pick || Math.min(900, show * 0.4), 350), show * 0.6, 2500), wait = show - pick;
+      const base = { board: before.board, last, check };
+      for (let t = 0; t < wait; t += 1000) frames.push([{ ...base, clock: { side, text: mmss((t + 1000) * scale) } }, Math.min(1000, wait - t)]);
+      const dots = legalMoves(before).filter(x => x.from === m.from).filter((x, i, a) => a.findIndex(y => y.to === x.to) === i).map(x => ({ to: x.to, take: !!(before.board[x.to] || x.ep) }));
+      frames.push([{ ...base, sel: m.from, dots, clock: { side, text: mmss(real) } }, pick]);
+      frames.push([{ board: after.board, last: m, lift: m.to, check: kingIn(after) }, 90]);
+      frames.push([{ board: after.board, last: m, check: kingIn(after) }, k === H.length - 1 ? 700 : 120]);
+    }
+    const o = G.over, hit = o.type === "mate" || o.type === "resign" || o.type === "flag" ? G.st.board.indexOf(opp(o.winner) + "K") : -1;
+    frames.push([{ board: G.st.board, last: G.last, hit, banner: this.banner() }, 3500]);
     const S = 540, c = document.createElement("canvas"); c.width = c.height = S;
     const g = c.getContext("2d", { willReadFrequently: true }); g.scale(S / 1080, S / 1080);
-    const frames = []; // [frame description, delay ms]
-    frames.push([{ L: this.GIF, board: steps[0].before.board, last: H[first].last, flip, pill: T("ย้อนดู " + n + " ตาสุดท้าย", "Last " + n + " moves") }, 1200]);
-    steps.forEach((s, i) => {
-      const pill = this.caption(s.before, s.after, s.m, i + 1, n), p = s.before.board[s.m.from], victim = s.before.board[s.m.to];
-      for (const t of [0.25, 0.5, 0.75]) frames.push([{ L: this.GIF, board: s.before.board, flip, pill, slide: { p, victim, from: s.m.from, to: s.m.to, t } }, 60]);
-      frames.push([{ L: this.GIF, board: s.after.board, last: s.m, flip, pill, arrow: s.m }, i === steps.length - 1 ? 900 : 1000]);
-    });
-    const hit = G.over.type === "mate" || G.over.type === "resign" || G.over.type === "flag" ? G.st.board.indexOf(opp(G.over.winner) + "K") : -1;
-    frames.push([{ L: this.GIF, board: G.st.board, last: G.last, flip, arrow: G.last, hit, banner: this.banner() }, 3500]);
-    // One palette for every frame: taken from the start and the end, which hold all the colours in use.
-    const grab = f => { this.frame(g, f); return g.getImageData(0, 0, S, S).data; };
-    const a = grab(frames[0][0]), b = grab(frames[frames.length - 1][0]), both = new Uint8ClampedArray(a.length * 2); both.set(a); both.set(b, a.length);
-    const palette = quantize(both, 255); while (palette.length < 256) palette.push([255, 0, 255]);
-    const CLEAR = 255, gif = GIFEncoder();
+    const grab = f => { this.play(g, f, P); return g.getImageData(0, 0, S, S).data; };
+    // One palette for every frame, taken from a picked-piece frame and the end, which hold all the colours in use.
+    const picks = frames.filter(x => x[0].sel != null).map(x => x[0]), samples = [picks[0], picks[picks.length - 1], frames[0][0], frames[frames.length - 1][0]].map(grab);
+    const all = new Uint8ClampedArray(samples[0].length * samples.length); samples.forEach((d, i) => all.set(d, i * d.length));
+    const palette = quantize(all, 255), CLEAR = palette.length, gif = GIFEncoder();
     let prev = null;
     for (const [f, delay] of frames) {
       const idx = applyPalette(grab(f), palette);
       // After the first frame only changed pixels are stored; the rest are see-through, which keeps the file small.
-      if (prev) { const out = idx.slice(); for (let i = 0; i < out.length; i++) if (out[i] === prev[i]) out[i] = CLEAR; gif.writeFrame(out, S, S, { delay, transparent: true, transparentIndex: CLEAR, dispose: 1 }); }
-      else gif.writeFrame(idx, S, S, { palette, delay, repeat: 0 });
+      if (prev) { const out = idx.slice(); for (let i = 0; i < out.length; i++) if (out[i] === prev[i]) out[i] = CLEAR; gif.writeFrame(out, S, S, { delay: Math.round(delay), transparent: true, transparentIndex: CLEAR, dispose: 1 }); }
+      else gif.writeFrame(idx, S, S, { palette: palette.concat([[255, 0, 255]]), delay: Math.round(delay), repeat: 0 }); // the extra colour is the see-through one
       prev = idx;
       await new Promise(r => setTimeout(r)); // let the result animation breathe between frames
     }
