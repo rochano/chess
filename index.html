@@ -1217,7 +1217,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-j</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-k</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3254,7 +3254,9 @@ const Share = {
     const sound = await this.soundtrack(frames, total); if (!sound) return null;
     const SR = ac.sampleRate, chunks = []; let desc = null, err = null;
     const aenc = new AudioEncoder({ output: (chunk, meta) => { const d = new Uint8Array(chunk.byteLength); chunk.copyTo(d); chunks.push([d, chunk.type, chunk.timestamp, chunk.duration || 0]); if (meta && meta.decoderConfig && meta.decoderConfig.description) desc = new Uint8Array(meta.decoderConfig.description.buffer || meta.decoderConfig.description); }, error: e => { err = e; } });
-    aenc.configure(ac);
+    let cfg = Object.assign({}, ac, { aac: { format: "aac" } }); // raw frames, not ADTS
+    try { if (!(await AudioEncoder.isConfigSupported(cfg)).supported) cfg = ac; } catch (e) { cfg = ac; }
+    aenc.configure(cfg);
     const L = sound.getChannelData(0), R = sound.getChannelData(1), len = Math.min(L.length, Math.round(SR * total / 1000)), step = SR / 2;
     for (let i = 0; i < len; i += step) {
       const n = Math.min(step, len - i), data = new Float32Array(n * 2); data.set(L.subarray(i, i + n), 0); data.set(R.subarray(i, i + n), n);
@@ -3263,7 +3265,17 @@ const Share = {
     }
     await aenc.flush(); aenc.close();
     if (err) throw err;
-    return { codec: "aac", decoderCodec: ac.codec, sampleRate: SR, numberOfChannels: 2, description: desc || undefined, chunks };
+    const hex = a => a ? Array.from(a.slice(0, 24), b => b.toString(16).padStart(2, "0")).join(" ") : "-";
+    this.log("desc " + hex(desc)); if (chunks[0]) this.log("frame0 " + chunks[0][0].length + "B " + hex(chunks[0][0]));
+    // Safari (iOS 18) hands back a 39-byte description (a whole esds box, not the 2-byte AudioSpecificConfig the MP4 needs),
+    // and may send ADTS frames: players then cannot decode the track and the video plays silent. So the MP4 always gets a
+    // plain AAC-LC config made here, and any ADTS header is cut off each frame.
+    const fi = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000].indexOf(SR);
+    const asc = new Uint8Array([(2 << 3) | (fi >> 1), ((fi & 1) << 7) | (2 << 3)]);
+    let adts = 0;
+    for (const c of chunks) { const d = c[0]; if (d.length > 7 && d[0] === 0xFF && (d[1] & 0xF6) === 0xF0) { c[0] = d.subarray(d[1] & 1 ? 7 : 9); adts++; } }
+    if (adts) this.log("adts stripped " + adts);
+    return { codec: "aac", decoderCodec: ac.codec, sampleRate: SR, numberOfChannels: 2, description: /^mp4a/.test(ac.codec) ? asc : desc || undefined, chunks };
   },
   loadMp4box() {
     if (!this._m4b) this._m4b = new Promise((res, rej) => {
@@ -3343,6 +3355,7 @@ const Share = {
     const buf = await off.startRendering();
     let peak = 0; for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
     const gain = peak > 0 ? Math.min(3, 0.9 / peak) : 1; // as loud as it can be without clipping
+    this.log("soundtrack peak " + peak.toFixed(3) + ", " + buf.length + " samples");
     if (gain !== 1) for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= gain; }
     return buf;
   },
