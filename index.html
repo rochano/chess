@@ -1217,7 +1217,7 @@ select {
     <p>Built from the Chess Game design sheet: walnut board, sticker icons and the sun and moon turn indicator.</p>
     <p>Full rules are in: castling, en passant, promotion, check, checkmate, stalemate, threefold repetition, the fifty-move rule and insufficient material. The computer player searches a few moves ahead with alpha-beta pruning.</p>
     <p class="fine">Music uses orchestral samples from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via midi-js-soundfonts by Benjamin Gleitzman.</p>
-    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-i</span></p>
+    <p class="fine">Pieces use the Noto Sans Symbols 2 typeface. <span>Version 2026.11.11-j</span></p>
     <p class="fine">© 2026 Rochanapan. All rights reserved. Play only at rochano.github.io/chess</p>
     <p class="fine">This site uses Google Analytics to count visits and see roughly which country and city players come from. Names you enter and game results are saved to the score sheet.</p>
     <div class="btns"><button class="btn" id="closeCredits">Close</button></div>
@@ -3213,8 +3213,9 @@ const Share = {
     // Sound: encoded on the phone where it can encode AAC (iOS 26+, Chrome); otherwise recorded in real time with
     // MediaRecorder (iOS 18 and the like) while the picture is encoded, then unpacked and put into the video.
     const total = v.frames.reduce((a, f) => a + f[1], 0), SR = 48000, ac = { codec: "mp4a.40.2", sampleRate: SR, numberOfChannels: 2, bitrate: 160000 };
-    let aac = false; try { aac = !!(window.AudioEncoder && window.AudioData && (await AudioEncoder.isConfigSupported(ac)).supported); } catch (e) {}
-    const audioJob = (aac ? this.encodeSound(v.frames, total, ac) : this.recordSound(v.frames, total)).catch(e => { console.warn("replay sound", e); return null; });
+    let aac = false; try { aac = !!(window.AudioEncoder && window.AudioData && (await AudioEncoder.isConfigSupported(ac)).supported); } catch (e) { this.log("aac check " + e); }
+    this.dbg = []; this.log("AudioEncoder " + !!window.AudioEncoder + ", aac " + aac + ", MediaRecorder " + !!window.MediaRecorder);
+    const audioJob = (aac ? this.encodeSound(v.frames, total, ac) : this.recordSound(v.frames, total)).catch(e => { console.warn("replay sound", e); this.log("sound error " + (e && e.message || e)); return null; });
     let err = null; const vchunks = [];
     const enc = new VideoEncoder({ output: (chunk, meta) => vchunks.push([chunk, meta]), error: e => { err = e; } });
     enc.configure({ codec, width: W, height: H, bitrate: rate, bitrateMode: "variable", latencyMode: "quality", framerate: FPS, avc: { format: "avc" } });
@@ -3239,7 +3240,7 @@ const Share = {
     }
     await enc.flush(); enc.close();
     if (err) throw err;
-    const snd = await audioJob; // { codec, sampleRate, numberOfChannels, description, chunks: [[data, type, us, durUs]] }
+    const snd = await audioJob; this.log(snd ? "sound " + snd.codec + " " + snd.sampleRate + "Hz x" + snd.numberOfChannels + ", " + snd.chunks.length + " frames, desc " + (snd.description ? snd.description.length : 0) : "no sound"); // { codec, sampleRate, numberOfChannels, description, chunks: [[data, type, us, durUs]] }
     const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: "avc", width: W, height: H, frameRate: FPS }, audio: snd ? { codec: snd.codec, sampleRate: snd.sampleRate, numberOfChannels: snd.numberOfChannels } : undefined, fastStart: "in-memory", firstTimestampBehavior: "offset" });
     for (const [chunk, meta] of vchunks) muxer.addVideoChunk(chunk, meta);
     if (snd) {
@@ -3274,10 +3275,13 @@ const Share = {
     return this._m4b;
   },
   // Plays the soundtrack into a MediaRecorder (not out loud) and unpacks the recorded MP4 into audio frames.
+  dbg: [],
+  log(m) { this.dbg.push(m); if (/debug/.test(location.search)) console.log("[replay]", m); },
   async recordSound(frames, total) {
+    this.log("rec types mp4 " + (window.MediaRecorder && MediaRecorder.isTypeSupported("audio/mp4")) + ", aac " + (window.MediaRecorder && MediaRecorder.isTypeSupported("audio/mp4;codecs=mp4a.40.2")));
     if (!window.MediaRecorder || !MediaRecorder.isTypeSupported("audio/mp4")) return null;
-    const [buf, M] = await Promise.all([this.soundtrack(frames, total), this.loadMp4box()]); if (!buf) return null;
-    const a = ctx(); if (a.state !== "running") { try { await a.resume(); } catch (e) {} } if (a.state !== "running") return null;
+    const [buf, M] = await Promise.all([this.soundtrack(frames, total), this.loadMp4box()]); this.log("soundtrack " + (buf ? buf.duration.toFixed(1) + "s" : "none") + ", mp4box " + !!M); if (!buf) return null;
+    const a = ctx(); this.log("ctx " + a.state); if (a.state !== "running") { try { await a.resume(); } catch (e) {} } this.log("ctx after resume " + a.state); if (a.state !== "running") return null;
     const dest = a.createMediaStreamDestination(), src = a.createBufferSource(); src.buffer = buf; src.connect(dest);
     const type = MediaRecorder.isTypeSupported("audio/mp4;codecs=mp4a.40.2") ? "audio/mp4;codecs=mp4a.40.2" : "audio/mp4";
     const rec = new MediaRecorder(dest.stream, { mimeType: type, audioBitsPerSecond: 160000 }), parts = [];
@@ -3286,7 +3290,7 @@ const Share = {
     rec.start(); src.start();
     await new Promise(r => setTimeout(r, Math.ceil(buf.duration * 1000) + 150));
     rec.stop(); await stopped; try { src.disconnect(); } catch (e) {}
-    const ab = await new Blob(parts).arrayBuffer(); ab.fileStart = 0;
+    const ab = await new Blob(parts).arrayBuffer(); ab.fileStart = 0; this.log("recorded " + rec.mimeType + " " + parts.length + " parts " + ab.byteLength + " bytes");
     return await new Promise((res, rej) => {
       const f = M.createFile(), samples = []; let info = null;
       f.onError = e => rej(new Error(String(e)));
@@ -3294,7 +3298,7 @@ const Share = {
       f.onSamples = (id, u, list) => { for (const x of list) samples.push(x); };
       f.appendBuffer(ab); f.flush();
       setTimeout(() => {
-        const t = info && info.audioTracks && info.audioTracks[0]; if (!t || !samples.length) return res(null);
+        const t = info && info.audioTracks && info.audioTracks[0]; this.log("parsed " + (t ? t.codec + " " + samples.length + " samples" : "no audio track") + (info ? " frag " + info.isFragmented : " no info")); if (!t || !samples.length) return res(null);
         const aacTrack = /^mp4a/.test(t.codec), trak = f.getTrackById(t.id), entry = trak && trak.mdia.minf.stbl.stsd.entries[0];
         let description;
         try { if (aacTrack) description = entry.esds.esd.descs[0].descs[0].data; } catch (e) {}
@@ -3597,6 +3601,7 @@ const Recap = {
   src(b) { if (this.of !== b) { if (this.url) URL.revokeObjectURL(this.url); this.url = b ? URL.createObjectURL(b) : null; this.of = b; } return this.url; },
   fill() {
     if ($("recap").hidden) return;
+    if (/debug/.test(location.search)) { let d = $("recapDbg"); if (!d) { d = document.createElement("pre"); d.id = "recapDbg"; d.style.cssText = "white-space:pre-wrap;font-size:11px;text-align:left;margin:0;max-height:30vh;overflow:auto"; $("recapTitle").after(d); } d.textContent = (Share.dbg || []).join("\n") || "(video not made yet)"; }
     const v = $("recapVid"), img = $("recapGif"), w = $("recapWait");
     if (Share.vidBlob) {
       img.hidden = true; w.hidden = true; v.hidden = false;
