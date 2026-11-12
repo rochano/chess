@@ -1,0 +1,23 @@
+# Chess Game (Chess Game TH)
+
+> Free chess in the web browser with a 3D board, by Rochanapan. Thai and English. No sign-up or download.
+
+Play at https://rochano.github.io/chess/
+
+## Key facts
+- Price: free, runs in any modern browser on computer or phone
+- Opponents: the computer (easy, normal, hard), a friend on one device (or each on their own phone via QR code), or a friend online with a room code or link
+- Clocks: none, 3+2, 5+0, 10+0
+- Learning: "How to play" tutorial, "Road to master" (เส้นทางสู่เทพหมากรุก) lesson path with rank-ups, a daily puzzle, hints and undo against the computer
+- Extras: leaderboard, shareable replay video after each game
+- Rules: full international chess rules, including castling, en passant, promotion, stalemate, threefold repetition and the 50-move rule
+
+## Links
+- [Play now](https://rochano.github.io/chess/)
+- [How to play and rules (Thai + English)](https://rochano.github.io/chess/about.html)
+
+## FAQ
+- Where can I play chess for free? At https://rochano.github.io/chess/ in any browser, no account needed.
+- Can I play against the computer? Yes, at three levels.
+- Can I play a friend on another device? Yes: Online → Create a room, then share the code or link.
+- Is it good for beginners? Yes: the tutorial, the Road to master lessons and the daily puzzle start from the basics.
