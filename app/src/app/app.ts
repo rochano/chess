@@ -1,4 +1,5 @@
 import { Component, HostListener, inject } from '@angular/core';
+import { AudioService } from './audio/audio.service';
 import { GameService } from './core/game.service';
 import { UiService } from './core/ui.service';
 import { GameScreenComponent } from './game/game-screen';
@@ -23,6 +24,8 @@ import { SettingsComponent } from './ui/settings';
 export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
+
+  constructor() { inject(AudioService).init(); }
 
   @HostListener('document:keydown.escape')
   escape() {
