@@ -75,7 +75,7 @@ import { BattleService } from '../battle/battle.service';
       <div class="field">
         <span class="lbl">{{ 'More' | tr }}</span>
         <div class="row2">
-          <button class="btn" disabled>{{ 'Leaderboard' | tr }}</button>
+          <button class="btn" id="openLeader" (click)="ui.closeAll(); ui.show('leader')">{{ 'Leaderboard' | tr }}</button>
           <button class="btn" (click)="settings()">{{ 'Settings' | tr }}</button>
         </div>
       </div>

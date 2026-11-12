@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap' | 'train' | 'rankup' | 'tutorial';
+export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap' | 'train' | 'rankup' | 'tutorial' | 'leader';
 export interface ConfirmBox { title: string; text: string; yes: string; action: () => void; }
 
 /** Which full-screen card is open (the original game's show/hide/anyOverlay). */
