@@ -8,6 +8,7 @@ import { UiService } from '../core/ui.service';
 import { I18nService } from '../core/i18n.service';
 import { PieceType } from '../core/engine';
 import { SergeantService } from '../sergeant/sergeant.service';
+import { CloudService } from '../cloud/cloud.service';
 
 
 /** Settings panel. Sound, Sergeant and 3D options are stored now and take effect as those parts are ported. */
@@ -19,6 +20,21 @@ import { SergeantService } from '../sergeant/sergeant.service';
 <div class="scrim" id="settings">
   <div class="card" role="dialog" aria-labelledby="setTitle">
     <h2 id="setTitle">{{ 'Settings panel' | tr }}</h2>
+    <section class="set-group" id="account">
+      <h3 class="menu-hd">{{ t('บัญชี', 'Account') }}</h3>
+      @let u = cloud.user();
+      @if (u && !u.isAnonymous) {
+        <div class="field"><span class="lbl">{{ t('ล็อกอินด้วย Google แล้ว', 'Signed in with Google') }}</span>
+          <p class="fine" style="margin:0">{{ u.displayName || u.email }}@if (cloud.me(); as m) { · Elo {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
+          <button class="btn" (click)="cloud.signOut()">{{ t('ออกจากระบบ', 'Sign out') }}</button></div>
+      } @else {
+        <div class="field">
+          <button class="btn go" id="googleIn" (click)="signIn()">{{ t('ล็อกอินด้วย Google', 'Sign in with Google') }}</button>
+          <p class="fine" style="margin:6px 0 0">{{ t('ไม่ล็อกอินก็เล่นและขึ้นกระดานคะแนนได้ ล็อกอินเพื่อเก็บคะแนนกับ Elo ไว้ใช้ได้ทุกเครื่อง', 'You can play and get on the leaderboard without it. Sign in to keep your score and Elo on every device.') }}@if (cloud.me(); as m) { · Elo {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
+          @if (cloud.error()) {<p class="fine" style="margin:4px 0 0;color:#B23A2E">{{ cloud.error() }}</p>}
+        </div>
+      }
+    </section>
     <section class="set-group">
       <h3 class="menu-hd">{{ 'Sound' | tr }}</h3>
       @for (s of sliders; track s.key) {
@@ -83,7 +99,11 @@ export class SettingsComponent {
   private sergeant = inject(SergeantService);
   protected p = this.prefs.value;
   protected readonly ICON = ICON;
-  protected lang = inject(I18nService).lang;
+  private i18n = inject(I18nService);
+  protected lang = this.i18n.lang;
+  protected cloud = inject(CloudService);
+  t(th: string, en: string) { return this.i18n.t(th, en); }
+  signIn() { this.cloud.signInGoogle().catch(() => {}); }
   protected readonly sliders = [
     { key: 'volMusic', label: 'Music', icon: 'note' },
     { key: 'volMove', label: 'Move sounds', icon: 'vol' },

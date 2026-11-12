@@ -17,6 +17,7 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "firebase": "^11.10.0",
     "gifenc": "^1.0.3",
     "mp4-muxer": "^5.2.1",
     "mp4box": "^0.5.2",

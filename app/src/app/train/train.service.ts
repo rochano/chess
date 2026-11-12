@@ -41,6 +41,7 @@ export class TrainService {
       side: () => T.side(), blocked: () => !!(T.done || T.wait), passTurn: () => !!T.passTurn(),
       after: (m, mover) => T.after(m, mover), status: () => T.status(), teaching: () => T.phase === 'teach', hint: () => T.hint(),
     };
+    this.syncButtons(); // the menu was drawn before this ran
     // ?puzzle=YYYY-MM-DD opens that day's puzzle straight away.
     const q = new URLSearchParams(location.search);
     if (q.get('puzzle')) setTimeout(() => this.L.Daily.open(q.get('puzzle')), 200);

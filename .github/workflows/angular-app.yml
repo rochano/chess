@@ -34,3 +34,14 @@ jobs:
           channelId: preview
           expires: 30d
           entryPoint: app
+      # Firestore security rules (the anti-cheat for scores). Needs the "Firebase Rules Admin" role on the service account;
+      # if it is missing this step fails without stopping the preview, and the rules can be pasted in the console instead.
+      - name: Deploy Firestore rules
+        if: github.event_name == 'push' && env.HAS_FIREBASE == 'true'
+        continue-on-error: true
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json" npx -y firebase-tools@13 deploy --only firestore:rules --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

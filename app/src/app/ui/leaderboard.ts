@@ -5,9 +5,10 @@ import { PrefsService } from '../core/prefs.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { SHEET_URL } from '../share/share.service';
+import { CloudService } from '../cloud/cloud.service';
 
 interface Row { finishedAt?: string; at?: string; white: string; black: string; opponent: string; winner: string; result: string; }
-interface Entry { name: string; p: number; w: number; d: number; l: number; pts: number; }
+interface Entry { name: string; p: number; w: number; d: number; l: number; pts: number; elo?: number; me?: boolean; }
 
 function lsGet<T>(k: string, d: T): T { try { const v = JSON.parse(localStorage.getItem(k)!); return v == null ? d : v; } catch { return d; } }
 function lsSet(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } }
@@ -40,7 +41,8 @@ export function tally(rows: Row[], local = false): Entry[] {
 export class LeaderService {
   private g = inject(GameService);
   private prefs = inject(PrefsService);
-  readonly tab = signal<'all' | 'local'>('all');
+  readonly tab = signal<'all' | 'season1' | 'local'>('all');
+  private cloud = inject(CloudService);
   readonly list = signal<Entry[] | null>(null);
   readonly error = signal(false);
   private pending: Promise<Row[]> | null = null;
@@ -65,12 +67,19 @@ export class LeaderService {
   load() {
     this.error.set(false);
     if (this.tab() === 'local') { this.list.set(tally(lsGet<Row[]>('chess-history', []), true).slice(0, 50)); return; }
-    // Show the last copy at once; Apps Script often takes a few seconds to answer.
+    if (this.tab() === 'all') {
+      this.list.set(null);
+      this.cloud.top(50)
+        .then(rows => { if (this.tab() === 'all') this.list.set(rows.map(r => ({ ...r, me: r.id === this.cloud.uid }))); })
+        .catch(e => { console.warn('leaderboard', e); if (this.tab() === 'all') this.error.set(true); });
+      return;
+    }
+    // Season 1 = the old Google Sheet board. Show the last copy at once; Apps Script often takes a few seconds to answer.
     const cached = lsGet<Row[] | null>('chess-board-cache', null);
     this.list.set(cached ? tally(cached).slice(0, 50) : null);
     this.fetchAll()
-      .then(rows => { if (this.tab() === 'all') this.list.set(tally(rows).slice(0, 50)); })
-      .catch(() => { if (this.tab() === 'all' && !cached) this.error.set(true); });
+      .then(rows => { if (this.tab() === 'season1') this.list.set(tally(rows).slice(0, 50)); })
+      .catch(() => { if (this.tab() === 'season1' && !cached) this.error.set(true); });
   }
 
   private fetchAll() {
@@ -93,21 +102,22 @@ export class LeaderService {
     <h2 id="lbTitle">{{ 'Leaderboard' | tr }}</h2>
     <div class="seg" id="segLeader">
       <button [attr.aria-pressed]="lb.tab() === 'all'" (click)="pick('all')">{{ 'Everyone' | tr }}</button>
+      <button [attr.aria-pressed]="lb.tab() === 'season1'" (click)="pick('season1')">{{ t('ซีซัน 1', 'Season 1') }}</button>
       <button [attr.aria-pressed]="lb.tab() === 'local'" (click)="pick('local')">{{ 'This device' | tr }}</button>
     </div>
     <div class="lb" id="lbBody">
       @if (lb.error()) {
-        <p class="empty">{{ 'ยังโหลดคะแนนรวมไม่ได้ (สคริปต์ Google Sheet ต้องอัปเดตเวอร์ชันใหม่ หรือเน็ตมีปัญหา) ดูแท็บ This device ไปก่อนได้' | tr }}</p>
+        <p class="empty">{{ t('ยังโหลดคะแนนรวมไม่ได้ เน็ตอาจมีปัญหา ดูแท็บ This device ไปก่อนได้', 'Couldn\'t load the scores. Check your connection, or look at This device for now.') }}</p>
       } @else if (lb.list() === null) {
         <p class="empty">{{ 'กำลังโหลดคะแนน…' | tr }}</p>
       } @else if (!lb.list()!.length) {
         <p class="empty">{{ (lb.tab() === 'local' ? 'ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่' : 'ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม') | tr }}</p>
       } @else {
-        <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th></tr></thead>
-          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td></tr>}</tbody></table>
+        <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th>@if (lb.tab() === 'all') {<th>Elo</th>}</tr></thead>
+          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo }}</td>}</tr>}</tbody></table>
       }
     </div>
-    <p class="fine">{{ 'ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน' | tr }}</p>
+    <p class="fine">{{ lb.tab() === 'all' ? t('นับเกมที่เล่นกับคอมพิวเตอร์: ชนะ Easy 1, Normal 2, Hard 3 แต้ม เสมอ 1 แต้ม · Elo เริ่มที่ 1000 · ล็อกอิน Google ในตั้งค่าเพื่อเก็บคะแนนข้ามเครื่อง', 'Games against the computer count: win Easy 1, Normal 2, Hard 3 points, draw 1 · Elo starts at 1000 · Sign in with Google in Settings to keep your score on every device') : ('ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน' | tr) }}</p>
     <div class="btns"><button class="btn" id="closeLeader" (click)="close()">{{ 'Back to menu' | tr }}</button></div>
   </div>
 </div>`,
@@ -118,6 +128,6 @@ export class LeaderComponent {
   private i18n = inject(I18nService);
   constructor() { this.lb.load(); }
   t(th: string, en: string) { return this.i18n.t(th, en); }
-  pick(v: 'all' | 'local') { this.lb.tab.set(v); this.lb.load(); }
+  pick(v: 'all' | 'season1' | 'local') { this.lb.tab.set(v); this.lb.load(); }
   close() { this.ui.hide('leader'); this.ui.show('menu'); }
 }

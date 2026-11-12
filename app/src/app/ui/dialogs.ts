@@ -6,6 +6,7 @@ import { GameService } from '../core/game.service';
 import { I18nService, PIECE_TH } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
+import { CloudService } from '../cloud/cloud.service';
 
 @Component({
   selector: 'app-credits',
@@ -91,6 +92,7 @@ export class PromoComponent {
     } @else {<div class="result-badge" id="resBadge"></div>}
     <h2 id="resTitle">{{ g.over() ? title() : '' }}</h2>
     <p id="resText">{{ g.over() ? text() : '' }}</p>
+    @if (cloud.save()) {<p class="fine" id="resSaved">{{ saved() }}</p>}
     <div class="row2">
       <button class="btn" id="resView" (click)="view()">{{ 'View board' | tr }}</button>
       <button class="btn go" id="resAgain" (click)="again()">{{ 'Play again' | tr }}</button>
@@ -116,7 +118,17 @@ export class ResultComponent {
   protected share = inject(ShareService);
   private battle = inject(BattleService);
   private i18n = inject(I18nService);
+  protected cloud = inject(CloudService);
   protected readonly king = GLYPH.K;
+  saved = computed(() => {
+    const t = (th: string, en: string) => this.i18n.t(th, en), d = this.cloud.lastDelta(), me = this.cloud.me();
+    switch (this.cloud.save()) {
+      case 'saving': return t('กำลังบันทึกคะแนน…', 'Saving your score…');
+      case 'failed': return t('บันทึกคะแนนไม่ได้ เน็ตอาจมีปัญหา', "Couldn't save your score. Check your connection.");
+      case 'saved': return d && me ? t(`บันทึกแล้ว · +${d.pts} แต้ม · Elo ${me.elo} (${d.elo >= 0 ? '+' : ''}${d.elo})`, `Saved · +${d.pts} pts · Elo ${me.elo} (${d.elo >= 0 ? '+' : ''}${d.elo})`) : t('บันทึกแล้ว', 'Saved');
+      default: return '';
+    }
+  });
 
   title = computed(() => {
     const o = this.g.over()!, me = this.g.myColor(), tr = (s: string) => this.i18n.tr(s);
