@@ -7,6 +7,8 @@
     <button class="gear music" id="musicBtn" [attr.aria-label]="(prefs.value().music ? 'Music on' : 'Music off') | tr"
       [attr.aria-pressed]="prefs.value().music" [title]="'Music' | tr" (click)="toggleMusic()"
       [innerHTML]="(prefs.value().music ? ICON['note'] : ICON['noteOff']) | safeHtml"></button>
+    @if (battle.ok()) {<button class="gear view" id="viewBtn" [title]="'Switch view' | tr"
+      [attr.aria-label]="(battle.active() ? 'Switch to the flat 2D board' : 'Switch to the 3D battlefield') | tr" (click)="battle.toggleView()">{{ battle.active() ? '2D' : '3D' }}</button>}
     <button class="gear" id="openSettings" [attr.aria-label]="'Settings' | tr" [title]="'Settings' | tr" (click)="openSettings()" [innerHTML]="ICON['gear'] | safeHtml"></button>
   </header>
 
@@ -17,13 +19,21 @@
         <div class="ranks left" aria-hidden="true">@for (r of ranks(); track r) {<span>{{ r }}</span>}</div>
         <div class="board" id="board" role="grid" [attr.aria-label]="'Chess board' | tr">
           @for (i of order(); track i) {
-            <button class="sq" [class]="sqClass(i)" role="gridcell" [attr.aria-label]="label(i)" (click)="tap(i)">
+            <button class="sq" [class]="sqClass(i)" role="gridcell" [attr.aria-label]="label(i)" (click)="battle.tipHide(); tap(i)"
+              (pointermove)="$event.pointerType === 'mouse' && battle.tipShow(i, $event.clientX, $event.clientY)" (pointerleave)="battle.tipHide()">
               @if (glyph(i)) {<span class="pc" [class.w]="pc(i) === 'w'" [class.b]="pc(i) === 'b'" [class.lift]="g.animTo() === i">{{ glyph(i) }}</span>}
             </button>
           }
         </div>
         <div class="ranks right" aria-hidden="true">@for (r of ranks(); track r) {<span>{{ r }}</span>}</div>
         <div class="files bottom" aria-hidden="true">@for (f of files(); track f) {<span>{{ f }}</span>}</div>
+      </div>
+      <div class="battle" id="battle" hidden>
+        <canvas id="battleCanvas" [attr.aria-label]="'3D battlefield. Tap a piece, then tap where it should go. Drag to look around.' | tr"></canvas>
+        <div class="battle-hud">
+          <button class="chip" id="followBtn" [attr.aria-pressed]="battle.follow()" (click)="battle.toggleFollow()">{{ (battle.follow() ? 'Follow camera: on' : 'Follow camera: off') | tr }}</button>
+          <button class="chip" id="resetView" (click)="battle.resetView()">{{ 'Reset view' | tr }}</button>
+        </div>
       </div>
       <app-taunt />
       <p class="status" id="status" aria-live="polite" [class.alert]="g.checkSq() >= 0 && !g.over()">{{ status() }}</p>

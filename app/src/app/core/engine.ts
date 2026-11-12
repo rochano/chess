@@ -307,3 +307,20 @@ export function outcome(st: GameState): Outcome {
   if (insufficient(st.board)) return { kind: 'insufficient' };
   return null;
 }
+
+const sqIdx = (s: string) => (8 - +s[1]) * 8 + 'abcdefgh'.indexOf(s[0]);
+/** A position from FEN (used by lessons, puzzles and the intro scenes). */
+export function fromFEN(fen: string): GameState {
+  const [placement, turn, cs, ep, half] = fen.split(' ');
+  const board: Board = new Array(64).fill(null);
+  let i = 0;
+  for (const ch of placement) {
+    if (ch === '/') continue;
+    if (/\d/.test(ch)) i += +ch;
+    else board[i++] = ((ch === ch.toUpperCase() ? 'w' : 'b') + ch.toUpperCase()) as Piece;
+  }
+  return {
+    board, turn: turn as Color, castle: { wK: cs.includes('K'), wQ: cs.includes('Q'), bK: cs.includes('k'), bQ: cs.includes('q') },
+    ep: ep === '-' ? -1 : sqIdx(ep), half: +half || 0, captured: null,
+  };
+}

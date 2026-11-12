@@ -4,6 +4,7 @@ import { GameService } from './core/game.service';
 import { UiService } from './core/ui.service';
 import { SergeantService } from './sergeant/sergeant.service';
 import { StreamerService } from './sergeant/streamer';
+import { BattleService } from './battle/battle.service';
 import { GameScreenComponent } from './game/game-screen';
 import { ConfirmComponent, CreditsComponent, PromoComponent, ResultComponent } from './ui/dialogs';
 import { MenuComponent } from './ui/menu';
@@ -27,7 +28,7 @@ export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
 
-  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); }
+  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); }
 
   @HostListener('document:keydown.escape')
   escape() {

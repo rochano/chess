@@ -9,6 +9,7 @@ import { SafeHtmlPipe } from '../core/safe-html.pipe';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { TauntComponent } from '../sergeant/taunt';
+import { BattleService } from '../battle/battle.service';
 import { StreamerComponent, StreamerService } from '../sergeant/streamer';
 
 /** The table: top bar, board, players, clocks and tools (the .app block of the original page). */
@@ -24,6 +25,7 @@ export class GameScreenComponent {
   protected ui = inject(UiService);
   protected prefs = inject(PrefsService);
   protected streamer = inject(StreamerService);
+  protected battle = inject(BattleService);
   protected readonly ICON = ICON;
   protected readonly AVATAR = AVATAR;
   protected readonly GLYPH = GLYPH;

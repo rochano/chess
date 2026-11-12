@@ -586,7 +586,7 @@ addEventListener("blur", () => { if (IN_APP) audioAway(true); });
 addEventListener("focus", () => { if (IN_APP && !document.hidden) audioAway(false); });
 addEventListener("pageshow", e => { if (e.persisted) audioAway(false); });}
 
-export { sfx, startMusic, stopMusic, musicSting, updateMusic, MUSIC, ctx, unlockAudio, audioAway };
+export { sfx, startMusic, stopMusic, musicSting, updateMusic, MUSIC, ctx, unlockAudio, audioAway, env, splay, orchLoad, musicLevel, mv, al };
 /** The replay video renders its soundtrack offline: point sounds at that context and time. */
 export function setOffline(a: Any, at: number, off: boolean) { audio = a; sfxAt = at; sfxOff = off; }
 export function audioState() { return { audio, sfxBus, musicBus, master, sfxAt, sfxOff }; }

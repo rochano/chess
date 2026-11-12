@@ -5,6 +5,7 @@ import { I18nService } from '../core/i18n.service';
 import { Prefs, PrefsService } from '../core/prefs.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
+import { BattleService } from '../battle/battle.service';
 
 /** Main menu: new game settings, then practice and more (same layout and ids as the original). */
 @Component({
@@ -87,6 +88,7 @@ export class MenuComponent {
   protected ui = inject(UiService);
   protected i18n = inject(I18nService);
   private prefs = inject(PrefsService);
+  private battle = inject(BattleService);
   protected p = this.prefs.value;
 
   protected readonly modes = [{ v: 'friend', label: 'Friend' }, { v: 'cpu', label: 'Computer' }, { v: 'online', label: 'Online' }] as const;
@@ -103,6 +105,7 @@ export class MenuComponent {
   start() {
     this.ui.hide('menu');
     this.g.newGame();
+    if (this.g.mode() !== 'online' && this.p().intro !== 'off') this.battle.intro();
     track('game_start', { opponent: this.g.mode(), level: this.g.mode() === 'cpu' ? this.g.level() : 0, clock: this.p().clock });
   }
   settings() { this.ui.hide('menu'); this.ui.backToMenu = true; this.ui.show('settings'); }
