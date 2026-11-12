@@ -2,6 +2,8 @@ import { Component, HostListener, inject } from '@angular/core';
 import { AudioService } from './audio/audio.service';
 import { GameService } from './core/game.service';
 import { UiService } from './core/ui.service';
+import { SergeantService } from './sergeant/sergeant.service';
+import { StreamerService } from './sergeant/streamer';
 import { GameScreenComponent } from './game/game-screen';
 import { ConfirmComponent, CreditsComponent, PromoComponent, ResultComponent } from './ui/dialogs';
 import { MenuComponent } from './ui/menu';
@@ -25,7 +27,7 @@ export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
 
-  constructor() { inject(AudioService).init(); }
+  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); }
 
   @HostListener('document:keydown.escape')
   escape() {

@@ -8,11 +8,13 @@ import { PrefsService } from '../core/prefs.service';
 import { SafeHtmlPipe } from '../core/safe-html.pipe';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
+import { TauntComponent } from '../sergeant/taunt';
+import { StreamerComponent, StreamerService } from '../sergeant/streamer';
 
 /** The table: top bar, board, players, clocks and tools (the .app block of the original page). */
 @Component({
   selector: 'app-game-screen',
-  imports: [TrPipe, SafeHtmlPipe],
+  imports: [TrPipe, SafeHtmlPipe, TauntComponent, StreamerComponent],
   templateUrl: './game-screen.html',
   host: { style: 'display: contents' },
 })
@@ -21,6 +23,7 @@ export class GameScreenComponent {
   protected i18n = inject(I18nService);
   protected ui = inject(UiService);
   protected prefs = inject(PrefsService);
+  protected streamer = inject(StreamerService);
   protected readonly ICON = ICON;
   protected readonly AVATAR = AVATAR;
   protected readonly GLYPH = GLYPH;

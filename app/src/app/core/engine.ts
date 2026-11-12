@@ -222,7 +222,7 @@ function orderScore(st: GameState, m: Move) {
   const victim = m.ep ? 100 : target ? VAL[type(target)] : 0;
   return (victim ? victim * 10 - VAL[type(st.board[m.from]!)] / 10 : 0) + (m.promo === 'Q' ? 9000 : 0);
 }
-function quiesce(st: GameState, alpha: number, beta: number, qd: number): number {
+export function quiesce(st: GameState, alpha: number, beta: number, qd: number): number {
   const stand = evaluate(st.board) * (st.turn === 'w' ? 1 : -1);
   if (stand >= beta) return stand;
   if (stand > alpha) alpha = stand;

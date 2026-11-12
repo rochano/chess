@@ -1,4 +1,4 @@
-<div class="app" id="app" [attr.data-board]="prefs.value().theme" [class.asblack]="flipped()">
+<div class="app" id="app" [attr.data-board]="prefs.value().theme" [class.asblack]="flipped()" [class.streaming]="streamer.on()">
   <header class="bar">
     <h1 class="brand"><img class="logo" src="img/logo.svg" alt="" width="34" height="34">Chess Game</h1>
     <div class="turn" id="turn" [attr.data-side]="g.st().turn" aria-live="polite">
@@ -25,6 +25,7 @@
         <div class="ranks right" aria-hidden="true">@for (r of ranks(); track r) {<span>{{ r }}</span>}</div>
         <div class="files bottom" aria-hidden="true">@for (f of files(); track f) {<span>{{ f }}</span>}</div>
       </div>
+      <app-taunt />
       <p class="status" id="status" aria-live="polite" [class.alert]="g.checkSq() >= 0 && !g.over()">{{ status() }}</p>
       @if (g.over()) {
         <div class="overbar" id="overBar">
@@ -54,6 +55,7 @@
         <button class="tool t-resign" [disabled]="!!g.over() || g.thinking()" (click)="resign()"><div class="ic" [innerHTML]="ICON['resign'] | safeHtml"></div><span>{{ 'Resign' | tr }}</span></button>
         <button class="tool t-hint" [disabled]="!g.humanTurn()" (click)="g.hint()"><div class="ic" [innerHTML]="ICON['hint'] | safeHtml"></div><span>{{ 'Hint' | tr }}</span></button>
       </div>
+      <app-streamer />
     </aside>
   </main>
 </div>

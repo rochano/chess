@@ -1,6 +1,7 @@
 import { effect, inject, Injectable } from '@angular/core';
 import { Color, inCheck, PieceType, VAL } from '../core/engine';
 import { GameService } from '../core/game.service';
+import { I18nService } from '../core/i18n.service';
 import { PrefsService } from '../core/prefs.service';
 import { UiService } from '../core/ui.service';
 import { installAudioListeners, musicSting, setAudioHost, sfx, startMusic, stopMusic, updateMusic } from './engine';
@@ -11,6 +12,7 @@ export class AudioService {
   private g = inject(GameService);
   private ui = inject(UiService);
   private prefs = inject(PrefsService);
+  private i18n = inject(I18nService);
   /** Optional: the Sergeant's stress per side (from the Sergeant, when ported). */
   stress: () => Record<Color, number> = () => ({ w: 0, b: 0 });
   /** Optional: stop the Sergeant's voice when the page goes away. */
@@ -19,7 +21,7 @@ export class AudioService {
   readonly sfx = sfx;
 
   init() {
-    setAudioHost({ prefs: () => this.prefs.get(), mood: () => this.mood(), stopVoice: () => this.stopVoice() });
+    setAudioHost({ prefs: () => this.prefs.get(), mood: () => this.mood(), stopVoice: () => this.stopVoice(), lang: () => this.i18n.lang() });
     installAudioListeners();
     // Every button press clicks, like the original.
     document.addEventListener('click', e => { if ((e.target as Element).closest?.('.btn, .seg button, .tool')) sfx.click(); });

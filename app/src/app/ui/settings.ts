@@ -5,6 +5,8 @@ import { Prefs, PrefsService } from '../core/prefs.service';
 import { SafeHtmlPipe } from '../core/safe-html.pipe';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
+import { PieceType } from '../core/engine';
+import { SergeantService } from '../sergeant/sergeant.service';
 
 const THEMES: Record<string, string[]> = {
   walnut: ['#F1E4C3', '#4B3528', '#8F6A47'],
@@ -41,12 +43,12 @@ const THEMES: Record<string, string[]> = {
     <section class="set-group">
       <h3 class="menu-hd">{{ 'Sergeant' | tr }}</h3>
       <div class="field"><span class="lbl">{{ 'Comments' | tr }}</span>
-        <div class="seg">@for (v of onOff; track v) {<button [attr.aria-pressed]="p().taunts === v" (click)="set('taunts', v)">{{ cap(v) | tr }}</button>}</div></div>
+        <div class="seg">@for (v of onOff; track v) {<button [attr.aria-pressed]="p().taunts === v" (click)="set('taunts', v); preview('risky', 'N', 1)">{{ cap(v) | tr }}</button>}</div></div>
       <div class="field"><span class="lbl">{{ 'Voice' | tr }}</span>
-        <div class="seg"><button [attr.aria-pressed]="p().voice === 'speech'" (click)="set('voice', 'speech')">{{ 'Thai speech' | tr }}</button>
-          <button [attr.aria-pressed]="p().voice === 'mumble'" (click)="set('voice', 'mumble')">{{ 'Mumble' | tr }}</button></div></div>
+        <div class="seg"><button [attr.aria-pressed]="p().voice === 'speech'" (click)="set('voice', 'speech'); preview('lost', 'B', 2)">{{ 'Thai speech' | tr }}</button>
+          <button [attr.aria-pressed]="p().voice === 'mumble'" (click)="set('voice', 'mumble'); preview('lost', 'B', 2)">{{ 'Mumble' | tr }}</button></div></div>
       <div class="field"><span class="lbl">{{ 'Speaking speed' | tr }}</span>
-        <div class="seg">@for (r of rates; track r[0]) {<button [attr.aria-pressed]="p().voiceRate === r[0]" (click)="set('voiceRate', r[0])">{{ r[1] | tr }}</button>}</div></div>
+        <div class="seg">@for (r of rates; track r[0]) {<button [attr.aria-pressed]="p().voiceRate === r[0]" (click)="set('voiceRate', r[0]); preview('lost', 'B', 3)">{{ r[1] | tr }}</button>}</div></div>
     </section>
     <section class="set-group">
       <h3 class="menu-hd">{{ 'Display' | tr }}</h3>
@@ -78,6 +80,7 @@ const THEMES: Record<string, string[]> = {
 export class SettingsComponent {
   protected ui = inject(UiService);
   private prefs = inject(PrefsService);
+  private sergeant = inject(SergeantService);
   protected p = this.prefs.value;
   protected readonly ICON = ICON;
   protected readonly sliders = [
@@ -91,6 +94,8 @@ export class SettingsComponent {
   protected readonly rates = [['0.65', 'Slow'], ['0.8', 'Medium'], ['1', 'Normal']];
   protected readonly themes = [['walnut', 'Walnut'], ['sand', 'Sandstone'], ['slate', 'Slate']];
 
+  /** Let the player hear the Sergeant with the new setting. */
+  preview(kind: 'risky' | 'lost', t: PieceType, level: number) { this.sergeant.show(kind, t, 'w', level); }
   cap(v: string) { return v === 'on' ? 'On' : 'Off'; }
   swatch() { return THEMES[this.p().theme]; }
   set<K extends keyof Prefs>(k: K, v: Prefs[K]) { this.prefs.set(k, v); }

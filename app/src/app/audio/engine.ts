@@ -8,11 +8,12 @@
  */
 type Any = any;
 export interface AudioHost {
-  prefs(): { volMove: number; volAlert: number; volMusic: number; music: boolean; track?: string };
+  prefs(): { volMove: number; volAlert: number; volMusic: number; music: boolean; track?: string; voice?: string; voiceRate?: string };
   mood(): { theme: string; level: number };
   stopVoice(): void;
+  lang(): 'th' | 'en';
 }
-let host: AudioHost = { prefs: () => ({ volMove: 60, volAlert: 60, volMusic: 40, music: true }), mood: () => ({ theme: "menu", level: 0 }), stopVoice: () => {} };
+let host: AudioHost = { prefs: () => ({ volMove: 60, volAlert: 60, volMusic: 40, music: true }), lang: () => 'th', mood: () => ({ theme: "menu", level: 0 }), stopVoice: () => {} };
 export function setAudioHost(h: AudioHost) { host = h; }
 declare global { interface Navigator { audioSession?: { type: string } } }
 let audio: Any = null, sfxBus: Any = null, musicBus: Any = null, noiseBuf: Any = null, master: Any = null;
@@ -448,7 +449,7 @@ function unlockAudio(e) {
 // Otherwise iOS keeps the "playback" session alive in the background and the loop can click or buzz.
 function audioAway(away) {
   if (away) {
-    host.stopVoice();
+    stopVoice();
     if (silentEl) try { silentEl.pause(); } catch (e) {}
     if (navigator.audioSession) try { navigator.audioSession.type = "auto"; } catch (e) {}
     // fade to silence first; cutting a sound mid-wave is what makes the click
@@ -459,6 +460,120 @@ function audioAway(away) {
     if (audio) { const p = audio.resume(); if (p && p.catch) p.catch(() => {}); try { master.gain.setTargetAtTime(1, audio.currentTime, 0.05); } catch (e) {} }
   }
 }
+
+/* ---------- Sergeant voice ---------- */
+const THAI_VOWELS = [[700, 1220, 2600], [280, 2250, 2900], [310, 870, 2250], [400, 2000, 2550], [450, 800, 2830], [580, 1800, 2500], [600, 900, 2500], [320, 1400, 2400]];
+let voiceNodes = [], thaiVoice = null, glottal = null;
+function findThaiVoice() {
+  try {
+    const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    thaiVoice = vs.find(v => (host.lang() === "th" ? /^th/i : /^en/i).test(v.lang)) || null;
+  } catch (e) { thaiVoice = null; }
+}
+
+function stopVoice() {
+  voiceNodes.forEach(n => { try { n.stop(); } catch (e) {} });
+  voiceNodes = [];
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {}
+}
+function voice(text, level) {
+  stopVoice();
+  const v = al();
+  if (v <= 0) return;
+  if (host.prefs().voice !== "mumble" && thaiVoice) {
+    try {
+      // Speak phrase by phrase (split at spaces and punctuation) so there are
+      // natural pauses, at a steady slow speed. Anger shows in pitch only.
+      const phrases = host.lang() === "th" ? text.replace(/\.{2,}|…/g, " ").split(/[\s!?]+/).filter(Boolean) : text.split(/(?<=[.!?…])\s+/).filter(Boolean);
+      const rate = +host.prefs().voiceRate || 0.8;
+      for (const ph of phrases) {
+        const u = new SpeechSynthesisUtterance(ph);
+        u.voice = thaiVoice; u.lang = thaiVoice.lang;
+        u.pitch = [1, 0.85, 1.1, 1.4][level];
+        u.rate = rate;
+        u.volume = Math.min(1, v * 1.2);
+        speechSynthesis.speak(u);
+      }
+      return;
+    } catch (e) {}
+  }
+  mumble(text, level, v);
+}
+function mumble(text, level, v) {
+  try {
+    const a = ctx();
+    if (!glottal) {
+      const n = 40, re = new Float32Array(n), im = new Float32Array(n);
+      for (let h = 1; h < n; h++) im[h] = 1 / Math.pow(h, 1.25);
+      glottal = a.createPeriodicWave(re, im);
+    }
+    const base = [0, 118, 150, 192][level];
+    const syl = [0, 0.17, 0.135, 0.11][level];
+    const count = Math.min(30, Math.max(6, Math.round(text.replace(/\s+/g, "").length / 2.8)));
+    const t0 = a.currentTime + 0.06;
+    const total = count * syl + 0.3;
+
+    const out = a.createGain(); out.gain.value = v * [0, 2.4, 2.8, 3.0][level];
+    let dest = sfxBus;
+    if (level === 3) {
+      const ws = a.createWaveShaper(), c = new Float32Array(256);
+      for (let i = 0; i < 256; i++) { const x = i / 128 - 1; c[i] = Math.tanh(x * 1.6); }
+      ws.curve = c; ws.connect(sfxBus); dest = ws;
+    }
+    out.connect(dest);
+
+    // Formant filters shared by voice and breath, so both glide together.
+    const fs = [0, 1, 2].map(k => {
+      const f = a.createBiquadFilter(); f.type = "bandpass"; f.Q.value = [5, 9, 11][k];
+      const g = a.createGain(); g.gain.value = [1, 0.6, 0.25][k];
+      f.connect(g).connect(out); return f;
+    });
+    const amp = a.createGain(); amp.gain.value = 0.0001;
+    fs.forEach(f => amp.connect(f));
+
+    const o = a.createOscillator(); o.setPeriodicWave(glottal);
+    const vib = a.createOscillator(), vibG = a.createGain();
+    vib.frequency.value = 5 + level * 0.6; vibG.gain.value = base * 0.018;
+    vib.connect(vibG).connect(o.frequency);
+    o.connect(amp);
+    const breath = a.createBufferSource(); breath.buffer = noiseBuf; breath.loop = true;
+    const bg = a.createGain(); bg.gain.value = [0, 0.08, 0.14, 0.22][level];
+    breath.connect(bg).connect(amp);
+
+    const shout = /!/.test(text);
+    let t = t0;
+    for (let k = 0; k < count; k++) {
+      const p = k / count;
+      const [f1, f2, f3] = THAI_VOWELS[Math.floor(Math.random() * THAI_VOWELS.length)];
+      // Intonation: calm falls, angry rises and jumps, furious stays high and shouts.
+      let pitch = base * (1 + (Math.random() - 0.5) * (0.08 + level * 0.07));
+      pitch *= level === 1 ? 1.06 - p * 0.2 : 1 + Math.sin(p * Math.PI * (1 + level)) * 0.06 * level;
+      if (shout && p > 0.7) pitch *= 1.15 + (level - 1) * 0.12;
+      const d = syl * (0.8 + Math.random() * 0.45);
+      o.frequency.setTargetAtTime(pitch, t, 0.025);
+      fs[0].frequency.setTargetAtTime(f1, t, 0.03);
+      fs[1].frequency.setTargetAtTime(f2, t, 0.03);
+      fs[2].frequency.setTargetAtTime(f3, t, 0.03);
+      // Syllable shape: a quick consonant dip, then the vowel.
+      const peak = 0.5 + Math.random() * 0.3 + (k % 4 === 0 ? 0.15 : 0);
+      amp.gain.setTargetAtTime(0.02, t, 0.012);
+      amp.gain.setTargetAtTime(peak, t + d * 0.18, 0.025);
+      if (Math.random() < 0.35) {
+        const ns = a.createBufferSource(); ns.buffer = noiseBuf;
+        const hp = a.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2800 + Math.random() * 2000;
+        const ng = a.createGain(); env(ng, t, v * 0.35, 0.005, 0.07);
+        ns.connect(hp).connect(ng).connect(dest); ns.start(t); ns.stop(t + 0.09); voiceNodes.push(ns);
+      }
+      t += d;
+      if (Math.random() < 0.15 && k < count - 1) { amp.gain.setTargetAtTime(0.0001, t, 0.03); t += syl * 0.7; }
+    }
+    amp.gain.setTargetAtTime(0.0001, t, 0.05);
+    for (const n of [o, vib, breath]) { n.start(t0); n.stop(t + 0.4); voiceNodes.push(n); }
+  } catch (e) {}
+}
+
+export function initVoices() { if (window.speechSynthesis) { findThaiVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", findThaiVoice); } }
+export { voice, stopVoice };
 
 /** Unlock audio on the first tap and stop it cleanly when the page goes away (call once). */
 export function installAudioListeners() {

@@ -1,0 +1,51 @@
+<div class="streamer" id="streamer" [attr.data-mood]="s.mood()" aria-hidden="true">
+        <svg viewBox="0 0 320 280">
+          <rect x="22" y="22" width="92" height="72" rx="6" fill="#CFE0D6" stroke="#2F2620" stroke-width="3"/>
+          <path d="M68 22v72M22 58h92" stroke="#2F2620" stroke-width="3"/>
+          <path d="M210 70h92" stroke="#2F2620" stroke-width="4" stroke-linecap="round"/>
+          <path d="M226 68v-22l6-6 6 6v22z" fill="#FBF5E6" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M250 68c0-14 4-22 10-26 2 6 8 8 8 14 0 4-2 6-4 7l4 5z" fill="#2A2C31" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="288" cy="56" r="10" fill="#6E8B4E" stroke="#2F2620" stroke-width="2.5"/><path d="M282 68h12l-2-6h-8z" fill="#C0644A" stroke="#2F2620" stroke-width="2.5" stroke-linejoin="round"/>
+          <rect x="88" y="108" width="144" height="140" rx="22" fill="#3D5A80" stroke="#2F2620" stroke-width="3"/>
+          <g class="body">
+            <path d="M92 250c2-50 26-78 68-78s66 28 68 78z" fill="#C0644A" stroke="#2F2620" stroke-width="3"/>
+            <rect x="148" y="146" width="24" height="30" rx="6" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/>
+            <path d="M146 174l14 12 14-12" fill="none" stroke="#2F2620" stroke-width="3" stroke-linejoin="round"/>
+            <g class="head">
+              <circle cx="116" cy="118" r="9" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/>
+              <circle cx="204" cy="118" r="9" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/>
+              <circle cx="160" cy="114" r="45" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/>
+              <path d="M113 110c0-38 22-56 47-56s47 18 47 56c-14-5-28-15-37-28-12 16-35 28-57 28z" fill="#7A4A2A" stroke="#2F2620" stroke-width="3" stroke-linejoin="round"/>
+              <g data-part="cheeks"><ellipse cx="130" cy="136" rx="8" ry="5" fill="#E5574A" opacity=".45"/><ellipse cx="190" cy="136" rx="8" ry="5" fill="#E5574A" opacity=".45"/></g>
+              <g data-part="e-normal" class="blink"><circle cx="144" cy="120" r="5" fill="#2F2620"/><circle cx="176" cy="120" r="5" fill="#2F2620"/></g>
+              <g data-part="e-side" class="blink"><circle cx="149" cy="121" r="5" fill="#2F2620"/><circle cx="181" cy="121" r="5" fill="#2F2620"/></g>
+              <g data-part="e-down"><circle cx="141" cy="124" r="5" fill="#2F2620"/><circle cx="173" cy="124" r="5" fill="#2F2620"/><path d="M133 108l16 3M187 108l-16 3" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/></g>
+              <g data-part="e-happy" fill="none" stroke="#2F2620" stroke-width="4" stroke-linecap="round"><path d="M136 122q8-10 16 0"/><path d="M168 122q8-10 16 0"/></g>
+              <g data-part="e-wide"><circle cx="144" cy="119" r="10" fill="#fff" stroke="#2F2620" stroke-width="3"/><circle cx="176" cy="119" r="10" fill="#fff" stroke="#2F2620" stroke-width="3"/><circle cx="144" cy="119" r="3.5" fill="#2F2620"/><circle cx="176" cy="119" r="3.5" fill="#2F2620"/><path d="M132 102l16-4M188 102l-16-4" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/></g>
+              <g data-part="e-sad" fill="none" stroke="#2F2620" stroke-width="4" stroke-linecap="round"><path d="M136 120q8 6 16 0"/><path d="M168 120q8 6 16 0"/><path d="M134 108l14-5M186 108l-14-5" stroke-width="3.5"/></g>
+              <path data-part="m-smile" d="M149 139q11 9 22 0" fill="none" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/>
+              <path data-part="m-flat" d="M151 142h18" fill="none" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/>
+              <path data-part="m-big" d="M144 135q16 24 32 0z" fill="#8E2A22" stroke="#2F2620" stroke-width="3" stroke-linejoin="round"/>
+              <ellipse data-part="m-o" cx="160" cy="143" rx="7" ry="9" fill="#8E2A22" stroke="#2F2620" stroke-width="3"/>
+              <path data-part="m-frown" d="M149 146q11-9 22 0" fill="none" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/>
+              <path data-part="m-wavy" d="M148 142q4-5 8 0t8 0t8 0" fill="none" stroke="#2F2620" stroke-width="3.5" stroke-linecap="round"/>
+              <path data-part="sweat" d="M208 92q8 12 0 16q-8-4 0-16z" fill="#7FB3E0" stroke="#2F2620" stroke-width="2"/>
+              <path data-part="tear" d="M140 128q6 10 0 14q-6-4 0-14z" fill="#7FB3E0" stroke="#2F2620" stroke-width="2"/>
+            </g>
+            <g data-part="a-desk"><path d="M104 196q-12 36 22 44h32M216 196q12 36-22 44h-32" fill="none" stroke="#2F2620" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 196q-12 36 22 44h32M216 196q12 36-22 44h-32" fill="none" stroke="#C0644A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/></g>
+            <g data-part="a-chin"><path d="M104 196q-12 36 22 44h32M214 196q6 34-12 38l-30-70" fill="none" stroke="#2F2620" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M104 196q-12 36 22 44h32M214 196q6 34-12 38l-30-70" fill="none" stroke="#C0644A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><circle cx="171" cy="161" r="12" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/></g>
+            <g data-part="a-up"><path d="M108 188L72 120L62 80M212 188L248 120L258 80" fill="none" stroke="#2F2620" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M108 188L72 120L62 80M212 188L248 120L258 80" fill="none" stroke="#C0644A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="72" r="13" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/><circle cx="258" cy="72" r="13" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/></g>
+            <g data-part="a-cheeks"><path d="M106 194Q90 236 104 236Q112 190 120 146M214 194Q230 236 216 236Q208 190 200 146" fill="none" stroke="#2F2620" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/><path d="M106 194Q90 236 104 236Q112 190 120 146M214 194Q230 236 216 236Q208 190 200 146" fill="none" stroke="#C0644A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><circle cx="121" cy="136" r="12" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/><circle cx="199" cy="136" r="12" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/></g>
+          </g>
+          <rect x="-4" y="236" width="328" height="48" fill="#8F6A47" stroke="#2F2620" stroke-width="3"/>
+          <path d="M0 244h320" stroke="#B08A62" stroke-width="3"/>
+          <g data-part="hands-desk"><circle cx="150" cy="240" r="11" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/><circle class="tapping" cx="170" cy="240" r="11" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/></g>
+          <g data-part="hands-chin"><circle cx="150" cy="240" r="11" fill="#F2C9A5" stroke="#2F2620" stroke-width="3"/></g>
+          <g transform="translate(262 206)"><path d="M0 0h26v26q0 8-8 8h-10q-8 0-8-8z" fill="#FBF7EE" stroke="#2F2620" stroke-width="3" stroke-linejoin="round"/><path d="M26 6q10 0 10 8t-10 8" fill="none" stroke="#2F2620" stroke-width="3"/><path d="M8-6q-4-6 0-12M17-6q-4-6 0-12" fill="none" stroke="#9AA0A6" stroke-width="2.5" stroke-linecap="round"/></g>
+          <g data-part="think"><circle cx="222" cy="84" r="4" fill="#FBF7EE" stroke="#2F2620" stroke-width="2.5"/><circle cx="236" cy="66" r="7" fill="#FBF7EE" stroke="#2F2620" stroke-width="2.5"/><ellipse cx="270" cy="36" rx="34" ry="20" fill="#FBF7EE" stroke="#2F2620" stroke-width="2.5"/><g class="dots" fill="#2F2620"><circle cx="256" cy="36" r="4"/><circle cx="270" cy="36" r="4"/><circle cx="284" cy="36" r="4"/></g></g>
+          <g data-part="stars" fill="#F5C344" stroke="#2F2620" stroke-width="2" stroke-linejoin="round"><path d="M96 70l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1z"/><path d="M226 60l3 6 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1z"/></g>
+          <g data-part="confetti" class="confetti"><rect x="40" y="0" width="8" height="12" fill="#F5C344"/><rect x="90" y="0" width="8" height="12" fill="#E5574A"/><rect x="140" y="0" width="8" height="12" fill="#6E8B4E"/><rect x="190" y="0" width="8" height="12" fill="#3D5A80"/><rect x="240" y="0" width="8" height="12" fill="#E07A3E"/><rect x="285" y="0" width="8" height="12" fill="#F5C344"/><rect x="65" y="0" width="8" height="12" fill="#3D5A80"/><rect x="215" y="0" width="8" height="12" fill="#E5574A"/></g>
+        </svg>
+  <p class="say" [class.show]="s.sayShown()">{{ s.sayText() }}</p>
+  <span class="tag">{{ s.tag() }}</span>
+</div>
