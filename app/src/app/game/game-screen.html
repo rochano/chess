@@ -1,4 +1,4 @@
-<div class="app" id="app" [attr.data-board]="prefs.value().theme" [class.asblack]="flipped()" [class.streaming]="streamer.on()">
+<div class="app" id="app" [attr.data-board]="prefs.value().theme" [class.asblack]="flipped()" [class.streaming]="streamer.on()" [class.training]="g.mode() === 'train'">
   <header class="bar">
     <h1 class="brand"><img class="logo" src="img/logo.svg" alt="" width="34" height="34">Chess Game</h1>
     <div class="turn" id="turn" [attr.data-side]="g.st().turn" aria-live="polite">
@@ -35,9 +35,10 @@
           <button class="chip" id="resetView" (click)="battle.resetView()">{{ 'Reset view' | tr }}</button>
         </div>
       </div>
+      <div class="coach" id="coach" hidden><div class="coach-face" id="coachFace" aria-hidden="true"></div><div class="coach-body"><small class="coach-step" id="coachStep"></small><p class="coach-text" id="coachText" aria-live="polite"></p><p class="coach-fb" id="coachFb" hidden></p><div class="coach-acts" id="coachActs"></div></div></div>
       <app-taunt />
       <p class="status" id="status" aria-live="polite" [class.alert]="g.checkSq() >= 0 && !g.over()">{{ status() }}</p>
-      @if (g.over()) {
+      @if (g.over() && g.mode() !== 'train') {
         <div class="overbar" id="overBar">
           <button class="btn" (click)="ui.show('result')">{{ 'Show result' | tr }}</button>
           <button class="btn go" (click)="again()">{{ 'Play again' | tr }}</button>
@@ -46,6 +47,7 @@
     </section>
 
     <aside class="side">
+      <div class="lesson" id="lesson"><div class="ls-top"><span class="ls-num" id="lsNum"></span><span class="rankchip" id="lsRank"></span></div><h3 id="lsTitle"></h3><div class="ls-dots" id="lsDots"></div><div class="tipbox look"><b>{{ 'ควรดูตรงไหน' | tr }}</b><ul id="lsLook"></ul></div><div class="tipbox warn"><b>{{ 'ระวังอะไร' | tr }}</b><ul id="lsWarn"></ul></div><div class="row2"><button class="btn" id="lsExit">{{ 'ออก' | tr }}</button><button class="btn" id="lsList">{{ 'แผนที่' | tr }}</button></div></div>
       @for (c of sides; track c) {
         <div class="player" [id]="c === 'w' ? 'pW' : 'pB'" [class.on]="!g.over() && g.st().turn === c">
           <div class="avatar" [id]="c === 'w' ? 'avW' : 'avB'" [innerHTML]="(c === 'w' ? AVATAR['p1'] : g.mode() === 'cpu' ? AVATAR['cpu'] : AVATAR['p2']) | safeHtml"></div>

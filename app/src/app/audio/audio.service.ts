@@ -33,6 +33,7 @@ export class AudioService {
         case 'start': sfx.move(); startMusic(); break;
         case 'move': {
           const { move: m, next, check } = ev;
+          if (this.g.mode() === 'train' && this.g.over()) { sfx.end(this.g.over(), false); break; }
           if (this.g.over() || !this.g.moves().length || next.half >= 100) break; // 'end' plays the final sound
           if (check) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (next.captured) sfx.capture(); else sfx.move();
           break;

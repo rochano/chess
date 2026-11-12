@@ -54,7 +54,7 @@ export class GameScreenComponent {
   }
 
   sqClass(i: number) {
-    const g = this.g, last = g.last(), hint = g.hintMove(), t = g.targets();
+    const g = this.g, last = g.last(), hint = g.hintMove(), t = g.targets(); g.redraw();
     return {
       dark: ((i >> 3) + (i & 7)) % 2 === 1,
       last: !!last && (last.from === i || last.to === i),
@@ -65,6 +65,7 @@ export class GameScreenComponent {
       can: !!g.stuck() && g.moves().some(m => m.from === i),
       target: t.has(i),
       take: t.has(i) && (!!g.st().board[i] || !!t.get(i)!.ep),
+      look: !!g.look()?.includes(i),
     };
   }
   label(i: number) {

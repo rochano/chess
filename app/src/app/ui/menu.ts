@@ -1,3 +1,4 @@
+import { TrainService } from '../train/train.service';
 import { Component, computed, inject } from '@angular/core';
 import { track } from '../core/analytics';
 import { GameService } from '../core/game.service';
@@ -66,10 +67,10 @@ import { BattleService } from '../battle/battle.service';
       <h3 class="menu-hd" id="moreHd">{{ 'Practice & more' | tr }}</h3>
       <div class="field">
         <div class="row2">
-          <button class="btn daily" disabled>{{ 'Daily puzzle · โจทย์ประจำวัน' | tr }}</button>
-          <button class="btn" disabled>{{ 'How to play' | tr }}</button>
+          <button class="btn daily" id="openDaily" (click)="train.openDaily()"></button>
+          <button class="btn" id="openTut" (click)="train.openTutorial()">{{ 'How to play' | tr }}</button>
         </div>
-        <button class="btn road" disabled>{{ 'Road to master' | tr }}</button>
+        <button class="btn road" id="openTrain" (click)="train.openTrain()"></button>
       </div>
       <div class="field">
         <span class="lbl">{{ 'More' | tr }}</span>
@@ -89,6 +90,9 @@ export class MenuComponent {
   protected i18n = inject(I18nService);
   private prefs = inject(PrefsService);
   private battle = inject(BattleService);
+  protected train = inject(TrainService);
+  // The ported code draws these two buttons (streak, chapter pips) itself.
+  ngAfterViewInit() { this.train.syncButtons(); }
   protected p = this.prefs.value;
 
   protected readonly modes = [{ v: 'friend', label: 'Friend' }, { v: 'cpu', label: 'Computer' }, { v: 'online', label: 'Online' }] as const;

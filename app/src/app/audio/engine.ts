@@ -575,6 +575,7 @@ function mumble(text, level, v) {
 
 export function initVoices() { if (window.speechSynthesis) { findThaiVoice(); speechSynthesis.addEventListener && speechSynthesis.addEventListener("voiceschanged", findThaiVoice); } }
 export { voice, stopVoice };
+export const hasVoice = () => !!thaiVoice;
 
 /** Unlock audio on the first tap and stop it cleanly when the page goes away (call once). */
 export function installAudioListeners() {

@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { afterNextRender, Component, HostListener, inject } from '@angular/core';
 import { AudioService } from './audio/audio.service';
 import { GameService } from './core/game.service';
 import { UiService } from './core/ui.service';
@@ -8,12 +8,14 @@ import { BattleService } from './battle/battle.service';
 import { GameScreenComponent } from './game/game-screen';
 import { ConfirmComponent, CreditsComponent, PromoComponent, RecapComponent, ResultComponent } from './ui/dialogs';
 import { ShareService } from './share/share.service';
+import { TrainCardsComponent } from './train/train-cards';
+import { TrainService } from './train/train.service';
 import { MenuComponent } from './ui/menu';
 import { SettingsComponent } from './ui/settings';
 
 @Component({
   selector: 'app-root',
-  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent],
+  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent, TrainCardsComponent],
   host: { style: 'display: contents' },
   template: `
     <app-game-screen />
@@ -22,6 +24,7 @@ import { SettingsComponent } from './ui/settings';
     @if (ui.isOpen('credits')) { <app-credits /> }
     <app-result />
     <app-recap />
+    <app-train-cards />
     @if (g.pendingPromo()) { <app-promo /> }
     @if (ui.isOpen('confirm')) { <app-confirm /> }
   `,
@@ -30,7 +33,8 @@ export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
 
-  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); }
+  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init();
+    const train = inject(TrainService); afterNextRender(() => train.init()); }
 
   @HostListener('document:keydown.escape')
   escape() {

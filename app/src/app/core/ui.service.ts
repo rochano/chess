@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap';
+export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap' | 'train' | 'rankup' | 'tutorial';
 export interface ConfirmBox { title: string; text: string; yes: string; action: () => void; }
 
 /** Which full-screen card is open (the original game's show/hide/anyOverlay). */
@@ -15,7 +15,11 @@ export class UiService {
   any() { return this.open().size > 0; }
   show(o: Overlay) { this.open.update(s => new Set(s).add(o)); }
   hide(o: Overlay) { this.open.update(s => { const n = new Set(s); n.delete(o); return n; }); }
-  closeAll() { this.open.set(new Set()); }
+  closeAll() {
+    // Cards the ported code drives are always in the page: hide them now too, it reads .hidden straight after.
+    for (const id of this.open()) { const el = document.getElementById(id); if (el?.classList.contains('scrim')) el.hidden = true; }
+    this.open.set(new Set());
+  }
 
   confirm(title: string, text: string, yes: string, action: () => void) {
     this.confirmBox.set({ title, text, yes, action });

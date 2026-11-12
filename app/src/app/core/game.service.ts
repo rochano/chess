@@ -23,6 +23,16 @@ interface HistoryEntry {
   st: GameState; captured: Record<Color, Piece[]>; last: Move | null; started: boolean; keysLen: number;
   clk: Record<Color, number>; think: number; pick: number;
 }
+/** Road to master hooks into the game flow (Train in the original). */
+export interface TrainHooks {
+  side(): Color;
+  blocked(): boolean;
+  passTurn(): boolean;
+  after(m: Move, mover: Color): void;
+  status(): string;
+  teaching(): boolean;
+  hint(): void;
+}
 export type GameEvent =
   | { kind: 'start' }
   | { kind: 'move'; move: Move; prev: GameState; next: GameState; mover: Color; check: boolean }
@@ -58,6 +68,12 @@ export class GameService {
   readonly clocks = signal<Record<Color, number>>({ w: 0, b: 0 });
   readonly names = signal<Record<Color, string>>({ w: 'Player 1', b: 'Player 2' });
   readonly pendingPromo = signal<Move[] | null>(null);
+  /** Squares and arrows a lesson points at. */
+  readonly look = signal<number[] | null>(null);
+  readonly arrows = signal<[number, number][] | null>(null);
+  /** Bumped by code that changes state the signals can't see (the lesson runner's own fields). */
+  readonly redraw = signal(0);
+  train: TrainHooks | null = null;
   /** Square whose piece just landed, for the small lift animation. */
   readonly animTo = signal(-1);
 
@@ -75,7 +91,11 @@ export class GameService {
     return out;
   });
   /** The side this device plays, or null when both sides share the device. */
-  readonly myColor = computed<Color | null>(() => (this.mode() === 'cpu' ? 'w' : null));
+  readonly myColor = computed<Color | null>(() => {
+    this.redraw();
+    const m = this.mode();
+    return m === 'cpu' ? 'w' : m === 'train' && this.train ? this.train.side() : null;
+  });
   readonly humanTurn = computed(() => !this.over() && !this.thinking() && this.humanSide(this.st().turn));
 
   constructor() {
@@ -83,7 +103,11 @@ export class GameService {
     this.newGame();
   }
 
-  humanSide(c: Color) { const me = this.myColor(); return !me || c === me; }
+  humanSide(c: Color) {
+    if (this.mode() === 'train' && this.train?.blocked()) return false;
+    const me = this.myColor(); return !me || c === me;
+  }
+  render() { this.redraw.update(n => n + 1); }
 
   /** Overlays pause the clock; the UI sets this. */
   paused = () => false;
@@ -110,7 +134,7 @@ export class GameService {
     this.history.set([]);
     this.captured.set({ w: [], b: [] });
     this.selected.set(null); this.last.set(null); this.hintMove.set(null); this.over.set(null); this.stuck.set(null);
-    this.thinking.set(false); this.pendingPromo.set(null);
+    this.thinking.set(false); this.pendingPromo.set(null); this.look.set(null); this.arrows.set(null);
     this.keys.set([posKey(st)]);
     this.started = false;
     this.names.set({
@@ -166,6 +190,9 @@ export class GameService {
     }]);
     this.turnAt = now; this.selAt = 0;
     const next = applyMove(prev, m);
+    const train = this.mode() === 'train' && this.train;
+    const pass = !!train && train.passTurn();
+    if (pass) { next.turn = mover; next.ep = -1; }
     if (next.captured) this.captured.update(c => ({ ...c, [mover]: [...c[mover], next.captured!] }));
     const tc = this.tc();
     if (tc && this.started) this.clocks.update(c => ({ ...c, [mover]: c[mover] + tc.inc }));
@@ -176,13 +203,21 @@ export class GameService {
     this.keys.update(k => [...k, key]);
     const check = inCheck(next.board, next.turn);
     let over: GameOver | null = null;
-    if (!legalMoves(next).length) {
+    if (pass) over = null;
+    else if (!legalMoves(next).length) {
       over = check
         ? { type: 'mate', winner: mover, text: `Checkmate. ${mover === 'w' ? 'White' : 'Black'} wins.` }
         : { type: 'draw', stalemate: mover, text: 'Stalemate. The game is a draw.' };
     } else if (next.half >= 100) over = { type: 'draw', text: 'Draw by the fifty-move rule.' };
     else if (this.keys().filter(k => k === key).length >= 3) over = { type: 'draw', text: 'Draw by threefold repetition.' };
     else if (insufficient(next.board)) over = { type: 'draw', text: 'Draw. Neither side can force mate.' };
+    if (train) {
+      // Lessons judge the move themselves and never show the result card.
+      this.over.set(over);
+      this.events.next({ kind: 'move', move: m, prev, next, mover, check });
+      train.after(m, mover);
+      return;
+    }
     this.events.next({ kind: 'move', move: m, prev, next, mover, check });
     if (over) this.finish(over);
     else void this.maybeComputer();
@@ -226,6 +261,7 @@ export class GameService {
   }
 
   hint() {
+    if (this.mode() === 'train' && this.train) { this.train.hint(); return; }
     if (this.over() || this.thinking() || this.mode() === 'online') return;
     this.hinting.set(true);
     setTimeout(() => {
@@ -259,12 +295,16 @@ export class GameService {
 
   /** Status line under the board, as an English sentence for trS. */
   readonly statusText = computed(() => {
+    this.redraw();
     const st = this.st(), over = this.over(), stuck = this.stuck(), hint = this.hintMove();
-    if (over) return over.text;
+    const train = this.mode() === 'train' ? this.train : null;
+    if (over && !train) return over.text;
     if (stuck) return stuck.text;
+    if (train?.teaching()) return train.status();
     if (this.hinting()) return 'Thinking about a hint…';
     if (this.checkSq() >= 0) return `Check! ${st.turn === 'w' ? 'White' : 'Black'} must answer it.`;
-    if (hint) return `Hint: ${NAME[st.board[hint.from]![1] as PieceType]} ${sqName(hint.from)} to ${sqName(hint.to)}`;
+    if (hint && st.board[hint.from]) return `Hint: ${NAME[st.board[hint.from]![1] as PieceType]} ${sqName(hint.from)} to ${sqName(hint.to)}`;
+    if (train) return train.status();
     if (!this.history().length) return this.mode() === 'cpu' ? 'You play White. Tap a piece to see its moves.' : 'Tap a piece to see its moves.';
     return `Move ${Math.floor(this.history().length / 2) + 1}`;
   });

@@ -217,7 +217,7 @@ export function evaluate(board: Board): number {
   }
   return s;
 }
-function orderScore(st: GameState, m: Move) {
+export function orderScore(st: GameState, m: Move) {
   const target = st.board[m.to];
   const victim = m.ep ? 100 : target ? VAL[type(target)] : 0;
   return (victim ? victim * 10 - VAL[type(st.board[m.from]!)] / 10 : 0) + (m.promo === 'Q' ? 9000 : 0);
@@ -241,7 +241,7 @@ export function quiesce(st: GameState, alpha: number, beta: number, qd: number):
 
 const TIME_UP = Symbol('time');
 let stopAt = 0, nodes = 0; // optional time limit for a search
-function negamax(st: GameState, depth: number, alpha: number, beta: number, ply: number): number {
+export function negamax(st: GameState, depth: number, alpha: number, beta: number, ply: number): number {
   if (stopAt && (++nodes & 255) === 0 && Date.now() > stopAt) throw TIME_UP;
   const moves = legalMoves(st);
   if (!moves.length) return inCheck(st.board, st.turn) ? -(100000 - ply) : 0;
