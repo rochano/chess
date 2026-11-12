@@ -1,0 +1,23 @@
+<div class="bar">
+  @for (l of [1, 2, 3]; track l) {
+    <button class="chip" [attr.aria-pressed]="level() === l" (click)="newGame($any(l))">
+      {{ (l === 1 ? 'Easy' : l === 2 ? 'Normal' : 'Hard') | tr }}
+    </button>
+  }
+</div>
+<p class="status" aria-live="polite">{{ status() }}</p>
+<div class="board" role="grid">
+  @for (i of squares; track i) {
+    <button class="sq" role="gridcell"
+      [class.dark]="dark(i)"
+      [class.sel]="selected() === i"
+      [class.last]="last()?.from === i || last()?.to === i"
+      [class.check]="checkSq() === i"
+      [class.target]="targets().has(i)"
+      [class.cap]="targets().has(i) && !!st().board[i]"
+      (click)="tap(i)">
+      @if (glyph(i)) { <span class="pc" [class.w]="pieceColor(i) === 'w'" [class.b]="pieceColor(i) === 'b'">{{ glyph(i) }}</span> }
+    </button>
+  }
+</div>
+<button class="big" (click)="newGame()">{{ 'New game' | tr }}</button>

@@ -1,0 +1,10 @@
+/* Same palette as the original game (index.html :root). */
+:root {
+  --paper: #F3EDE0; --paper-2: #E8DFCB; --card: #FBF7EE; --stone: #D9D3C7;
+  --ink: #2F2620; --ink-soft: #6E5E50; --accent: #E07A3E;
+  --sq-light: #F1E4C3; --white-pc: #FBF5E6; --black-pc: #2A2C31;
+  --font-piece: 'Noto Sans Symbols 2', 'Segoe UI Symbol', 'DejaVu Sans', 'Apple Symbols', serif; --sq-dark: #4B3528;
+  --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+}
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font); }

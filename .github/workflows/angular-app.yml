@@ -1,0 +1,35 @@
+# Builds and tests the Angular version of the game (app/). The live game (index.html on GitHub Pages) is not touched.
+# Preview deploy to Firebase Hosting runs only once the FIREBASE_SERVICE_ACCOUNT and FIREBASE_PROJECT_ID secrets exist.
+name: Angular app
+on:
+  push:
+    paths: ['app/**', 'index.html', '.github/workflows/angular-app.yml']
+  pull_request:
+    paths: ['app/**', 'index.html', '.github/workflows/angular-app.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HAS_FIREBASE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npx ng test --watch=false
+      - run: npx ng build
+      - name: Deploy preview to Firebase Hosting
+        if: github.event_name == 'push' && env.HAS_FIREBASE == 'true'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          channelId: preview
+          entryPoint: app
