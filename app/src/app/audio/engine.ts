@@ -60,7 +60,8 @@ function clack(vol, when = 0, pitch = 1) {
     body.connect(lp).connect(og).connect(sfxBus); body.start(t); body.stop(t + 0.12);
   } catch (e) {}
 }
-const mv = () => host.prefs().volMove / 100, al = () => host.prefs().volAlert / 100;
+let volOv = null; // the replay soundtrack plays the piece sounds as loud as the game allows
+const mv = () => (volOv ? volOv.vm : host.prefs().volMove) / 100, al = () => (volOv ? volOv.va : host.prefs().volAlert) / 100;
 // Sound effects: wooden clacks for the pieces and real instrument samples (harp, pizzicato, horn,
 // timpani, cello) for everything else. No synth beeps.
 const SFX_INST = ["orchestral_harp", "pizzicato_strings", "timpani", "french_horn", "cello"];
@@ -591,3 +592,25 @@ export { sfx, startMusic, stopMusic, musicSting, updateMusic, MUSIC, ctx, unlock
 export function setOffline(a: Any, at: number, off: boolean) { audio = a; sfxAt = at; sfxOff = off; }
 export function audioState() { return { audio, sfxBus, musicBus, master, sfxAt, sfxOff }; }
 export function rebindBuses(s: Any) { ({ audio, sfxBus, musicBus, master } = s); }
+
+export { ORCH, INST, SFX_INST };
+/** Render sounds into an OfflineAudioContext (for the replay video); place(t) sets where the next sounds land. */
+export function offlineRender(off, run) {
+  const keep = { audio, sfxBus, musicBus, out: ORCH.out };
+  try {
+    audio = off; sfxOff = true; ORCH.out = null;
+    sfxBus = off.createGain(); sfxBus.connect(off.destination);
+    musicBus = off.createGain(); musicBus.gain.value = 0.4; musicBus.connect(off.destination);
+    volOv = { vm: 100, va: 85 };
+    run(t => { sfxAt = t; });
+  } finally {
+    audio = keep.audio; sfxBus = keep.sfxBus; musicBus = keep.musicBus; ORCH.out = keep.out; volOv = null;
+    sfxOff = false; sfxAt = 0;
+  }
+}
+/** The replay brings its own sound, so the after-game music steps aside while it plays. */
+export function musicDuck(on) {
+  if (!audio || !musicBus) return;
+  if (on) { musicBus.gain.cancelScheduledValues(audio.currentTime); musicBus.gain.setTargetAtTime(0, audio.currentTime, 0.2); }
+  else if (host.prefs().music) musicBus.gain.setTargetAtTime(musicLevel(), audio.currentTime, 0.4);
+}

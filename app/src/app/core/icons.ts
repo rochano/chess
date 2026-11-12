@@ -17,3 +17,9 @@ export const AVATAR: Record<string, string> = {
   p2: '<svg viewBox="0 0 46 46"><rect width="46" height="46" fill="#D5DCEA"/><path d="M7 46c1-9 7.5-13 16-13s15 4 16 13z" fill="#3D5A80" stroke="#2F2620" stroke-width="2"/><circle cx="23" cy="21" r="10" fill="#8D5B3E" stroke="#2F2620" stroke-width="2"/><path d="M13 18.5c0-6 4.5-9.5 10-9.5s10 3.5 10 9.5c-2.5-2-6-3-10-3s-7.5 1-10 3z" fill="#1F1A17" stroke="#2F2620" stroke-width="2" stroke-linejoin="round"/><circle cx="19.5" cy="22.5" r="1.4" fill="#1F1A17"/><circle cx="26.5" cy="22.5" r="1.4" fill="#1F1A17"/><path d="M20.5 26.5q2.5 2 5 0" fill="none" stroke="#1F1A17" stroke-width="1.6" stroke-linecap="round"/></svg>',
   cpu: '<svg viewBox="0 0 46 46"><rect width="46" height="46" fill="#E9DFC8"/><path d="M23 6v5" stroke="#2F2620" stroke-width="2" stroke-linecap="round"/><circle cx="23" cy="5.5" r="2.5" fill="#E07A3E" stroke="#2F2620" stroke-width="1.6"/><rect x="9" y="11" width="28" height="22" rx="6" fill="#9AA6B1" stroke="#2F2620" stroke-width="2"/><rect x="13.5" y="16" width="19" height="9" rx="4" fill="#2F2620"/><circle cx="18.5" cy="20.5" r="2" fill="#F5C344"/><circle cx="27.5" cy="20.5" r="2" fill="#F5C344"/><path d="M17 29h12" stroke="#2F2620" stroke-width="2" stroke-linecap="round"/><path d="M6 46c1-6 6-9 17-9s16 3 17 9z" fill="#7D8995" stroke="#2F2620" stroke-width="2"/></svg>',
 };
+
+export const THEMES: Record<string, string[]> = {
+  walnut: ['#F1E4C3', '#4B3528', '#8F6A47'],
+  sand: ['#F3E9D2', '#B08C66', '#A07A55'],
+  slate: ['#D8DCE0', '#4A525C', '#6A737D'],
+};

@@ -1,18 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { track } from '../core/analytics';
-import { ICON } from '../core/icons';
+import { ICON, THEMES } from '../core/icons';
 import { Prefs, PrefsService } from '../core/prefs.service';
 import { SafeHtmlPipe } from '../core/safe-html.pipe';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
+import { I18nService } from '../core/i18n.service';
 import { PieceType } from '../core/engine';
 import { SergeantService } from '../sergeant/sergeant.service';
 
-const THEMES: Record<string, string[]> = {
-  walnut: ['#F1E4C3', '#4B3528', '#8F6A47'],
-  sand: ['#F3E9D2', '#B08C66', '#A07A55'],
-  slate: ['#D8DCE0', '#4A525C', '#6A737D'],
-};
 
 /** Settings panel. Sound, Sergeant and 3D options are stored now and take effect as those parts are ported. */
 @Component({
@@ -65,6 +61,10 @@ const THEMES: Record<string, string[]> = {
       <div class="field"><span class="lbl">{{ 'Streamer character' | tr }}</span>
         <div class="seg">@for (v of onOff; track v) {<button [attr.aria-pressed]="p().streamer === v" (click)="set('streamer', v)">{{ cap(v) | tr }}</button>}</div>
         <p class="fine" style="margin:6px 0 0">{{ 'A player at a desk who reacts to your game against the computer or online. Handy for recording videos.' | tr }}</p></div>
+      @if (lang() === 'th') {
+        <div class="field" id="shopField"><span class="lbl">{{ 'Product tips after a game' | tr }}</span>
+          <div class="seg">@for (v of onOff; track v) {<button [attr.aria-pressed]="p().shop === v" (click)="set('shop', v)">{{ cap(v) | tr }}</button>}</div></div>
+      }
       <div class="field">
         <label class="lbl" for="theme">{{ 'Board theme' | tr }}</label>
         <select id="theme" (change)="set('theme', $any($event.target).value)">
@@ -83,6 +83,7 @@ export class SettingsComponent {
   private sergeant = inject(SergeantService);
   protected p = this.prefs.value;
   protected readonly ICON = ICON;
+  protected lang = inject(I18nService).lang;
   protected readonly sliders = [
     { key: 'volMusic', label: 'Music', icon: 'note' },
     { key: 'volMove', label: 'Move sounds', icon: 'vol' },

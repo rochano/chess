@@ -1,5 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { Color, GLYPH, NAME, opp, PieceType } from '../core/engine';
+import { Color, GLYPH, kingSq, NAME, opp, PieceType } from '../core/engine';
+import { BattleService } from '../battle/battle.service';
+import { ShareService } from '../share/share.service';
 import { GameService } from '../core/game.service';
 import { I18nService, PIECE_TH } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
@@ -79,24 +81,40 @@ export class PromoComponent {
   selector: 'app-result',
   imports: [TrPipe],
   host: { style: 'display: contents' },
+  // Always in the page (hidden when closed): the product tip and its light effects are placed into it directly.
   template: `
-@if (g.over(); as o) {
-<div class="scrim" id="result">
+<div class="scrim" id="result" [hidden]="!ui.isOpen('result')">
   <div class="card center" role="dialog" aria-labelledby="resTitle">
-    @if (o.type === 'draw') {<div class="result-badge draw">♚</div>}
-    @else {<div class="result-badge" [class]="o.type === 'mate' ? 'mate' : 'win'"><span class="pc" [class]="o.winner" style="font-size:44px">{{ king }}</span></div>}
-    <h2 id="resTitle">{{ title() }}</h2>
-    <p>{{ text() }}</p>
+    @if (g.over(); as o) {
+      @if (o.type === 'draw') {<div class="result-badge draw" id="resBadge">♚</div>}
+      @else {<div class="result-badge" id="resBadge" [class]="o.type === 'mate' ? 'mate' : 'win'"><span class="pc" [class]="o.winner" style="font-size:44px">{{ king }}</span></div>}
+    } @else {<div class="result-badge" id="resBadge"></div>}
+    <h2 id="resTitle">{{ g.over() ? title() : '' }}</h2>
+    <p id="resText">{{ g.over() ? text() : '' }}</p>
     <div class="row2">
-      <button class="btn" (click)="ui.hide('result')">{{ 'View board' | tr }}</button>
-      <button class="btn go" (click)="again()">{{ 'Play again' | tr }}</button>
+      <button class="btn" id="resView" (click)="view()">{{ 'View board' | tr }}</button>
+      <button class="btn go" id="resAgain" (click)="again()">{{ 'Play again' | tr }}</button>
+    </div>
+    <div class="share-row">
+      <button class="recap-tile" id="shareGo" (click)="share.openRecap()"><span class="rt-thumb"><img id="recapThumb" alt="" hidden><i class="rt-play" aria-hidden="true"></i></span><span class="rt-txt"><b id="rtTitle">{{ share.recapTitle() }}</b><small id="rtSub">{{ share.recapSub() }}</small></span><span class="rt-go" aria-hidden="true">›</span></button>
+    </div>
+    <div class="shop" id="shop" hidden>
+      <p class="shop-say" id="shopSay"></p>
+      <a class="shop-item" id="shopItem" target="_blank" rel="noopener sponsored">
+        <span class="shop-ic" id="shopIc"></span>
+        <span class="shop-txt"><b id="shopTitle"></b><small id="shopNote"></small></span>
+        <span class="shop-go">ดูสินค้า →</span>
+      </a>
+      <p class="shop-fine"><span id="shopAd"></span></p>
     </div>
   </div>
-</div>}`,
+</div>`,
 })
 export class ResultComponent {
   protected g = inject(GameService);
   protected ui = inject(UiService);
+  protected share = inject(ShareService);
+  private battle = inject(BattleService);
   private i18n = inject(I18nService);
   protected readonly king = GLYPH.K;
 
@@ -126,4 +144,35 @@ export class ResultComponent {
   });
 
   again() { this.ui.hide('result'); this.g.newGame(); this.ui.show('menu'); }
+  view() {
+    this.ui.hide('result');
+    const o = this.g.over();
+    if (this.battle.active() && o) this.battle.focus(kingSq(this.g.st().board, o.winner ? opp(o.winner) : this.g.st().turn));
+  }
+}
+
+@Component({
+  selector: 'app-recap',
+  host: { style: 'display: contents' },
+  // Always in the page (hidden when closed): the video and GIF are placed into it directly.
+  template: `
+<div class="scrim" id="recap" [hidden]="!ui.isOpen('recap')">
+  <div class="card center" role="dialog" aria-labelledby="recapTitle">
+    <h2 id="recapTitle"></h2>
+    <div class="recap-box"><video id="recapVid" playsinline controls loop hidden></video><img id="recapGif" alt="" hidden><p class="recap-wait" id="recapWait"></p></div>
+    <div class="share-row">
+      <span class="share-lbl">{{ i18n.t('ชวนเพื่อนมาเล่น', 'Invite a friend') }}</span>
+      <button class="chip" id="recapShare" (click)="share.shareGo()"></button>
+      <button class="chip line" id="shareLine" (click)="share.shareOpen('line')">LINE</button>
+      <button class="chip fb" id="shareFb" (click)="share.shareOpen('facebook')">Facebook</button>
+      <button class="chip" id="shareCopy" (click)="share.shareCopy()">{{ i18n.t('คัดลอกลิงก์', 'Copy link') }}</button>
+    </div>
+    <button class="btn" id="recapClose" (click)="share.closeRecap()"></button>
+  </div>
+</div>`,
+})
+export class RecapComponent {
+  protected ui = inject(UiService);
+  protected share = inject(ShareService);
+  protected i18n = inject(I18nService);
 }

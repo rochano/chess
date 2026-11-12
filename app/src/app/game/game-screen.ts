@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Color, GLYPH, opp, PieceType, sqName, NAME, VAL } from '../core/engine';
 import { fmtClock } from '../core/format';
 import { GameService } from '../core/game.service';
@@ -51,11 +51,6 @@ export class GameScreenComponent {
   constructor() {
     // Overlays pause the clock, as in the original game.
     this.g.paused = () => this.ui.any() || !!this.g.pendingPromo();
-    // When a game ends, show the result card after a short beat.
-    effect(() => {
-      const o = this.g.over();
-      if (o) setTimeout(() => { if (this.g.over() === o) this.ui.show('result'); }, o.type === 'mate' ? 650 : 200);
-    });
   }
 
   sqClass(i: number) {
