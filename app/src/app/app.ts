@@ -1,21 +1,36 @@
-import { Component } from '@angular/core';
-import { BoardComponent } from './game/board';
+import { Component, HostListener, inject } from '@angular/core';
+import { GameService } from './core/game.service';
+import { UiService } from './core/ui.service';
+import { GameScreenComponent } from './game/game-screen';
+import { ConfirmComponent, CreditsComponent, PromoComponent, ResultComponent } from './ui/dialogs';
+import { MenuComponent } from './ui/menu';
+import { SettingsComponent } from './ui/settings';
 
 @Component({
   selector: 'app-root',
-  imports: [BoardComponent],
+  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent],
+  host: { style: 'display: contents' },
   template: `
-    <header><img src="img/logo.svg" width="40" height="40" alt="" /><h1>Chess Game</h1><small>Angular preview</small></header>
-    <main><app-board /></main>
-    <footer>© 2026 Rochanapan. All rights reserved.</footer>
-  `,
-  styles: `
-    :host { display: grid; min-height: 100vh; grid-template-rows: auto 1fr auto; }
-    header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; }
-    h1 { margin: 0; font-size: 20px; }
-    small { border: 2px solid var(--ink); border-radius: 999px; padding: 2px 8px; font-weight: 800; font-size: 11px; }
-    main { padding: 8px 16px 24px; }
-    footer { text-align: center; padding: 12px; font-size: 12px; color: var(--ink-soft); }
+    <app-game-screen />
+    @if (ui.isOpen('menu')) { <app-menu /> }
+    @if (ui.isOpen('settings')) { <app-settings /> }
+    @if (ui.isOpen('credits')) { <app-credits /> }
+    @if (ui.isOpen('result')) { <app-result /> }
+    @if (g.pendingPromo()) { <app-promo /> }
+    @if (ui.isOpen('confirm')) { <app-confirm /> }
   `,
 })
-export class App {}
+export class App {
+  protected ui = inject(UiService);
+  protected g = inject(GameService);
+
+  @HostListener('document:keydown.escape')
+  escape() {
+    const ui = this.ui;
+    if (ui.isOpen('settings')) { ui.hide('settings'); if (ui.backToMenu) ui.show('menu'); ui.backToMenu = false; }
+    else if (ui.isOpen('credits')) { ui.hide('credits'); ui.show('menu'); }
+    else if (ui.isOpen('confirm')) ui.hide('confirm');
+    else if (ui.isOpen('result')) ui.hide('result');
+    else if (ui.isOpen('menu') && this.g.history().length && !this.g.over()) ui.hide('menu');
+  }
+}
