@@ -3,6 +3,7 @@
 /* eslint-disable */
 // The encoders are bundled (the original pulled them from a CDN) and load only when the first video is made.
 import { refTag } from "../cloud/ref";
+import { HOUSE_SHARE } from "../cloud/referral.service";
 const load = (u) => (u.includes("gifenc") ? import("gifenc/dist/gifenc.esm.js") : import("mp4-muxer"));
 
 export function create(deps) {
@@ -691,7 +692,8 @@ export function create(deps) {
       if (this.games - this.lastShown < gap) return;
       const want = mood === "stalemate" ? "learn" : mood;
       // A player who came through a friend's invite sees that friend's approved products first (for this mood, else any of them).
-      const mine = await refPicks();
+      // The game keeps a share of those showings for its own products (the platform fee, told to inviters on their page).
+      const mine = Math.random() < HOUSE_SHARE ? [] : await refPicks();
       let pool = mine.length ? (mine.some(i => i.moods.includes(want)) ? mine.filter(i => i.moods.includes(want)) : mine) : (await this.load()).filter(i => i.moods.includes(want));
       if (pool.length > 1) pool = pool.filter(i => i.id !== this.lastId); // not the same product twice in a row
       if (!pool.length) return;

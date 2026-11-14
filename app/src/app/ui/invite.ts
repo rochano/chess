@@ -4,7 +4,7 @@ import { I18nService } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
-import { IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
+import { HOUSE_SHARE, IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
 import { HOME_URL } from '../share/share.service';
 
 const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: '', img: '', moods: [...MOODS], status: 'pending' };
@@ -66,6 +66,7 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
     <section class="inv-sec" aria-labelledby="pickHd">
       <h3 id="pickHd">สินค้าแนะนำของฉัน</h3>
       <p class="fine">ใส่ลิงก์ Shopee Affiliate ของคุณเอง เพื่อนที่คุณชวนมาจะเห็นสินค้านี้หลังจบเกม ถ้าเขากดซื้อ ค่าคอมมิชชันจะเข้าบัญชี Shopee ของคุณ สินค้าจะขึ้นหลังผ่านการตรวจแล้ว</p>
+      <p class="fine">ค่าบริการแพลตฟอร์ม: ไม่เก็บเงิน แต่ทุก 10 ครั้งที่เพื่อนของคุณเห็นสินค้าหลังจบเกม จะเป็นสินค้าของคุณ {{ 10 - house }} ครั้ง และสินค้าของเกม {{ house }} ครั้ง</p>
       @if (!ref.google) {
         <button class="btn" (click)="login()">เข้าสู่ระบบด้วย Google</button>
         <p class="fine">ต้องเข้าสู่ระบบก่อน เพื่อให้สินค้าของคุณไม่หายเวลาเปลี่ยนเครื่อง</p>
@@ -113,6 +114,7 @@ export class InviteComponent {
   private ui = inject(UiService);
   protected readonly moods = MOODS;
   protected readonly max = MAX_PICKS;
+  protected readonly house = Math.round(HOUSE_SHARE * 10);
   protected readonly moodText: Record<Mood, string> = { lost: 'หลังแพ้', won: 'หลังชนะ', tense: 'เกมเครียด', learn: 'อยากเก่งขึ้น' };
   protected readonly statusText = { pending: 'รอตรวจ', ok: 'ขึ้นแล้ว', no: 'ไม่ผ่าน ลองแก้แล้วส่งใหม่' };
   protected code = computed(() => this.cloud.user() ? this.ref.code : '');

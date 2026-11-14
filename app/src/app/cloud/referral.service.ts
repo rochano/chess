@@ -15,6 +15,8 @@ export interface Pick { id?: string; owner: string; ref: string; name: string; t
 export const SHOPEE_RE = /^https:\/\/(s\.shopee\.co\.th|shope\.ee|shopee\.co\.th)\/\S*$/;
 export const IMG_RE = /^https:\/\/[a-z0-9.-]+\.susercontent\.com\/\S*$/;
 export const MAX_PICKS = 6;
+/** Platform fee, paid in showings instead of money: this share of the product tips an invited friend sees are the game's own products. */
+export const HOUSE_SHARE = 0.3;
 
 /** Invites (who brought whom) and the products each inviter recommends. */
 @Injectable({ providedIn: 'root' })
