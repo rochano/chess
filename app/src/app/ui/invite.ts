@@ -4,7 +4,7 @@ import { I18nService } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
-import { acceptedTerms, setAcceptedTerms, TERMS_VERSION, HOUSE_SHARE, IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
+import { acceptedTerms, flagWords, setAcceptedTerms, TERMS_VERSION, HOUSE_SHARE, IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
 import { HOME_URL } from '../share/share.service';
 
 const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: '', img: '', moods: [...MOODS], status: 'pending' };
@@ -117,6 +117,7 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
                 <label class="agree"><input type="checkbox" [checked]="agree()" (change)="agree.set($any($event.target).checked)">
                   <span>ฉันอ่านและยอมรับ <a href="#" (click)="$event.preventDefault(); openTerms()">ข้อกำหนดและเงื่อนไข</a> แล้ว</span></label>
               }
+              @if (flagWords(f); as w) { @if (w.length) { <p class="err">มีคำที่อาจผิดข้อกำหนด: {{ w.join(', ') }} สินค้านี้อาจไม่ผ่านการตรวจ</p> } }
               @if (err()) { <p class="err">{{ err() }}</p> }
               <div class="row2"><button class="btn" (click)="form.set(null); err.set('')">ยกเลิก</button><button class="btn go" [disabled]="busy()" (click)="save()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึก' }}</button></div>
             </div>
@@ -182,6 +183,7 @@ export class InviteComponent {
   add() { this.err.set(''); this.form.set({ ...EMPTY, moods: [...MOODS] }); }
   edit(p: Pick) { this.err.set(''); this.form.set({ ...p, moods: [...p.moods] }); }
   patch<K extends keyof Pick>(k: K, v: Pick[K]) { this.form.update(f => f && { ...f, [k]: v }); }
+  protected readonly flagWords = flagWords;
   toggle(m: Mood) { this.form.update(f => f && { ...f, moods: f.moods.includes(m) ? f.moods.filter(x => x !== m) : [...f.moods, m] }); }
 
   async save() {

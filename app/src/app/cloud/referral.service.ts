@@ -19,6 +19,31 @@ export const MAX_PICKS = 6;
 export const HOUSE_SHARE = 0.3;
 /** Raise when the inviter terms change: everyone is asked to accept again before adding or editing products. */
 export const TERMS_VERSION = 1;
+/**
+ * Words that usually mean a product breaks the inviter terms (vapes, alcohol, gambling, adult, miracle cures, weapons, fakes).
+ * Only a warning: the owner still decides, since a word can also appear in an innocent product name.
+ */
+export const BANNED = [
+  'บุหรี่', 'บุหรี่ไฟฟ้า', 'พอต', 'พอด', 'vape', 'pod', 'ยาเส้น', 'กัญชา', 'กระท่อม', 'cbd', 'thc',
+  'เหล้า', 'เบียร์', 'ไวน์', 'วิสกี้', 'แอลกอฮอล์', 'สุรา', 'beer', 'wine', 'whisky', 'vodka',
+  'คาสิโน', 'พนัน', 'บาคาร่า', 'สล็อต', 'หวย', 'แทงบอล', 'casino', 'slot', 'baccarat',
+  'เซ็กส์', 'เซ็กซ์', 'ผู้ใหญ่', 'ของเล่นผู้ใหญ่', 'ถุงยาง', 'sex', 'adult', '18+',
+  'ลดน้ำหนักเร็ว', 'ลดความอ้วน', 'ผอมเร็ว', 'ขาวไว', 'ขาวใน', 'อึด', 'เพิ่มขนาด', 'ยาฟิต', 'ยาลดน้ำหนัก', 'รักษาหาย', 'หายขาด',
+  'ปืน', 'กระสุน', 'มีดพับ', 'สนับมือ', 'สเปรย์พริกไทย', 'ช็อตไฟฟ้า', 'gun',
+  'ก๊อป', 'ก็อป', 'เกรดมิลเลอร์', 'มิลเลอร์', 'แบรนด์เนมเกรด', 'copy', 'replica', 'mirror',
+];
+/** The banned words found in a product's name, note and link (lower case; longest first so "บุหรี่ไฟฟ้า" is shown, not both). */
+export function flagWords(p: Pick | { title: string; note: string; url: string }): string[] {
+  let text = (p.title + ' ' + p.note + ' ' + p.url).toLowerCase();
+  try { text += ' ' + decodeURIComponent(p.url).toLowerCase(); } catch { /* bad escape */ }
+  const hits: string[] = [];
+  for (const w of [...BANNED].sort((a, b) => b.length - a.length)) {
+    const ascii = /^[a-z0-9+]+$/.test(w);
+    const found = ascii ? new RegExp('(^|[^a-z0-9])' + w.replace('+', '\\+') + '($|[^a-z0-9])').test(text) : text.includes(w);
+    if (found && !hits.some(h => h.includes(w))) hits.push(w);
+  }
+  return hits;
+}
 export function acceptedTerms() { try { return Number(localStorage.getItem('chess-terms') || 0); } catch { return 0; } }
 export function setAcceptedTerms(v: number) { try { localStorage.setItem('chess-terms', String(v)); } catch { /* private mode */ } }
 
