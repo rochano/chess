@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        "host": {
+          ".read": "auth != null",
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && $code.matches(/^[A-Z0-9]{5}$/)"
+        },
+        "guest": {
+          ".read": "auth != null",
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid && root.child('rooms').child($code).child('host').exists() && root.child('rooms').child($code).child('host').val() !== auth.uid"
+        },
+        "at": {
+          ".write": "auth != null && !data.exists()",
+          ".validate": "newData.val() === now"
+        },
+        "to_host": {
+          ".read": "auth != null && (auth.uid === root.child('rooms').child($code).child('host').val() || auth.uid === root.child('rooms').child($code).child('guest').val())",
+          "$m": {
+            ".write": "auth != null && !data.exists() && auth.uid === root.child('rooms').child($code).child('guest').val()",
+            ".validate": "newData.hasChildren(['n', 'd', 'at']) && newData.child('n').isNumber() && newData.child('d').hasChild('t') && newData.child('at').val() === now"
+          }
+        },
+        "to_join": {
+          ".read": "auth != null && (auth.uid === root.child('rooms').child($code).child('host').val() || auth.uid === root.child('rooms').child($code).child('guest').val())",
+          "$m": {
+            ".write": "auth != null && !data.exists() && auth.uid === root.child('rooms').child($code).child('host').val()",
+            ".validate": "newData.hasChildren(['n', 'd', 'at']) && newData.child('n').isNumber() && newData.child('d').hasChild('t') && newData.child('at').val() === now"
+          }
+        }
+      }
+    }
+  }
+}

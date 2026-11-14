@@ -1,0 +1,71 @@
+rules_version = '2';
+// Scores are written by the browser (Spark has no Cloud Functions), so these rules are the anti-cheat:
+// one game per write, at most 3 points and 32 Elo per game, at least 10 seconds between games.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function okName(n) { return n is string && n.size() >= 1 && n.size() <= 30; }
+    function playerKeys() { return ['name', 'p', 'w', 'd', 'l', 'pts', 'elo', 'google', 'updated']; }
+    function inc(n, o, k) { return n[k] is int && (n[k] == o[k] || n[k] == o[k] + 1); }
+    // The result of one game decides which counter moves and how points and Elo may change.
+    function oneGame(n, o) {
+      return n.p == o.p + 1 && inc(n, o, 'w') && inc(n, o, 'd') && inc(n, o, 'l')
+        && (n.w - o.w) + (n.d - o.d) + (n.l - o.l) == 1
+        && n.pts is int && n.elo is int && n.elo - o.elo <= 32 && o.elo - n.elo <= 32
+        && (n.w > o.w ? (n.pts - o.pts >= 1 && n.pts - o.pts <= 3 && n.elo >= o.elo)
+          : n.d > o.d ? n.pts - o.pts == 1
+          : n.pts == o.pts && n.elo <= o.elo);
+    }
+
+    match /players/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(playerKeys()) && request.resource.data.keys().hasAll(playerKeys())
+        && okName(request.resource.data.name) && request.resource.data.google is bool
+        && request.resource.data.updated == request.time
+        && oneGame(request.resource.data, { 'p': 0, 'w': 0, 'd': 0, 'l': 0, 'pts': 0, 'elo': 1000 });
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(playerKeys())
+        && okName(request.resource.data.name) && request.resource.data.updated == request.time
+        && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'updated'])
+          || (request.resource.data.google is bool && request.time > resource.data.updated + duration.value(10, 's')
+              && oneGame(request.resource.data, resource.data))
+        );
+      allow delete: if false;
+    }
+
+    match /games/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'opponent', 'level', 'result', 'reason', 'moves', 'minutes', 'at'])
+        && request.resource.data.result in ['w', 'd', 'l'] && request.resource.data.at == request.time
+        // Only together with the matching update of the player's totals (same batch).
+        && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.updated == request.time;
+      allow update, delete: if false;
+    }
+    // Online rooms: the host creates rooms/{CODE}, one guest claims it, and only those two can send or read its messages.
+    match /rooms/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && code.matches('[A-Z0-9]{5}')
+        && request.resource.data.keys().hasOnly(['host', 'guest', 'at'])
+        && request.resource.data.host == request.auth.uid && request.resource.data.guest == null
+        && request.resource.data.at == request.time;
+      allow update: if signedIn() && resource.data.guest == null && resource.data.host != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest'])
+        && request.resource.data.guest == request.auth.uid;
+      allow delete: if false;
+
+      match /msgs/{id} {
+        function room() { return get(/databases/$(database)/documents/rooms/$(code)).data; }
+        allow read: if signedIn() && request.auth.uid in [room().host, room().guest];
+        allow create: if signedIn() && request.auth.uid in [room().host, room().guest]
+          && request.resource.data.keys().hasOnly(['to', 'n', 'd', 'from', 'at'])
+          && request.resource.data.from == request.auth.uid && request.resource.data.to in ['host', 'join']
+          && request.resource.data.n is int && request.resource.data.d is map && request.resource.data.d.size() <= 8
+          && request.resource.data.at == request.time;
+        allow update, delete: if false;
+      }
+    }
+  }
+}

@@ -1,0 +1,74 @@
+<div class="app" id="app" [attr.data-board]="prefs.value().theme" [class.asblack]="flipped()" [class.streaming]="streamer.on()" [class.training]="g.mode() === 'train'">
+  <header class="bar">
+    <h1 class="brand"><img class="logo" src="img/logo.svg" alt="" width="34" height="34">Chess Game</h1>
+    <div class="turn" id="turn" [attr.data-side]="g.st().turn" aria-live="polite">
+      <span class="orb" id="turnIcon" [innerHTML]="(g.st().turn === 'w' ? ICON['sun'] : ICON['moon']) | safeHtml"></span><span id="turnText">{{ turnText() }}</span>
+    </div>
+    <button class="gear music" id="musicBtn" [attr.aria-label]="(prefs.value().music ? 'Music on' : 'Music off') | tr"
+      [attr.aria-pressed]="prefs.value().music" [title]="'Music' | tr" (click)="toggleMusic()"
+      [innerHTML]="(prefs.value().music ? ICON['note'] : ICON['noteOff']) | safeHtml"></button>
+    @if (battle.ok()) {<button class="gear view" id="viewBtn" [title]="'Switch view' | tr"
+      [attr.aria-label]="(battle.active() ? 'Switch to the flat 2D board' : 'Switch to the 3D battlefield') | tr" (click)="battle.toggleView()">{{ battle.active() ? '2D' : '3D' }}</button>}
+    <button class="gear" id="openSettings" [attr.aria-label]="'Settings' | tr" [title]="'Settings' | tr" (click)="openSettings()" [innerHTML]="ICON['gear'] | safeHtml"></button>
+  </header>
+
+  <main class="table">
+    <section class="board-col">
+      <div class="frame">
+        <div class="files top" aria-hidden="true">@for (f of files(); track f) {<span>{{ f }}</span>}</div>
+        <div class="ranks left" aria-hidden="true">@for (r of ranks(); track r) {<span>{{ r }}</span>}</div>
+        <div class="board" id="board" role="grid" [attr.aria-label]="'Chess board' | tr">
+          @for (i of order(); track i) {
+            <button class="sq" [class]="sqClass(i)" role="gridcell" [attr.aria-label]="label(i)" (click)="battle.tipHide(); tap(i)"
+              (pointermove)="$event.pointerType === 'mouse' && battle.tipShow(i, $event.clientX, $event.clientY)" (pointerleave)="battle.tipHide()">
+              @if (glyph(i)) {<span class="pc" [class.w]="pc(i) === 'w'" [class.b]="pc(i) === 'b'" [class.lift]="g.animTo() === i">{{ glyph(i) }}</span>}
+            </button>
+          }
+        </div>
+        <div class="ranks right" aria-hidden="true">@for (r of ranks(); track r) {<span>{{ r }}</span>}</div>
+        <div class="files bottom" aria-hidden="true">@for (f of files(); track f) {<span>{{ f }}</span>}</div>
+      </div>
+      <div class="battle" id="battle" hidden>
+        <canvas id="battleCanvas" [attr.aria-label]="'3D battlefield. Tap a piece, then tap where it should go. Drag to look around.' | tr"></canvas>
+        <div class="battle-hud">
+          <button class="chip" id="followBtn" [attr.aria-pressed]="battle.follow()" (click)="battle.toggleFollow()">{{ (battle.follow() ? 'Follow camera: on' : 'Follow camera: off') | tr }}</button>
+          <button class="chip" id="resetView" (click)="battle.resetView()">{{ 'Reset view' | tr }}</button>
+        </div>
+      </div>
+      <div class="coach" id="coach" hidden><div class="coach-face" id="coachFace" aria-hidden="true"></div><div class="coach-body"><small class="coach-step" id="coachStep"></small><p class="coach-text" id="coachText" aria-live="polite"></p><p class="coach-fb" id="coachFb" hidden></p><div class="coach-acts" id="coachActs"></div></div></div>
+      <app-taunt />
+      <p class="status" id="status" aria-live="polite" [class.alert]="g.checkSq() >= 0 && !g.over()">{{ status() }}</p>
+      @if (g.over() && g.mode() !== 'train') {
+        <div class="overbar" id="overBar">
+          <button class="btn" (click)="ui.show('result')">{{ 'Show result' | tr }}</button>
+          <button class="btn go" (click)="again()">{{ 'Play again' | tr }}</button>
+        </div>
+      }
+    </section>
+
+    <aside class="side">
+      <div class="lesson" id="lesson"><div class="ls-top"><span class="ls-num" id="lsNum"></span><span class="rankchip" id="lsRank"></span></div><h3 id="lsTitle"></h3><div class="ls-dots" id="lsDots"></div><div class="tipbox look"><b>{{ 'ควรดูตรงไหน' | tr }}</b><ul id="lsLook"></ul></div><div class="tipbox warn"><b>{{ 'ระวังอะไร' | tr }}</b><ul id="lsWarn"></ul></div><div class="row2"><button class="btn" id="lsExit">{{ 'ออก' | tr }}</button><button class="btn" id="lsList">{{ 'แผนที่' | tr }}</button></div></div>
+      @for (c of sides; track c) {
+        <div class="player" [id]="c === 'w' ? 'pW' : 'pB'" [class.on]="!g.over() && g.st().turn === c">
+          <div class="avatar" [id]="c === 'w' ? 'avW' : 'avB'" [innerHTML]="(c === 'w' ? AVATAR['p1'] : g.mode() === 'cpu' ? AVATAR['cpu'] : AVATAR['p2']) | safeHtml"></div>
+          <div class="pname" [id]="c === 'w' ? 'nameW' : 'nameB'">{{ g.names()[c] | tr }}<small>{{ (c === 'w' ? 'White' : 'Black') | tr }}@if (g.mode() === 'online') { · {{ (c === g.myColor() ? 'You' : 'Online') | tr }}} @else if (c === 'b') { · {{ (g.mode() === 'cpu' ? levelName() : 'Friend') | tr }}}</small></div>
+          @if (g.mode() === 'online' && c !== g.myColor() && net.rtt(); as r) {<span class="ping" [class.slow]="r.ms > 300" [title]="r.via === 'p2p' ? 'Direct connection' : 'Through the server'">{{ r.ms }} ms · {{ r.via === 'p2p' ? 'P2P' : 'DB' }}</span>}
+          @if (g.tc()) {<div class="clock" [id]="c === 'w' ? 'clockW' : 'clockB'" [class.low]="g.clocks()[c] < 20000">{{ fmt(g.clocks()[c]) }}</div>}
+          <div class="caps" [id]="c === 'w' ? 'capsW' : 'capsB'">
+            @let cp = caps(c);
+            @for (p of cp.list; track $index) {<span [class]="p[0]">{{ glyphOf(p) }}</span>}
+            @if (cp.list.length && cp.diff > 0) {<span class="adv">+{{ cp.diff }}</span>}
+            @if (!cp.list.length) {<span class="none">{{ 'No captures yet' | tr }}</span>}
+          </div>
+        </div>
+      }
+      <div class="controls">
+        <button class="tool t-undo" [disabled]="g.thinking() || !g.history().length || g.mode() === 'online'" (click)="g.undo()"><div class="ic" [innerHTML]="ICON['undo'] | safeHtml"></div><span>{{ 'Undo' | tr }}</span></button>
+        <button class="tool t-reset" (click)="reset()"><div class="ic" [innerHTML]="ICON['reset'] | safeHtml"></div><span>{{ 'Reset' | tr }}</span></button>
+        <button class="tool t-resign" [disabled]="!!g.over() || g.thinking()" (click)="resign()"><div class="ic" [innerHTML]="ICON['resign'] | safeHtml"></div><span>{{ 'Resign' | tr }}</span></button>
+        <button class="tool t-hint" [disabled]="!g.humanTurn()" (click)="g.hint()"><div class="ic" [innerHTML]="ICON['hint'] | safeHtml"></div><span>{{ 'Hint' | tr }}</span></button>
+      </div>
+      <app-streamer />
+    </aside>
+  </main>
+</div>
