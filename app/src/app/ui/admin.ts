@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
-import { Pick, PickStatus, ReferralService } from '../cloud/referral.service';
+import { flagWords, Pick, PickStatus, ReferralService } from '../cloud/referral.service';
 
 type Row = Pick & { at?: Date };
 
@@ -22,6 +22,8 @@ type Row = Pick & { at?: Date };
     .st { font-size: 12px; font-weight: 800; padding: 1px 8px; border-radius: 999px; border: 1.5px solid var(--ink); }
     .st.pending { background: var(--sun); } .st.ok { background: var(--leaf); color: #fff; } .st.no { background: var(--flag); color: #fff; }
     table { width: 100%; border-collapse: collapse; } td, th { text-align: left; padding: 6px 8px; border-bottom: 1.5px solid var(--paper-2); }
+    .flag { justify-self: start; font-size: 13px; font-weight: 800; padding: 2px 10px; border-radius: 8px; background: var(--flag); color: #fff; }
+    .ad-item.sus { border-color: var(--flag); }
     code { background: var(--paper-2); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
   `,
   template: `
@@ -51,9 +53,10 @@ type Row = Pick & { at?: Date };
         } @else {
           <div class="ad-list">
             @for (p of shown(); track p.id) {
-              <div class="ad-item">
+              <div class="ad-item" [class.sus]="p.flags.length">
                 <span class="ph" [style.background-image]="p.img ? 'url(' + p.img + ')' : null">{{ p.img ? '' : '🛍️' }}</span>
                 <div class="tx">
+                  @if (p.flags.length) { <span class="flag">⚠ น่าสงสัย: มีคำว่า {{ p.flags.join(', ') }}</span> }
                   <b>{{ p.title }}</b>
                   @if (p.note) { <span>{{ p.note }}</span> }
                   <span class="fine">โดย {{ p.name }} · {{ p.at ? p.at.toLocaleDateString('th-TH') : '' }} · <span [class]="'st ' + p.status">{{ label[p.status] }}</span></span>
@@ -68,7 +71,7 @@ type Row = Pick & { at?: Date };
             } @empty { <p class="fine">ไม่มีรายการ</p> }
           </div>
         }
-        <p class="fine">ก่อนกด "ให้ขึ้น" ลองกดลิงก์ดูว่าพาไปสินค้าใน Shopee จริง และชื่อกับรูปตรงกับสินค้า</p>
+        <p class="fine">ก่อนกด "ให้ขึ้น" ลองกดลิงก์ดูว่าพาไปสินค้าใน Shopee จริง และชื่อกับรูปตรงกับสินค้า ป้ายแดง "น่าสงสัย" ขึ้นเมื่อเจอคำที่มักผิดข้อกำหนด เป็นแค่การเตือน ระบบดูของจริงหลังลิงก์ไม่ได้</p>
       }
     }
     @if (err()) { <p class="fine" style="color: var(--flag)">{{ err() }}</p> }
@@ -88,7 +91,7 @@ export class AdminComponent {
   protected err = signal('');
   protected readonly label = { pending: 'รอตรวจ', ok: 'ขึ้นแล้ว', no: 'ไม่ผ่าน' };
   protected uid = computed(() => this.cloud.user()?.uid ?? '');
-  protected shown = computed(() => this.rows().filter(r => r.status === this.tab()).sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0)));
+  protected shown = computed(() => this.rows().filter(r => r.status === this.tab()).map(r => ({ ...r, flags: flagWords(r) })).sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0)));
   protected people = computed(() => {
     const names = new Map<string, string>(), ok = new Map<string, number>(), mail = new Map<string, string>();
     for (const r of this.rows()) { names.set(r.ref, r.name); mail.set(r.ref, this.owners().get(r.owner)?.email || ''); if (r.status === 'ok') ok.set(r.ref, (ok.get(r.ref) || 0) + 1); }
@@ -111,7 +114,7 @@ export class AdminComponent {
     } catch (e) { console.warn('admin', e); this.err.set('โหลดข้อมูลไม่ได้ ลองใหม่อีกครั้ง'); this.state.set('ok'); }
   }
   async login() { try { await this.cloud.signInGoogle(); } catch { /* closed */ } await this.load(); }
-  async set(p: Row, s: PickStatus) {
+  async set(p: Pick, s: PickStatus) {
     try { await this.ref.setStatus(p.id!, s); this.rows.update(rs => rs.map(r => r.id === p.id ? { ...r, status: s } : r)); }
     catch (e) { console.warn('status', e); this.err.set('เปลี่ยนสถานะไม่ได้'); }
   }
