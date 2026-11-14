@@ -837,3 +837,7 @@ select {
 .stile i.down { color: var(--flag); }
 @keyframes stileIn { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .stile { animation: none; } }
+/* Invite friends: full width under Leaderboard and Settings */
+#menu .row2 > .invite { grid-column: 1 / -1; }
+/* Short wide screens: Leaderboard and Settings share a row so the column still ends level with Start game */
+@media (min-width: 760px) and (max-height: 820px) { #menu .menu-more .row2:has(> .invite) { grid-template-columns: 1fr 1fr; } }
