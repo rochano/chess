@@ -45,7 +45,7 @@ export class TrainService {
     // ?puzzle=YYYY-MM-DD opens that day's puzzle straight away.
     const q = new URLSearchParams(location.search);
     if (q.get('puzzle')) setTimeout(() => this.L.Daily.open(q.get('puzzle')), 200);
-    else if (!lsGet('chess-tut', 0) && !q.get('preview') && q.get('intro') === null) setTimeout(() => { this.ui.hide('menu'); this.L.Tutorial.open(); }, 200);
+    else if (!lsGet('chess-tut', 0) && !q.get('preview') && !q.get('vs') && q.get('intro') === null) setTimeout(() => { this.ui.hide('menu'); this.L.Tutorial.open(); }, 200);
   }
 
   private deps() {

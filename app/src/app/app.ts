@@ -14,6 +14,8 @@ import { LeaderComponent, LeaderService } from './ui/leaderboard';
 import { CloudService } from './cloud/cloud.service';
 import { NetService } from './net/net.service';
 import { MenuComponent } from './ui/menu';
+import { GhostCardComponent } from './ui/ghost-card';
+import { GhostService } from './cloud/ghost.service';
 import { SettingsComponent } from './ui/settings';
 import { InviteComponent } from './ui/invite';
 import { AdminComponent } from './ui/admin';
@@ -21,7 +23,7 @@ import { ReferralService } from './cloud/referral.service';
 
 @Component({
   selector: 'app-root',
-  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent, TrainCardsComponent, LeaderComponent, InviteComponent, AdminComponent],
+  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent, TrainCardsComponent, LeaderComponent, InviteComponent, AdminComponent, GhostCardComponent],
   host: { style: 'display: contents' },
   template: `
     <app-game-screen />
@@ -31,6 +33,7 @@ import { ReferralService } from './cloud/referral.service';
     @if (ui.isOpen('leader')) { <app-leader /> }
     @if (ui.isOpen('invite')) { @defer (on immediate) { <app-invite /> } }
     @if (ui.isOpen('admin')) { @defer (on immediate) { <app-admin /> } }
+    @if (ui.isOpen('ghost')) { <app-ghost /> }
     <app-result />
     <app-recap />
     <app-train-cards />
@@ -42,7 +45,7 @@ export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
 
-  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); inject(LeaderService).init(); inject(CloudService).init(); inject(ReferralService);
+  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); inject(LeaderService).init(); inject(CloudService).init(); inject(ReferralService); inject(GhostService).init();
     // ?admin opens the owner's page for approving recommended products.
     if (new URLSearchParams(location.search).has('admin')) { this.ui.hide('menu'); this.ui.show('admin'); }
     const net = inject(NetService); afterNextRender(() => net.init());
@@ -54,6 +57,7 @@ export class App {
     if (ui.isOpen('settings')) { ui.hide('settings'); if (ui.backToMenu) ui.show('menu'); ui.backToMenu = false; }
     else if (ui.isOpen('credits')) { ui.hide('credits'); ui.show('menu'); }
     else if (ui.isOpen('leader')) { ui.hide('leader'); ui.show('menu'); }
+    else if (ui.isOpen('ghost')) { ui.hide('ghost'); ui.show(ui.ghostFrom); }
     else if (ui.isOpen('confirm')) ui.hide('confirm');
     else if (ui.isOpen('invite')) { ui.hide('invite'); ui.show('menu'); }
     else if (ui.isOpen('admin')) { ui.hide('admin'); ui.show('menu'); }

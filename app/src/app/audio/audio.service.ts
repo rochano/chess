@@ -40,7 +40,7 @@ export class AudioService {
         }
         case 'end': {
           const o = ev.over, me = this.g.myColor();
-          sfx.end(o, this.g.mode() === 'cpu' && o.winner === 'b');
+          sfx.end(o, this.g.mode() === 'cpu' && o.winner === this.g.cpuColor());
           musicSting(o.type === 'draw' ? 'draw' : me && o.winner !== me ? 'lose' : 'win');
           break;
         }

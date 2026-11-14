@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap' | 'train' | 'rankup' | 'tutorial' | 'leader' | 'invite' | 'admin';
+export type Overlay = 'menu' | 'settings' | 'credits' | 'confirm' | 'result' | 'recap' | 'train' | 'rankup' | 'tutorial' | 'leader' | 'invite' | 'admin' | 'ghost';
 export interface ConfirmBox { title: string; text: string; yes: string; action: () => void; }
 
 /** Which full-screen card is open (the original game's show/hide/anyOverlay). */
@@ -10,6 +10,8 @@ export class UiService {
   readonly confirmBox = signal<ConfirmBox | null>(null);
   /** Settings opened from the menu go back to the menu when closed. */
   backToMenu = false;
+  /** Where the bot challenge card goes back to. */
+  ghostFrom: Overlay = 'menu';
 
   isOpen(o: Overlay) { return this.open().has(o); }
   any() { return this.open().size > 0; }

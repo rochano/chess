@@ -7,3 +7,10 @@ img { max-width: 100%; }
 .player .ping { position: absolute; right: 10px; bottom: 6px; font: 700 11px/1 Nunito, sans-serif; color: #3E7D4F; background: rgba(62,125,79,.12); padding: 3px 7px; border-radius: 99px; font-variant-numeric: tabular-nums; }
 .player .ping.slow { color: #B23A2E; background: rgba(178,58,46,.12); }
 .player { position: relative; }
+.lb tr.vs { cursor: pointer; }
+.lb tr.vs td:nth-child(2) { text-decoration: underline dotted rgba(47, 38, 32, 0.5); text-underline-offset: 3px; }
+.lb tr.vs:hover td { background: rgba(245, 195, 68, 0.2); }
+.mybot { border: 2.5px solid var(--ink); border-radius: 12px; background: var(--paper-2); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.mybot p { margin: 0; line-height: 1.45; }
+.mybot .botpts { font-weight: 800; color: #3E7D4F; }
+.mybot .chip { box-shadow: 0 2px 0 var(--ink); }

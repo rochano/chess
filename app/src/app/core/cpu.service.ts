@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { cpuMove, GameState, legalMoves, Level, Move } from './engine';
+import { GhostPlay, ghostMove } from './ghost';
 
 @Injectable({ providedIn: 'root' })
 export class CpuService {
@@ -15,13 +16,13 @@ export class CpuService {
   }
 
   /** Pick the computer's move. Like the original game, it always takes at least a short "think" pause. */
-  async think(st: GameState, level: Level, avoid: string[] = []): Promise<Move | null> {
+  async think(st: GameState, level: Level, avoid: string[] = [], ghost?: GhostPlay): Promise<Move | null> {
     // Longer in busy positions, a little random, never instant (thinkTime in the original).
     const busy = Math.min(1, legalMoves(st).length / 35);
     const pause = new Promise(r => setTimeout(r, 900 + busy * 900 + Math.random() * 900));
     const pick = this.worker
-      ? new Promise<Move | null>(res => { const id = ++this.seq; this.waiting.set(id, res); this.worker!.postMessage({ id, st, level, avoid }); })
-      : Promise.resolve(cpuMove(st, level, new Set(avoid)));
+      ? new Promise<Move | null>(res => { const id = ++this.seq; this.waiting.set(id, res); this.worker!.postMessage({ id, st, level, avoid, ghost }); })
+      : Promise.resolve(ghost ? ghostMove(st, ghost, new Set(avoid)) : cpuMove(st, level, new Set(avoid)));
     const [move] = await Promise.all([pick, pause]);
     return move;
   }

@@ -48,6 +48,7 @@ import { BattleService } from '../battle/battle.service';
             }
           </div>
           <p class="fine" style="margin:6px 0 0">{{ levelNote() | tr }}</p>
+          <p class="friendqr" id="botPick"><span>{{ i18n.t('อยากแข่งกับบอทที่เล่นเหมือนผู้เล่นจริง?', 'Want a bot that plays like a real player?') }}</span><button class="chip" (click)="ui.closeAll(); ui.show('leader')">{{ i18n.t('เลือกจากกระดานคะแนน', 'Pick one on the leaderboard') }}</button></p>
         </div>
       }
       <div class="field">

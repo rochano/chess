@@ -1,4 +1,5 @@
 import { NetService } from '../net/net.service';
+import { GhostService } from '../cloud/ghost.service';
 import { Component, computed, inject } from '@angular/core';
 import { Color, GLYPH, opp, PieceType, sqName, NAME, VAL } from '../core/engine';
 import { fmtClock } from '../core/format';
@@ -98,7 +99,8 @@ export class GameScreenComponent {
     const [me, them] = who === 'w' ? ['White', 'Black'] : ['Black', 'White'];
     this.ui.confirm('Resign this game?', `${me} resigns and ${them} is awarded the win.`, 'Resign', () => this.g.resign());
   }
-  again() { if (this.g.mode() === 'online') { this.net.again(); return; } this.g.newGame(); this.ui.show('menu'); }
+  again() { if (this.g.mode() === 'online') { this.net.again(); return; } if (this.ghost.rematch()) return; this.g.newGame(); this.ui.show('menu'); }
+  private ghost = inject(GhostService);
   protected net = inject(NetService);
   toggleMusic() { this.prefs.set('music', !this.prefs.get().music); }
   openSettings() { this.ui.backToMenu = false; this.ui.show('settings'); }

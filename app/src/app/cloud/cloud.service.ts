@@ -9,7 +9,7 @@ import { PrefsService } from '../core/prefs.service';
 import { CPU_ELO, eloAfter, pointsFor, START_ELO } from './elo';
 import { FIREBASE_CONFIG } from './firebase-config';
 
-export interface Player { name: string; p: number; w: number; d: number; l: number; pts: number; elo: number; google?: boolean; }
+export interface Player { name: string; p: number; w: number; d: number; l: number; pts: number; elo: number; google?: boolean; bot?: number; botAt?: unknown; }
 export type SaveState = '' | 'saving' | 'saved' | 'failed';
 
 /**
@@ -55,7 +55,7 @@ export class CloudService {
   }
 
   /** The name shown on the leaderboard: the name typed in the menu (or the auto animal name). */
-  private myName() { return String(this.prefs.get().nameW || this.g.names().w || 'Player').trim().slice(0, 30); }
+  myName() { return String(this.prefs.get().nameW || this.g.names().w || 'Player').trim().slice(0, 30); }
 
   /** One finished game: a record in games/ and the player's totals, in one batch. Lessons and friend games on one device don't count. */
   private async report(over: GameOver) {
@@ -68,7 +68,7 @@ export class CloudService {
       const u = this.user(); if (!u) throw new Error('no user');
       const F = await import('firebase/firestore');
       const level = this.g.level();
-      const res: 'w' | 'd' | 'l' = over.type === 'draw' ? 'd' : over.winner === 'w' ? 'w' : 'l';
+      const res: 'w' | 'd' | 'l' = over.type === 'draw' ? 'd' : over.winner === (this.g.myColor() ?? 'w') ? 'w' : 'l';
       const ref = F.doc(this.db!, 'players', u.uid);
       const old = (await F.getDoc(ref)).data() as Player | undefined;
       const base: Player = old ?? { name: this.myName(), p: 0, w: 0, d: 0, l: 0, pts: 0, elo: START_ELO };
@@ -77,11 +77,13 @@ export class CloudService {
       const next = {
         name: this.myName(), p: base.p + 1, w: base.w + (res === 'w' ? 1 : 0), d: base.d + (res === 'd' ? 1 : 0), l: base.l + (res === 'l' ? 1 : 0),
         pts: base.pts + pts, elo, google: !u.isAnonymous, updated: F.serverTimestamp(),
+        // Points already given for the player's bot's wins stay as they are (see GhostService.claim).
+        ...(old?.bot !== undefined ? { bot: old.bot, botAt: old.botAt } : {}),
       };
       const batch = F.writeBatch(this.db!);
       batch.set(ref, next);
       batch.set(F.doc(F.collection(this.db!, 'games')), {
-        uid: u.uid, name: next.name, opponent: 'cpu', level, result: res, reason: over.type,
+        uid: u.uid, name: next.name, opponent: this.g.ghost() ? 'bot' : 'cpu', level, result: res, reason: over.type,
         moves: Math.ceil(this.g.history().length / 2), minutes: this.g.elapsedMinutes, at: F.serverTimestamp(),
       });
       await batch.commit();

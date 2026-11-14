@@ -8,6 +8,7 @@ import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
 import { NetService } from '../net/net.service';
+import { GhostService } from '../cloud/ghost.service';
 
 @Component({
   selector: 'app-credits',
@@ -145,7 +146,9 @@ export class ResultComponent {
     if (o.type === 'draw') return tr('Draw');
     const youLost = !!me && o.winner !== me;
     let t = tr(o.type === 'mate' ? 'Checkmate' : o.type === 'flag' ? "Time's up" : o.type === 'abandon' ? (youLost ? 'Away too long' : 'Opponent left') : 'Resigned');
-    if (me) t += tr(youLost ? (this.g.mode() === 'cpu' ? '. The computer wins' : '. You lose') : '. You win');
+    const gh = this.g.ghost();
+    if (me && gh && youLost) t += this.i18n.t(' บอทของ ' + gh.name + 'ชนะ', `. ${gh.name}'s bot wins`);
+    else if (me) t += tr(youLost ? (this.g.mode() === 'cpu' ? '. The computer wins' : '. You lose') : '. You win');
     return t;
   });
 
@@ -164,7 +167,8 @@ export class ResultComponent {
           (stuck === 'w' ? 'White' : 'Black') + " wasn't in check but had no legal move. That's called stalemate, so the game is a draw.");
   });
 
-  again() { this.ui.hide('result'); if (this.g.mode() === 'online') { this.net.again(); return; } this.g.newGame(); this.ui.show('menu'); }
+  again() { this.ui.hide('result'); if (this.g.mode() === 'online') { this.net.again(); return; } if (this.ghost.rematch()) return; this.g.newGame(); this.ui.show('menu'); }
+  private ghost = inject(GhostService);
   private net = inject(NetService);
   view() {
     this.ui.hide('result');
