@@ -84,7 +84,9 @@ export class ReferralService {
   /** The owner sees who is behind the products (Google name and email); nobody else can read this. */
   private async saveOwner() {
     const F = await this.F(), u = this.cloud.user(); if (!u || u.isAnonymous) return;
-    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || '').slice(0, 100), email: u.email || '', at: F.serverTimestamp() })
+    // A guest account turned into a Google one keeps an empty name on the account itself; the Google profile has it.
+    const g = u.providerData.find(p => p.providerId === 'google.com');
+    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || g?.displayName || '').slice(0, 100), email: u.email || g?.email || '', at: F.serverTimestamp() })
       .catch(e => console.warn('pick owner', e));
   }
 
