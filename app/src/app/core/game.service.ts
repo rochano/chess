@@ -6,10 +6,13 @@ import {
   applyMove, bestMove, Color, GameState, inCheck, initialState, insufficient, kingSq, legalMoves, Level, Move, NAME, opp,
   Piece, PieceType, posKey, sqName,
 } from './engine';
+import { GhostPlay } from './ghost';
 import { I18nService } from './i18n.service';
 import { heroName, OLD_HERO } from './names';
 import { PrefsService } from './prefs.service';
 
+/** A player's bot as an opponent: whose it is, how it plays, the colour it takes and the level it counts as. */
+export interface GhostGame { uid: string; name: string; play: GhostPlay; side: Color; level: Level; }
 export type Mode = 'friend' | 'cpu' | 'online' | 'train';
 export interface GameOver {
   type: 'mate' | 'draw' | 'flag' | 'resign' | 'abandon';
@@ -83,6 +86,10 @@ export class GameService {
   readonly redraw = signal(0);
   train: TrainHooks | null = null;
   net: NetHooks | null = null;
+  /** Playing someone's bot (a computer game where the computer plays like that player), or null. */
+  readonly ghost = signal<GhostGame | null>(null);
+  /** The side the computer plays: Black, except a player's bot may play White. */
+  readonly cpuColor = signal<Color>('b');
   /** Square whose piece just landed, for the small lift animation. */
   readonly animTo = signal(-1);
 
@@ -103,7 +110,7 @@ export class GameService {
   readonly myColor = computed<Color | null>(() => {
     this.redraw();
     const m = this.mode();
-    return m === 'cpu' ? 'w' : m === 'train' && this.train ? this.train.side() : m === 'online' && this.net ? this.net.color() : null;
+    return m === 'cpu' ? opp(this.cpuColor()) : m === 'train' && this.train ? this.train.side() : m === 'online' && this.net ? this.net.color() : null;
   });
   readonly humanTurn = computed(() => !this.over() && !this.thinking() && this.humanSide(this.st().turn));
 
@@ -128,12 +135,15 @@ export class GameService {
     }
   }
 
-  newGame(online = false) {
+  newGame(online = false, keepGhost = false) {
     this.fillNames();
     const p = this.prefs.get();
-    const mode: Mode = p.mode === 'online' && !online ? 'friend' : p.mode;
+    if (!keepGhost) this.ghost.set(null);
+    const ghost = this.ghost();
+    const mode: Mode = ghost ? 'cpu' : p.mode === 'online' && !online ? 'friend' : p.mode;
+    this.cpuColor.set(ghost?.side ?? 'b');
     this.mode.set(mode);
-    this.level.set(+p.level as Level);
+    this.level.set(ghost?.level ?? (+p.level as Level));
     const [base, inc] = p.clock === '0' ? [0, 0] : p.clock.split('+').map(Number);
     const tc = base ? { base: base * 60000, inc: inc * 1000 } : null;
     this.tc.set(tc);
@@ -150,6 +160,10 @@ export class GameService {
       w: p.nameW.trim() || (mode === 'cpu' ? 'You' : 'Player 1'),
       b: mode === 'cpu' ? 'Computer' : p.nameB.trim() || 'Player 2',
     });
+    if (ghost) {
+      const me = p.nameW.trim() || 'You', bot = this.i18n.t('บอทของ ' + ghost.name, ghost.name + "'s bot");
+      this.names.set(this.cpuColor() === 'w' ? { w: bot, b: me } : { w: me, b: bot });
+    }
     this.startedAt = Date.now(); this.turnAt = Date.now(); this.selAt = 0;
     this.events.next({ kind: 'start' });
   }
@@ -244,11 +258,18 @@ export class GameService {
     this.events.next({ kind: 'end', over });
   }
 
+  /** A game against a player's bot; it moves first when it plays White. */
+  newGhostGame(ghost: GhostGame) {
+    this.ghost.set(ghost);
+    this.newGame(false, true);
+    void this.maybeComputer();
+  }
+
   private async maybeComputer() {
-    if (this.mode() !== 'cpu' || this.st().turn !== 'b' || this.over()) return;
+    if (this.mode() !== 'cpu' || this.st().turn !== this.cpuColor() || this.over()) return;
     this.thinking.set(true);
     const st = this.st();
-    const m = await this.cpu.think(st, this.level(), this.keys());
+    const m = await this.cpu.think(st, this.level(), this.keys(), this.ghost()?.play);
     if (this.st() !== st) return; // the game moved on (undo, new game)
     this.thinking.set(false);
     if (m && !this.over()) this.doMove(m);
@@ -263,7 +284,7 @@ export class GameService {
       this.keys.update(k => k.slice(0, e.keysLen));
     };
     pop();
-    if (this.mode() === 'cpu') while (this.st().turn === 'b' && h.length) pop();
+    if (this.mode() === 'cpu') while (this.st().turn === this.cpuColor() && h.length) pop();
     this.history.set(h);
     this.over.set(null); this.selected.set(null); this.hintMove.set(null);
     if (this.tc()) this.clocks.update(c => ({ w: Math.max(c.w, 1000), b: Math.max(c.b, 1000) }));
@@ -319,7 +340,7 @@ export class GameService {
     if (this.checkSq() >= 0) return `Check! ${st.turn === 'w' ? 'White' : 'Black'} must answer it.`;
     if (hint && st.board[hint.from]) return `Hint: ${NAME[st.board[hint.from]![1] as PieceType]} ${sqName(hint.from)} to ${sqName(hint.to)}`;
     if (train) return train.status();
-    if (!this.history().length) return this.mode() === 'cpu' ? 'You play White. Tap a piece to see its moves.' : 'Tap a piece to see its moves.';
+    if (!this.history().length) return this.mode() === 'cpu' ? (this.cpuColor() === 'w' ? 'You play Black. Tap a piece to see its moves.' : 'You play White. Tap a piece to see its moves.') : 'Tap a piece to see its moves.';
     return `Move ${Math.floor(this.history().length / 2) + 1}`;
   });
 

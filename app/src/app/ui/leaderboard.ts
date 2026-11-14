@@ -6,9 +6,11 @@ import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { SHEET_URL } from '../share/share.service';
 import { CloudService, Player } from '../cloud/cloud.service';
+import { GhostService } from '../cloud/ghost.service';
+import { GHOST_MIN_GAMES, traits } from '../core/ghost';
 
 interface Row { finishedAt?: string; at?: string; white: string; black: string; opponent: string; winner: string; result: string; }
-interface Entry { name: string; p: number; w: number; d: number; l: number; pts: number; elo?: number; me?: boolean; }
+interface Entry { name: string; p: number; w: number; d: number; l: number; pts: number; elo?: number; me?: boolean; /** Player id, for their bot. */ id?: string; }
 
 function lsGet<T>(k: string, d: T): T { try { const v = JSON.parse(localStorage.getItem(k)!); return v == null ? d : v; } catch { return d; } }
 function lsSet(k: string, v: unknown) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } }
@@ -42,7 +44,7 @@ export function merge(rows: (Player & { id: string })[], old: Entry[], uid: stri
   const t = new Map<string, Entry>();
   for (const r of rows) {
     const k = r.name.trim().toLowerCase(), e = t.get(k);
-    const add: Entry = { name: r.name, p: r.p, w: r.w, d: r.d, l: r.l, pts: r.pts, elo: r.elo, me: r.id === uid };
+    const add: Entry = { name: r.name, p: r.p, w: r.w, d: r.d, l: r.l, pts: r.pts, elo: r.elo, me: r.id === uid, id: r.id };
     if (!e) t.set(k, add);
     else { e.p += add.p; e.w += add.w; e.d += add.d; e.l += add.l; e.pts += add.pts; e.elo = Math.max(e.elo || 0, add.elo || 0); e.me ||= add.me; }
   }
@@ -129,6 +131,18 @@ export class LeaderService {
       <button [attr.aria-pressed]="lb.tab() === 'all'" (click)="pick('all')">{{ 'Everyone' | tr }}</button>
       <button [attr.aria-pressed]="lb.tab() === 'local'" (click)="pick('local')">{{ t('ของฉัน', 'Mine') }}</button>
     </div>
+    @if (lb.tab() === 'local') {
+      <div class="mybot">
+        @if (gs.botPoints()) {<p class="botpts">{{ t('บอทของคุณชนะคนที่มาท้า ได้เพิ่ม ' + gs.botPoints() + ' แต้ม', 'Your bot beat its challengers: +' + gs.botPoints() + ' points') }}</p>}
+        @if (gs.mine(); as m) {
+          <p><b>{{ t('บอทของคุณ', 'Your bot') }}</b> · {{ t('เรียนจาก ' + m.n + ' เกม', 'learned from ' + m.n + ' games') }}@if (m.gw + m.gd + m.gl) { · {{ t('ถูกท้า ' + (m.gw + m.gd + m.gl) + ' ครั้ง ชนะ ' + m.gw, (m.gw + m.gd + m.gl) + ' challenges, won ' + m.gw) }}}</p>
+          @if (myTraits().length) {<p class="fine">{{ myTraits().join(' · ') }}</p>}
+        } @else {
+          <p><b>{{ t('บอทของคุณ', 'Your bot') }}</b> · {{ t('เล่นกับคอมหรือออนไลน์ให้จบ บอทจะเริ่มจำวิธีเดินของคุณ แล้วคนอื่นมาท้าแข่งได้', 'Finish games against the computer or online and a bot learns how you play, so others can challenge it.') }}</p>
+        }
+        <button class="chip" (click)="openMine()">{{ (gs.mine()?.n ?? 0) >= MIN ? t('ดูบอทและชวนเพื่อนมาท้า', 'See your bot and invite friends') : t('ดูบอทของฉัน', 'See my bot') }}</button>
+      </div>
+    }
     <div class="lb" id="lbBody">
       @if (lb.error()) {
         <p class="empty">{{ t('ยังโหลดคะแนนไม่ได้ ลองใหม่อีกครั้งนะ', "Couldn’t load the scores. Please try again.") }}</p>
@@ -138,10 +152,10 @@ export class LeaderService {
         <p class="empty">{{ (lb.tab() === 'local' ? 'ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่' : 'ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม') | tr }}</p>
       } @else {
         <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th>@if (lb.tab() === 'all') {<th>{{ t('ฝีมือ', 'Rating') }}</th>}</tr></thead>
-          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo || '–' }}</td>}</tr>}</tbody></table>
+          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me" [class.vs]="!!e.id && lb.tab() === 'all'" (click)="vs(e)"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo || '–' }}</td>}</tr>}</tbody></table>
       }
     </div>
-    <p class="fine">{{ lb.tab() === 'all' ? t('ชนะคอมได้ 1–3 แต้มตามระดับ เสมอได้ 1 แต้ม รวมคะแนนจากเวอร์ชันก่อนแล้ว', 'Beat the computer for 1–3 points by level, draw for 1. Includes scores from before.')
+    <p class="fine">{{ lb.tab() === 'all' ? t('แตะชื่อเพื่อแข่งกับบอทที่เล่นเหมือนคนนั้น · ชนะคอมได้ 1–3 แต้มตามระดับ เสมอได้ 1 แต้ม', 'Tap a name to play a bot that plays like them · Beat the computer for 1–3 points by level, draw for 1.')
       : t('เกมที่เล่นจบบนเครื่องนี้', 'Games finished on this device') }}</p>
     <div class="btns"><button class="btn" id="closeLeader" (click)="close()">{{ 'Back to menu' | tr }}</button></div>
   </div>
@@ -149,6 +163,12 @@ export class LeaderService {
 })
 export class LeaderComponent {
   protected lb = inject(LeaderService);
+  protected gs = inject(GhostService);
+  private cloud = inject(CloudService);
+  protected readonly MIN = GHOST_MIN_GAMES;
+  protected myTraits() { const m = this.gs.mine(); return m ? traits(m).map(x => this.i18n.lang() === 'th' ? x.th : x.en) : []; }
+  vs(e: Entry) { if (e.id && this.lb.tab() === 'all') void this.gs.open(e.id, 'leader'); }
+  async openMine() { await this.cloud.start(); if (this.cloud.uid) void this.gs.open(this.cloud.uid, 'leader'); }
   private ui = inject(UiService);
   private i18n = inject(I18nService);
   constructor() { this.lb.load(); }

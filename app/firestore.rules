@@ -6,6 +6,9 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function okName(n) { return n is string && n.size() >= 1 && n.size() <= 30; }
     function playerKeys() { return ['name', 'p', 'w', 'd', 'l', 'pts', 'elo', 'google', 'updated']; }
+    // bot = wins of the player's bot already turned into points, botAt = when they last were (at most 5, once a day).
+    function playerKeysAll() { return ['name', 'p', 'w', 'd', 'l', 'pts', 'elo', 'google', 'updated', 'bot', 'botAt']; }
+    function botSame() { return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['bot', 'botAt']); }
     function inc(n, o, k) { return n[k] is int && (n[k] == o[k] || n[k] == o[k] + 1); }
     // The result of one game decides which counter moves and how points and Elo may change.
     function oneGame(n, o) {
@@ -17,6 +20,16 @@ service cloud.firestore {
           : n.pts == o.pts && n.elo <= o.elo);
     }
 
+    // Wins of the player's bot (counted on ghosts/{uid} by the players who lost to it) become points: 1 each, at most 5 a day.
+    function botPoints(n, o) {
+      let had = o.get('bot', 0);
+      let claim = n.bot - had;
+      return n.diff(o).affectedKeys().hasOnly(['pts', 'bot', 'botAt', 'updated'])
+        && n.bot is int && claim >= 1 && claim <= 5 && n.pts == o.pts + claim
+        && n.bot <= get(/databases/$(database)/documents/ghosts/$(request.auth.uid)).data.gw
+        && n.botAt == request.time && (!('botAt' in o) || request.time > o.botAt + duration.value(20, 'h'));
+    }
+
     match /players/{uid} {
       allow read: if true;
       allow create: if signedIn() && request.auth.uid == uid
@@ -25,12 +38,13 @@ service cloud.firestore {
         && request.resource.data.updated == request.time
         && oneGame(request.resource.data, { 'p': 0, 'w': 0, 'd': 0, 'l': 0, 'pts': 0, 'elo': 1000 });
       allow update: if signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(playerKeys())
+        && request.resource.data.keys().hasOnly(playerKeysAll())
         && okName(request.resource.data.name) && request.resource.data.updated == request.time
         && (
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'updated'])
-          || (request.resource.data.google is bool && request.time > resource.data.updated + duration.value(10, 's')
+          || (botSame() && request.resource.data.google is bool && request.time > resource.data.updated + duration.value(10, 's')
               && oneGame(request.resource.data, resource.data))
+          || botPoints(request.resource.data, resource.data)
         );
       allow delete: if false;
     }
@@ -87,6 +101,36 @@ service cloud.firestore {
         || (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
             && request.resource.data.status in ['pending', 'ok', 'no']);
       allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
+    }
+
+    // A player's bot: what their own games taught it (written by them), and how challengers did against it.
+    // gw/gd/gl = bot won/drew/lost; anyone signed in may add one result, at most once every 10 seconds per bot.
+    match /ghosts/{uid} {
+      function ghostKeys() {
+        return ['name', 'book', 'n', 'nw', 'nb', 'mv', 'cap', 'capN', 'chk', 'chkN', 'pP', 'pN', 'pB', 'pR', 'pQ', 'pK', 'cas', 'blun',
+          'gw', 'gd', 'gl', 'hit', 'updated'];
+      }
+      function okGhost(d) {
+        return d.keys().hasOnly(ghostKeys()) && okName(d.name) && d.book is string && d.book.size() <= 40000
+          && d.n is int && d.mv is int && d.blun is int && d.updated == request.time;
+      }
+      function bump(n, o, k) { return n[k] is int && (n[k] == o[k] || n[k] == o[k] + 1); }
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid && okGhost(request.resource.data)
+        && request.resource.data.gw == 0 && request.resource.data.gd == 0 && request.resource.data.gl == 0;
+      allow update: if signedIn() && (
+        (request.auth.uid == uid && okGhost(request.resource.data)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['gw', 'gd', 'gl', 'hit'])
+          && request.time > resource.data.updated + duration.value(5, 's'))
+        || (request.auth.uid != uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gw', 'gd', 'gl', 'hit'])
+          && bump(request.resource.data, resource.data, 'gw') && bump(request.resource.data, resource.data, 'gd')
+          && bump(request.resource.data, resource.data, 'gl')
+          && (request.resource.data.gw - resource.data.gw) + (request.resource.data.gd - resource.data.gd) + (request.resource.data.gl - resource.data.gl) == 1
+          && request.resource.data.hit == request.time
+          && (!('hit' in resource.data) || request.time > resource.data.hit + duration.value(10, 's')))
+      );
+      allow delete: if false;
     }
 
     // Online rooms: the host creates rooms/{CODE}, one guest claims it, and only those two can send or read its messages.
