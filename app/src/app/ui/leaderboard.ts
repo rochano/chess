@@ -110,7 +110,7 @@ export class LeaderService {
     </div>
     <div class="lb" id="lbBody">
       @if (lb.error()) {
-        <p class="empty">{{ t('ยังโหลดคะแนนไม่ได้ ลองใหม่อีกครั้งนะ', 'Couldn\'t load the scores. Please try again.') }}</p>
+        <p class="empty">{{ t('ยังโหลดคะแนนไม่ได้ ลองใหม่อีกครั้งนะ', "Couldn’t load the scores. Please try again.") }}</p>
       } @else if (lb.list() === null) {
         <p class="empty">{{ t('กำลังโหลดคะแนน…', 'Loading scores…') }}</p>
       } @else if (!lb.list()!.length) {

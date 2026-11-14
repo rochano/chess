@@ -135,11 +135,16 @@ export class CloudService {
    * no SDK, no sign-in wait and no streaming channel, which some in-app browsers and mobile networks break.
    */
   async top(n = 50): Promise<(Player & { id: string })[]> {
+    // Mobile data drops requests now and then: one retry before giving up.
+    try { return await this.topOnce(n, 8000); } catch { return await this.topOnce(n, 12000); }
+  }
+
+  private async topOnce(n: number, ms: number): Promise<(Player & { id: string })[]> {
     const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents:runQuery?key=${FIREBASE_CONFIG.apiKey}`;
     const body = { structuredQuery: { from: [{ collectionId: 'players' }], orderBy: [{ field: { fieldPath: 'pts' }, direction: 'DESCENDING' }], limit: n } };
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal });
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal, cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const rows: { document?: { name: string; fields: Record<string, Record<string, unknown>> } }[] = await r.json();
       const val = (f?: Record<string, unknown>) => f ? (f['integerValue'] ?? f['doubleValue'] ?? f['stringValue'] ?? f['booleanValue']) : undefined;
