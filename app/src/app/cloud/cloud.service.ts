@@ -130,12 +130,24 @@ export class CloudService {
     await F.updateDoc(F.doc(this.db!, 'players', u.uid), { name: name.trim().slice(0, 30), updated: F.serverTimestamp() }).catch(() => {});
   }
 
+  /**
+   * Top players by points. Uses the Firestore REST API with a plain fetch (players/ is public):
+   * no SDK, no sign-in wait and no streaming channel, which some in-app browsers and mobile networks break.
+   */
   async top(n = 50): Promise<(Player & { id: string })[]> {
-    await this.start();
-    const F = await import('firebase/firestore');
-    const q = F.query(F.collection(this.db!, 'players'), F.orderBy('pts', 'desc'), F.limit(n));
-    const s = await F.getDocs(q);
-    return s.docs.map(d => ({ id: d.id, ...(d.data() as Player) }));
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/databases/(default)/documents:runQuery?key=${FIREBASE_CONFIG.apiKey}`;
+    const body = { structuredQuery: { from: [{ collectionId: 'players' }], orderBy: [{ field: { fieldPath: 'pts' }, direction: 'DESCENDING' }], limit: n } };
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const rows: { document?: { name: string; fields: Record<string, Record<string, unknown>> } }[] = await r.json();
+      const val = (f?: Record<string, unknown>) => f ? (f['integerValue'] ?? f['doubleValue'] ?? f['stringValue'] ?? f['booleanValue']) : undefined;
+      return rows.filter(x => x.document).map(({ document: d }) => {
+        const f = d!.fields, num = (k: string) => Number(val(f[k]) ?? 0);
+        return { id: d!.name.split('/').pop()!, name: String(val(f['name']) ?? ''), p: num('p'), w: num('w'), d: num('d'), l: num('l'), pts: num('pts'), elo: num('elo') || 1000, google: !!val(f['google']) };
+      });
+    } finally { clearTimeout(timer); }
   }
 
   get uid() { return this.user()?.uid ?? ''; }

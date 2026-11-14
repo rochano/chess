@@ -5,7 +5,7 @@ import { PrefsService } from '../core/prefs.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { SHEET_URL } from '../share/share.service';
-import { CloudService } from '../cloud/cloud.service';
+import { CloudService, Player } from '../cloud/cloud.service';
 
 interface Row { finishedAt?: string; at?: string; white: string; black: string; opponent: string; winner: string; result: string; }
 interface Entry { name: string; p: number; w: number; d: number; l: number; pts: number; elo?: number; me?: boolean; }
@@ -68,10 +68,13 @@ export class LeaderService {
     this.error.set(false);
     if (this.tab() === 'local') { this.list.set(tally(lsGet<Row[]>('chess-history', []), true).slice(0, 50)); return; }
     if (this.tab() === 'all') {
-      this.list.set(null);
+      // Show the last copy at once, then the fresh list.
+      const cachedTop = lsGet<(Player & { id: string })[] | null>('chess-top-cache', null);
+      const mark = (rows: (Player & { id: string })[]) => rows.map(r => ({ ...r, me: r.id === this.cloud.uid }));
+      this.list.set(cachedTop ? mark(cachedTop) : null);
       this.cloud.top(50)
-        .then(rows => { if (this.tab() === 'all') this.list.set(rows.map(r => ({ ...r, me: r.id === this.cloud.uid }))); })
-        .catch(e => { console.warn('leaderboard', e); if (this.tab() === 'all') this.error.set(true); });
+        .then(rows => { lsSet('chess-top-cache', rows); if (this.tab() === 'all') this.list.set(mark(rows)); })
+        .catch(e => { console.warn('leaderboard', e); if (this.tab() === 'all' && !cachedTop) this.error.set(true); });
       return;
     }
     // Season 1 = the old Google Sheet board. Show the last copy at once; Apps Script often takes a few seconds to answer.
@@ -107,9 +110,9 @@ export class LeaderService {
     </div>
     <div class="lb" id="lbBody">
       @if (lb.error()) {
-        <p class="empty">{{ t('ยังโหลดคะแนนรวมไม่ได้ เน็ตอาจมีปัญหา ดูแท็บ This device ไปก่อนได้', 'Couldn\'t load the scores. Check your connection, or look at This device for now.') }}</p>
+        <p class="empty">{{ t('ยังโหลดคะแนนไม่ได้ ลองใหม่อีกครั้งนะ', 'Couldn\'t load the scores. Please try again.') }}</p>
       } @else if (lb.list() === null) {
-        <p class="empty">{{ 'กำลังโหลดคะแนน…' | tr }}</p>
+        <p class="empty">{{ t('กำลังโหลดคะแนน…', 'Loading scores…') }}</p>
       } @else if (!lb.list()!.length) {
         <p class="empty">{{ (lb.tab() === 'local' ? 'ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่' : 'ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม') | tr }}</p>
       } @else {
@@ -117,7 +120,9 @@ export class LeaderService {
           <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo }}</td>}</tr>}</tbody></table>
       }
     </div>
-    <p class="fine">{{ lb.tab() === 'all' ? t('นับเกมที่เล่นกับคอมพิวเตอร์: ชนะ Easy 1, Normal 2, Hard 3 แต้ม เสมอ 1 แต้ม · ระดับฝีมือเริ่มที่ 1000 ขึ้นลงตามผลแพ้ชนะ · ล็อกอิน Google ในตั้งค่าเพื่อเก็บคะแนนข้ามเครื่อง', 'Games against the computer count: win Easy 1, Normal 2, Hard 3 points, draw 1 · Rating starts at 1000 and moves with each result · Sign in with Google in Settings to keep your score on every device') : ('ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน' | tr) }}</p>
+    <p class="fine">{{ lb.tab() === 'all' ? t('ชนะคอมได้ 1–3 แต้มตามระดับ เสมอได้ 1 แต้ม', 'Beat the computer for 1–3 points by level, draw for 1')
+      : lb.tab() === 'season1' ? t('คะแนนซีซันแรก (เวอร์ชันเก่า)', 'Scores from the first season (old version)')
+      : t('เกมที่เล่นจบบนเครื่องนี้', 'Games finished on this device') }}</p>
     <div class="btns"><button class="btn" id="closeLeader" (click)="close()">{{ 'Back to menu' | tr }}</button></div>
   </div>
 </div>`,
