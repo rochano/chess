@@ -88,6 +88,7 @@ import { BattleService } from '../battle/battle.service';
         <div class="row2">
           <button class="btn" id="openLeader" (click)="ui.closeAll(); ui.show('leader')">{{ 'Leaderboard' | tr }}</button>
           <button class="btn" (click)="settings()">{{ 'Settings' | tr }}</button>
+          <button class="btn go invite" id="openInvite" (click)="ui.closeAll(); ui.show('invite')">{{ i18n.t('ชวนเพื่อนมาเล่น', 'Invite friends') }}</button>
         </div>
       </div>
       <button class="linkbtn" (click)="ui.hide('menu'); ui.show('credits')">{{ 'Credits' | tr }}</button>

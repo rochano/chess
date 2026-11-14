@@ -44,6 +44,51 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.updated == request.time;
       allow update, delete: if false;
     }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function google() { return signedIn() && request.auth.token.firebase.sign_in_provider == 'google.com'; }
+
+    // Owner accounts for the ?admin page. Added by hand in the Firebase console (document id = the account's uid).
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    // Invites: invites/{new player's uid} = { ref: inviter's code }. Written once by the new player, only before
+    // they have any score, and never for their own code. Public, so inviters can count their friends.
+    match /invites/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['ref', 'at'])
+        && request.resource.data.ref is string && request.resource.data.ref.matches('[A-Za-z0-9]{8}')
+        && !uid.matches(request.resource.data.ref + '.*')
+        && request.resource.data.at == request.time
+        && !exists(/databases/$(database)/documents/players/$(uid));
+      allow update, delete: if false;
+    }
+
+    // Products a player recommends to the friends they invite, with their own Shopee affiliate link.
+    // Only Google accounts can add them, every add or change waits for the owner's approval (status 'pending'),
+    // and only approved ones are public.
+    match /picks/{id} {
+      function okPick(d) {
+        return d.keys().hasOnly(['owner', 'ref', 'name', 'title', 'note', 'url', 'img', 'moods', 'status', 'at'])
+          && d.owner == request.auth.uid && d.ref is string && d.ref.matches('[A-Za-z0-9]{8}') && request.auth.uid.matches(d.ref + '.*')
+          && okName(d.name)
+          && d.title is string && d.title.size() >= 2 && d.title.size() <= 60
+          && d.note is string && d.note.size() <= 90
+          && d.url is string && d.url.size() <= 300 && d.url.matches('https://(s[.]shopee[.]co[.]th|shope[.]ee|shopee[.]co[.]th)/[^ ]*')
+          && d.img is string && d.img.size() <= 300 && (d.img == '' || d.img.matches('https://[a-z0-9.-]+[.]susercontent[.]com/[^ ]*'))
+          && d.moods is list && d.moods.size() >= 1 && d.moods.size() <= 4 && d.moods.hasOnly(['tense', 'lost', 'won', 'learn'])
+          && d.status == 'pending' && d.at == request.time;
+      }
+      allow read: if resource.data.status == 'ok' || (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
+      allow create: if google() && okPick(request.resource.data);
+      allow update: if (google() && resource.data.owner == request.auth.uid && okPick(request.resource.data))
+        || (isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status in ['pending', 'ok', 'no']);
+      allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
+    }
+
     // Online rooms: the host creates rooms/{CODE}, one guest claims it, and only those two can send or read its messages.
     match /rooms/{code} {
       allow get: if signedIn();
