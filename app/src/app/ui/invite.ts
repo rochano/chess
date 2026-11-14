@@ -4,7 +4,7 @@ import { I18nService } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
-import { IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
+import { acceptedTerms, flagWords, setAcceptedTerms, TERMS_VERSION, HOUSE_SHARE, IMG_RE, MAX_PICKS, Mood, MOODS, Pick, ReferralService, SHOPEE_RE } from '../cloud/referral.service';
 import { HOME_URL } from '../share/share.service';
 
 const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: '', img: '', moods: [...MOODS], status: 'pending' };
@@ -40,6 +40,12 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
     .pick-form small { font-weight: 600; color: var(--ink-soft); font-size: 12.5px; line-height: 1.4; }
     .moods { display: flex; flex-wrap: wrap; gap: 6px; }
     .moods .chip { box-shadow: 0 2px 0 var(--ink); }
+    .terms { border: 2px solid var(--paper-2); border-radius: 10px; padding: 8px 12px; background: var(--paper); }
+    .terms summary { cursor: pointer; font-weight: 800; font-size: 14px; }
+    .terms ol { margin: 8px 0 2px; padding-left: 20px; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+    .pick-form label.agree { display: flex; flex-direction: row; gap: 8px; align-items: flex-start; font-weight: 700; }
+    .agree a { color: var(--ink); text-underline-offset: 3px; }
+    .agree input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--ink); flex: none; }
     .err { color: var(--flag); font-weight: 800; font-size: 14px; }
   `,
   template: `
@@ -66,6 +72,21 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
     <section class="inv-sec" aria-labelledby="pickHd">
       <h3 id="pickHd">สินค้าแนะนำของฉัน</h3>
       <p class="fine">ใส่ลิงก์ Shopee Affiliate ของคุณเอง เพื่อนที่คุณชวนมาจะเห็นสินค้านี้หลังจบเกม ถ้าเขากดซื้อ ค่าคอมมิชชันจะเข้าบัญชี Shopee ของคุณ สินค้าจะขึ้นหลังผ่านการตรวจแล้ว</p>
+      <p class="fine">ค่าบริการแพลตฟอร์ม: ไม่เก็บเงิน แต่ทุก 10 ครั้งที่เพื่อนของคุณเห็นสินค้าหลังจบเกม จะเป็นสินค้าของคุณ {{ 10 - house }} ครั้ง และสินค้าของเกม {{ house }} ครั้ง</p>
+      <details class="terms" [open]="showTerms()">
+        <summary>ข้อกำหนดและเงื่อนไขสำหรับผู้แนะนำสินค้า</summary>
+        <ol>
+          <li>ใช้ได้เฉพาะลิงก์ Shopee Affiliate ของคุณเอง กับสินค้าที่ขายได้ถูกกฎหมายในประเทศไทย</li>
+          <li>ห้ามสินค้าผิดกฎหมาย ของปลอม อาวุธ บุหรี่และบุหรี่ไฟฟ้า แอลกอฮอล์ การพนัน สินค้าสำหรับผู้ใหญ่ ยาหรืออาหารเสริมที่อ้างสรรพคุณเกินจริง และห้ามข้อความหลอกลวง หยาบคาย หรือไม่ตรงกับสินค้า</li>
+          <li>สินค้าทุกชิ้นต้องผ่านการตรวจก่อนขึ้น และทุกครั้งที่แก้ไขต้องตรวจใหม่ เจ้าของเกมไม่อนุมัติหรือเอาสินค้าออกได้ทุกเมื่อ โดยไม่ต้องแจ้งเหตุผล</li>
+          <li>ค่าบริการแพลตฟอร์ม: ไม่เก็บเงิน แต่ {{ house }} ใน 10 ครั้งที่เพื่อนที่คุณชวนมาเห็นสินค้าหลังจบเกม จะเป็นสินค้าของเกมแทนสินค้าของคุณ</li>
+          <li>ค่าคอมมิชชัน Shopee จ่ายให้คุณโดยตรงตามเงื่อนไขของ Shopee Affiliate เกมไม่ได้จ่ายหรือรับประกันรายได้ และไม่รับผิดชอบเรื่องตัวสินค้า การจัดส่ง หรือการคืนเงิน</li>
+          <li>เพื่อนจะเห็นบรรทัด "แนะนำโดย (ชื่อในเกมของคุณ)" และข้อความว่าคุณอาจได้ค่าคอมมิชชัน</li>
+          <li>นับเป็นเพื่อนที่คุณชวน เฉพาะคนที่เข้าเล่นครั้งแรกจากลิงก์ของคุณ บนเครื่องที่ไม่เคยเล่นมาก่อน ห้ามโกงยอด เช่น สร้างบัญชีปลอม ถ้าพบจะเอาสินค้าออก</li>
+          <li>เจ้าของเกมเห็นชื่อและอีเมล Google ของคุณ ใช้เพื่อติดต่อเรื่องสินค้าเท่านั้น ไม่เผยแพร่ ผู้เล่นคนอื่นเห็นแค่ชื่อในเกม</li>
+          <li>ข้อกำหนดนี้อาจเปลี่ยนได้ ถ้าเปลี่ยนจะให้คุณกดยอมรับใหม่ก่อนใส่หรือแก้สินค้า</li>
+        </ol>
+      </details>
       @if (!ref.google) {
         <button class="btn" (click)="login()">เข้าสู่ระบบด้วย Google</button>
         <p class="fine">ต้องเข้าสู่ระบบก่อน เพื่อให้สินค้าของคุณไม่หายเวลาเปลี่ยนเครื่อง</p>
@@ -92,6 +113,11 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
               <div class="field"><span class="lbl">แสดงหลังเกมแบบไหน</span>
                 <div class="moods">@for (m of moods; track m) {<button class="chip" [attr.aria-pressed]="f.moods.includes(m)" (click)="toggle(m)">{{ moodText[m] }}</button>}</div></div>
               <p class="fine">เจ้าของเกมจะเห็นชื่อและอีเมล Google ของคุณ เพื่อใช้ติดต่อเรื่องสินค้า คนอื่นไม่เห็น</p>
+              @if (!accepted()) {
+                <label class="agree"><input type="checkbox" [checked]="agree()" (change)="agree.set($any($event.target).checked)">
+                  <span>ฉันอ่านและยอมรับ <a href="#" (click)="$event.preventDefault(); openTerms()">ข้อกำหนดและเงื่อนไข</a> แล้ว</span></label>
+              }
+              @if (flagWords(f); as w) { @if (w.length) { <p class="err">มีคำที่อาจผิดข้อกำหนด: {{ w.join(', ') }} สินค้านี้อาจไม่ผ่านการตรวจ</p> } }
               @if (err()) { <p class="err">{{ err() }}</p> }
               <div class="row2"><button class="btn" (click)="form.set(null); err.set('')">ยกเลิก</button><button class="btn go" [disabled]="busy()" (click)="save()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึก' }}</button></div>
             </div>
@@ -113,6 +139,7 @@ export class InviteComponent {
   private ui = inject(UiService);
   protected readonly moods = MOODS;
   protected readonly max = MAX_PICKS;
+  protected readonly house = Math.round(HOUSE_SHARE * 10);
   protected readonly moodText: Record<Mood, string> = { lost: 'หลังแพ้', won: 'หลังชนะ', tense: 'เกมเครียด', learn: 'อยากเก่งขึ้น' };
   protected readonly statusText = { pending: 'รอตรวจ', ok: 'ขึ้นแล้ว', no: 'ไม่ผ่าน ลองแก้แล้วส่งใหม่' };
   protected code = computed(() => this.cloud.user() ? this.ref.code : '');
@@ -120,6 +147,10 @@ export class InviteComponent {
   protected form = signal<Pick | null>(null);
   protected err = signal('');
   protected busy = signal(false);
+  protected agree = signal(false);
+  protected showTerms = signal(false);
+  protected accepted = signal(acceptedTerms() >= TERMS_VERSION);
+  openTerms() { this.showTerms.set(false); setTimeout(() => { this.showTerms.set(true); document.querySelector('#invite .terms')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); }
 
   constructor() {
     track('invite_open', {});
@@ -152,6 +183,7 @@ export class InviteComponent {
   add() { this.err.set(''); this.form.set({ ...EMPTY, moods: [...MOODS] }); }
   edit(p: Pick) { this.err.set(''); this.form.set({ ...p, moods: [...p.moods] }); }
   patch<K extends keyof Pick>(k: K, v: Pick[K]) { this.form.update(f => f && { ...f, [k]: v }); }
+  protected readonly flagWords = flagWords;
   toggle(m: Mood) { this.form.update(f => f && { ...f, moods: f.moods.includes(m) ? f.moods.filter(x => x !== m) : [...f.moods, m] }); }
 
   async save() {
@@ -159,10 +191,11 @@ export class InviteComponent {
     const e = f.title.trim().length < 2 ? 'ใส่ชื่อสินค้าก่อนนะ'
       : !SHOPEE_RE.test(f.url.trim()) ? 'ลิงก์ต้องเป็นลิงก์ Shopee (ขึ้นต้นด้วย https://s.shopee.co.th/ หรือ https://shopee.co.th/)'
       : f.img.trim() && !IMG_RE.test(f.img.trim()) ? 'รูปต้องเป็นรูปจาก Shopee (ที่อยู่มีคำว่า susercontent.com) หรือเว้นว่างไว้'
-      : !f.moods.length ? 'เลือกอย่างน้อยหนึ่งแบบว่าจะแสดงหลังเกมแบบไหน' : '';
+      : !f.moods.length ? 'เลือกอย่างน้อยหนึ่งแบบว่าจะแสดงหลังเกมแบบไหน'
+      : !this.accepted() && !this.agree() ? 'กดยอมรับข้อกำหนดและเงื่อนไขก่อนนะ' : '';
     this.err.set(e); if (e) return;
     this.busy.set(true);
-    try { await this.ref.savePick(f); this.form.set(null); }
+    try { await this.ref.savePick(f); this.form.set(null); if (!this.accepted()) { setAcceptedTerms(TERMS_VERSION); this.accepted.set(true); } }
     catch (x) { console.warn('save pick', x); this.err.set('บันทึกไม่สำเร็จ ลองใหม่อีกครั้งนะ'); }
     finally { this.busy.set(false); }
   }

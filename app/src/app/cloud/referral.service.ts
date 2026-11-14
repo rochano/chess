@@ -15,6 +15,37 @@ export interface Pick { id?: string; owner: string; ref: string; name: string; t
 export const SHOPEE_RE = /^https:\/\/(s\.shopee\.co\.th|shope\.ee|shopee\.co\.th)\/\S*$/;
 export const IMG_RE = /^https:\/\/[a-z0-9.-]+\.susercontent\.com\/\S*$/;
 export const MAX_PICKS = 6;
+/** Platform fee, paid in showings instead of money: this share of the product tips an invited friend sees are the game's own products. */
+export const HOUSE_SHARE = 0.3;
+/** Raise when the inviter terms change: everyone is asked to accept again before adding or editing products. */
+export const TERMS_VERSION = 1;
+/**
+ * Words that usually mean a product breaks the inviter terms (vapes, alcohol, gambling, adult, miracle cures, weapons, fakes).
+ * Only a warning: the owner still decides, since a word can also appear in an innocent product name.
+ */
+export const BANNED = [
+  'บุหรี่', 'บุหรี่ไฟฟ้า', 'พอต', 'พอด', 'vape', 'pod', 'ยาเส้น', 'กัญชา', 'กระท่อม', 'cbd', 'thc',
+  'เหล้า', 'เบียร์', 'ไวน์', 'วิสกี้', 'แอลกอฮอล์', 'สุรา', 'beer', 'wine', 'whisky', 'vodka',
+  'คาสิโน', 'พนัน', 'บาคาร่า', 'สล็อต', 'หวย', 'แทงบอล', 'casino', 'slot', 'baccarat',
+  'เซ็กส์', 'เซ็กซ์', 'ผู้ใหญ่', 'ของเล่นผู้ใหญ่', 'ถุงยาง', 'sex', 'adult', '18+',
+  'ลดน้ำหนักเร็ว', 'ลดความอ้วน', 'ผอมเร็ว', 'ขาวไว', 'ขาวใน', 'อึด', 'เพิ่มขนาด', 'ยาฟิต', 'ยาลดน้ำหนัก', 'รักษาหาย', 'หายขาด',
+  'ปืน', 'กระสุน', 'มีดพับ', 'สนับมือ', 'สเปรย์พริกไทย', 'ช็อตไฟฟ้า', 'gun',
+  'ก๊อป', 'ก็อป', 'เกรดมิลเลอร์', 'มิลเลอร์', 'แบรนด์เนมเกรด', 'copy', 'replica', 'mirror',
+];
+/** The banned words found in a product's name, note and link (lower case; longest first so "บุหรี่ไฟฟ้า" is shown, not both). */
+export function flagWords(p: Pick | { title: string; note: string; url: string }): string[] {
+  let text = (p.title + ' ' + p.note + ' ' + p.url).toLowerCase();
+  try { text += ' ' + decodeURIComponent(p.url).toLowerCase(); } catch { /* bad escape */ }
+  const hits: string[] = [];
+  for (const w of [...BANNED].sort((a, b) => b.length - a.length)) {
+    const ascii = /^[a-z0-9+]+$/.test(w);
+    const found = ascii ? new RegExp('(^|[^a-z0-9])' + w.replace('+', '\\+') + '($|[^a-z0-9])').test(text) : text.includes(w);
+    if (found && !hits.some(h => h.includes(w))) hits.push(w);
+  }
+  return hits;
+}
+export function acceptedTerms() { try { return Number(localStorage.getItem('chess-terms') || 0); } catch { return 0; } }
+export function setAcceptedTerms(v: number) { try { localStorage.setItem('chess-terms', String(v)); } catch { /* private mode */ } }
 
 /** Invites (who brought whom) and the products each inviter recommends. */
 @Injectable({ providedIn: 'root' })
@@ -76,17 +107,17 @@ export class ReferralService {
     };
     const col = F.collection(this.cloud.firestore, 'picks');
     await F.setDoc(p.id ? F.doc(col, p.id) : F.doc(col), data);
-    await this.saveOwner();
+    await this.saveOwner(true);
     track('pick_saved', {});
     await this.loadMine();
   }
 
   /** The owner sees who is behind the products (Google name and email); nobody else can read this. */
-  private async saveOwner() {
+  private async saveOwner(accepted = false) {
     const F = await this.F(), u = this.cloud.user(); if (!u || u.isAnonymous) return;
     // A guest account turned into a Google one keeps an empty name on the account itself; the Google profile has it.
     const g = u.providerData.find(p => p.providerId === 'google.com');
-    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || g?.displayName || '').slice(0, 100), email: u.email || g?.email || '', at: F.serverTimestamp() })
+    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || g?.displayName || '').slice(0, 100), email: u.email || g?.email || '', ...(accepted ? { terms: TERMS_VERSION } : {}), at: F.serverTimestamp() }, { merge: true })
       .catch(e => console.warn('pick owner', e));
   }
 
