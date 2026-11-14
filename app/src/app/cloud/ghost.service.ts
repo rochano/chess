@@ -162,7 +162,11 @@ export class GhostService {
   }
 
   /** Link that opens this player's bot for whoever taps it. */
-  link(method: string) { return `${HOME_URL}?vs=${this.cloud.uid}&utm_source=${method}&utm_medium=share&utm_campaign=bot`; }
+  link(method: string) {
+    // On the test site the link stays on the test site, so the bot can be tried there before it goes live.
+    const base = location.hostname.endsWith('.web.app') ? location.origin + '/' : HOME_URL;
+    return `${base}?vs=${this.cloud.uid}&utm_source=${method}&utm_medium=share&utm_campaign=bot`;
+  }
 
   async shareMine() {
     if (!this.cloud.uid) await this.cloud.start();
