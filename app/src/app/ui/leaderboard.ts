@@ -37,6 +37,23 @@ export function tally(rows: Row[], local = false): Entry[] {
   return [...t.values()].sort((a, b) => b.pts - a.pts || b.w - a.w || a.p - b.p || a.name.localeCompare(b.name));
 }
 
+/** One board: new scores plus the old version's totals, joined by name (the old board went by name too). */
+export function merge(rows: (Player & { id: string })[], old: Entry[], uid: string): Entry[] {
+  const t = new Map<string, Entry>();
+  for (const r of rows) {
+    const k = r.name.trim().toLowerCase(), e = t.get(k);
+    const add: Entry = { name: r.name, p: r.p, w: r.w, d: r.d, l: r.l, pts: r.pts, elo: r.elo, me: r.id === uid };
+    if (!e) t.set(k, add);
+    else { e.p += add.p; e.w += add.w; e.d += add.d; e.l += add.l; e.pts += add.pts; e.elo = Math.max(e.elo || 0, add.elo || 0); e.me ||= add.me; }
+  }
+  for (const o of old) {
+    const k = o.name.trim().toLowerCase(), e = t.get(k);
+    if (!e) t.set(k, { ...o });
+    else { e.p += o.p; e.w += o.w; e.d += o.d; e.l += o.l; e.pts += o.pts; }
+  }
+  return [...t.values()].sort((a, b) => b.pts - a.pts || b.w - a.w || a.p - b.p || a.name.localeCompare(b.name)).slice(0, 50);
+}
+
 @Injectable({ providedIn: 'root' })
 export class LeaderService {
   private g = inject(GameService);
@@ -64,16 +81,21 @@ export class LeaderService {
     void this.prefs;
   }
 
+  /** Scores from the old version (copied from its sheet when the site is built, see build-pages.sh). Missing file = none. */
+  private oldScores(): Promise<Entry[]> {
+    return this.old ??= fetch('season1.json').then(r => r.ok ? r.json() : { rows: [] }).then(d => tally(d.rows || [])).catch(() => { this.old = undefined; return []; });
+  }
+  private old?: Promise<Entry[]>;
+
   load() {
     this.error.set(false);
     if (this.tab() === 'local') { this.list.set(tally(lsGet<Row[]>('chess-history', []), true).slice(0, 50)); return; }
     if (this.tab() === 'all') {
       // Show the last copy at once, then the fresh list.
-      const cachedTop = lsGet<(Player & { id: string })[] | null>('chess-top-cache', null);
-      const mark = (rows: (Player & { id: string })[]) => rows.map(r => ({ ...r, me: r.id === this.cloud.uid }));
-      this.list.set(cachedTop ? mark(cachedTop) : null);
-      this.cloud.top(50)
-        .then(rows => { lsSet('chess-top-cache', rows); if (this.tab() === 'all') this.list.set(mark(rows)); })
+      const cachedTop = lsGet<Entry[] | null>('chess-top-cache2', null);
+      this.list.set(cachedTop);
+      Promise.all([this.cloud.top(200), this.oldScores()])
+        .then(([rows, old]) => { const m = merge(rows, old, this.cloud.uid); lsSet('chess-top-cache2', m.map(e => ({ ...e, me: false }))); if (this.tab() === 'all') this.list.set(m); })
         .catch(e => { console.warn('leaderboard', e); if (this.tab() === 'all' && !cachedTop) this.error.set(true); });
       return;
     }
@@ -105,8 +127,7 @@ export class LeaderService {
     <h2 id="lbTitle">{{ 'Leaderboard' | tr }}</h2>
     <div class="seg" id="segLeader">
       <button [attr.aria-pressed]="lb.tab() === 'all'" (click)="pick('all')">{{ 'Everyone' | tr }}</button>
-      <button [attr.aria-pressed]="lb.tab() === 'season1'" (click)="pick('season1')">{{ t('ซีซัน 1', 'Season 1') }}</button>
-      <button [attr.aria-pressed]="lb.tab() === 'local'" (click)="pick('local')">{{ 'This device' | tr }}</button>
+      <button [attr.aria-pressed]="lb.tab() === 'local'" (click)="pick('local')">{{ t('ของฉัน', 'Mine') }}</button>
     </div>
     <div class="lb" id="lbBody">
       @if (lb.error()) {
@@ -117,11 +138,10 @@ export class LeaderService {
         <p class="empty">{{ (lb.tab() === 'local' ? 'ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่' : 'ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม') | tr }}</p>
       } @else {
         <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th>@if (lb.tab() === 'all') {<th>{{ t('ฝีมือ', 'Rating') }}</th>}</tr></thead>
-          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo }}</td>}</tr>}</tbody></table>
+          <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo || '–' }}</td>}</tr>}</tbody></table>
       }
     </div>
-    <p class="fine">{{ lb.tab() === 'all' ? t('ชนะคอมได้ 1–3 แต้มตามระดับ เสมอได้ 1 แต้ม', 'Beat the computer for 1–3 points by level, draw for 1')
-      : lb.tab() === 'season1' ? t('คะแนนซีซันแรก (เวอร์ชันเก่า)', 'Scores from the first season (old version)')
+    <p class="fine">{{ lb.tab() === 'all' ? t('ชนะคอมได้ 1–3 แต้มตามระดับ เสมอได้ 1 แต้ม รวมคะแนนจากเวอร์ชันก่อนแล้ว', 'Beat the computer for 1–3 points by level, draw for 1. Includes scores from before.')
       : t('เกมที่เล่นจบบนเครื่องนี้', 'Games finished on this device') }}</p>
     <div class="btns"><button class="btn" id="closeLeader" (click)="close()">{{ 'Back to menu' | tr }}</button></div>
   </div>
