@@ -27,6 +27,8 @@ export class NetService {
   private prefs = inject(PrefsService);
   private i18n = inject(I18nService);
   readonly msg = signal<{ html: string; bad: boolean } | null>(null);
+  /** Round trip to the other device in ms, and whether it goes direct (p2p) or through the database. */
+  readonly rtt = signal<{ ms: number; via: 'p2p' | 'db' } | null>(null);
   N: any;
 
   constructor() {
@@ -119,11 +121,76 @@ export class NetService {
     let after = '';
     lastOld?.forEach(c => { after = c.key || ''; });
     const q = after ? D.query(inbox, D.orderByKey(), D.startAfter(after)) : D.query(inbox, D.orderByKey());
-    subs.push(D.onChildAdded(q, snap => {
-      const m = snap.val();
-      if ((window as any).__net) console.warn('net recv', role, JSON.stringify(m?.d));
-      if (!closed && m) try { h.data(m.d); } catch (e) { console.warn('net handler', e); }
-    }, e => h.error({ type: (e as any)?.code || 'network' })));
+
+    /* Messages come in two ways: the database inbox, and (once it opens) a direct WebRTC channel between the
+       two devices. Every message carries this link's session id (s) and a sequence number (n), so they are
+       handled once each and in order whichever way they came. */
+    const sid = Math.random().toString(36).slice(2, 10);
+    let peerSid = '', next = 0;
+    const held = new Map<number, any>();
+    const debug = !!(window as any).__net;
+    const receive = (m: any, via: string) => {
+      if (closed || !m || typeof m.n !== 'number') return;
+      if (m.s !== peerSid) { peerSid = m.s; next = m.n; held.clear(); if (role === 'host' && m.d?.t !== 'sig') void offer(); }
+      if (m.n < next || held.has(m.n)) return;
+      held.set(m.n, m);
+      while (held.has(next)) {
+        const x = held.get(next); held.delete(next); next++;
+        if (debug) console.warn('net recv', role, via, JSON.stringify(x.d));
+        if (x.d?.t === 'sig') { void signal(x.d); continue; }
+        if (x.d?.t === 'rtt') { send({ t: 'rtt2', at: x.d.at }); continue; }
+        if (x.d?.t === 'rtt2') { this.rtt.set({ ms: Math.max(1, Math.round(performance.now() - x.d.at)), via: dc?.readyState === 'open' ? 'p2p' : 'db' }); continue; }
+        try { h.data(x.d); } catch (e) { console.warn('net handler', e); }
+      }
+    };
+    subs.push(D.onChildAdded(q, snap => receive(snap.val(), 'db'), e => h.error({ type: (e as any)?.code || 'network' })));
+
+    const viaDb = (env: any) => D.push(outbox, { ...env, at: D.serverTimestamp() }).catch(e => console.warn('net send', e));
+    const send = (d: any) => {
+      if (closed) return;
+      const env = { s: sid, n: n++, d: JSON.parse(JSON.stringify(d)) };
+      if (dc?.readyState === 'open' && d?.t !== 'sig') { try { dc.send(JSON.stringify(env)); return; } catch { /* fall back */ } }
+      void viaDb(env);
+    };
+
+    // Direct link. The host offers; the guest answers. If it never connects, the database keeps carrying everything.
+    let pc: RTCPeerConnection | null = null, dc: RTCDataChannel | null = null;
+    const wire = (ch: RTCDataChannel) => {
+      ch.onopen = () => { dc = ch; if (debug) console.warn('net p2p open', role); };
+      ch.onclose = () => { if (dc === ch) dc = null; };
+      ch.onmessage = e => { try { receive(JSON.parse(e.data), 'p2p'); } catch { /* bad frame */ } };
+    };
+    const fresh = () => {
+      try { pc?.close(); } catch { /* closed */ }
+      dc = null;
+      if (typeof RTCPeerConnection !== 'function') return null;
+      pc = new RTCPeerConnection({ iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] });
+      pc.onicecandidate = e => { if (e.candidate) send({ t: 'sig', ice: e.candidate.toJSON() }); };
+      pc.onconnectionstatechange = () => { if (pc && (pc.connectionState === 'failed' || pc.connectionState === 'closed')) dc = null; };
+      pc.ondatachannel = e => wire(e.channel);
+      return pc;
+    };
+    const offer = async () => {
+      const p = fresh(); if (!p) return;
+      wire(p.createDataChannel('chess', { ordered: true }));
+      try { await p.setLocalDescription(await p.createOffer()); send({ t: 'sig', sdp: p.localDescription!.toJSON() }); } catch (e) { console.warn('p2p offer', e); }
+    };
+    const signal = async (d: any) => {
+      try {
+        if (d.sdp?.type === 'offer') {
+          const p = fresh(); if (!p) return;
+          await p.setRemoteDescription(d.sdp);
+          await p.setLocalDescription(await p.createAnswer());
+          send({ t: 'sig', sdp: p.localDescription!.toJSON() });
+        } else if (d.sdp?.type === 'answer') await pc?.setRemoteDescription(d.sdp);
+        else if (d.ice && pc) await pc.addIceCandidate(d.ice).catch(() => { /* late candidate */ });
+      } catch (e) { console.warn('p2p signal', e); }
+    };
+
+    // Measure the round trip every 3 s for the ping chip.
+    this.rtt.set(null);
+    const timer = setInterval(() => { if (!document.hidden) send({ t: 'rtt', at: performance.now() }); }, 3000);
+    subs.push(() => { clearInterval(timer); this.rtt.set(null); });
 
     if (role === 'host') {
       let opened = false;
@@ -131,11 +198,8 @@ export class NetService {
     } else setTimeout(() => h.open(), 0);
 
     return {
-      send: (d: any) => {
-        if (closed) return;
-        D.push(outbox, { n: n++, d: JSON.parse(JSON.stringify(d)), at: D.serverTimestamp() }).catch(e => console.warn('net send', e));
-      },
-      close: () => { closed = true; subs.forEach(u => u()); },
+      send,
+      close: () => { closed = true; subs.forEach(u => u()); try { pc?.close(); } catch { /* closed */ } },
     };
   }
 }

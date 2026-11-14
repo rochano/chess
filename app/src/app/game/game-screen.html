@@ -52,6 +52,7 @@
         <div class="player" [id]="c === 'w' ? 'pW' : 'pB'" [class.on]="!g.over() && g.st().turn === c">
           <div class="avatar" [id]="c === 'w' ? 'avW' : 'avB'" [innerHTML]="(c === 'w' ? AVATAR['p1'] : g.mode() === 'cpu' ? AVATAR['cpu'] : AVATAR['p2']) | safeHtml"></div>
           <div class="pname" [id]="c === 'w' ? 'nameW' : 'nameB'">{{ g.names()[c] | tr }}<small>{{ (c === 'w' ? 'White' : 'Black') | tr }}@if (g.mode() === 'online') { · {{ (c === g.myColor() ? 'You' : 'Online') | tr }}} @else if (c === 'b') { · {{ (g.mode() === 'cpu' ? levelName() : 'Friend') | tr }}}</small></div>
+          @if (g.mode() === 'online' && c !== g.myColor() && net.rtt(); as r) {<span class="ping" [class.slow]="r.ms > 300" [title]="r.via === 'p2p' ? 'Direct connection' : 'Through the server'">{{ r.ms }} ms · {{ r.via === 'p2p' ? 'P2P' : 'DB' }}</span>}
           @if (g.tc()) {<div class="clock" [id]="c === 'w' ? 'clockW' : 'clockB'" [class.low]="g.clocks()[c] < 20000">{{ fmt(g.clocks()[c]) }}</div>}
           <div class="caps" [id]="c === 'w' ? 'capsW' : 'capsB'">
             @let cp = caps(c);

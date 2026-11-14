@@ -99,7 +99,7 @@ export class GameScreenComponent {
     this.ui.confirm('Resign this game?', `${me} resigns and ${them} is awarded the win.`, 'Resign', () => this.g.resign());
   }
   again() { if (this.g.mode() === 'online') { this.net.again(); return; } this.g.newGame(); this.ui.show('menu'); }
-  private net = inject(NetService);
+  protected net = inject(NetService);
   toggleMusic() { this.prefs.set('music', !this.prefs.get().music); }
   openSettings() { this.ui.backToMenu = false; this.ui.show('settings'); }
 }
