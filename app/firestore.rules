@@ -103,6 +103,16 @@ service cloud.firestore {
       allow delete: if (signedIn() && resource.data.owner == request.auth.uid) || isAdmin();
     }
 
+    // Who is behind each inviter's products: Google name and email, visible to the owner only (?admin).
+    match /pickOwners/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow create, update: if google() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'at'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 100
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.at == request.time;
+    }
+
     // A player's bot: what their own games taught it (written by them), and how challengers did against it.
     // gw/gd/gl = bot won/drew/lost; anyone signed in may add one result, at most once every 10 seconds per bot.
     match /ghosts/{uid} {

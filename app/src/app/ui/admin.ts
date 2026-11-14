@@ -46,8 +46,8 @@ type Row = Pick & { at?: Date };
           <button [attr.aria-pressed]="tab() === 'people'" (click)="tab.set('people')">ผู้ชวน</button>
         </div>
         @if (tab() === 'people') {
-          <table><thead><tr><th>ผู้ชวน</th><th>เพื่อนที่ชวนมา</th><th>สินค้าที่ขึ้นแล้ว</th></tr></thead>
-            <tbody>@for (p of people(); track p.ref) {<tr><td>{{ p.name }}</td><td>{{ p.friends }}</td><td>{{ p.ok }}</td></tr>} @empty {<tr><td colspan="3">ยังไม่มีใครชวนเพื่อนมา</td></tr>}</tbody></table>
+          <table><thead><tr><th>ผู้ชวน</th><th>อีเมล</th><th>เพื่อนที่ชวนมา</th><th>สินค้าที่ขึ้นแล้ว</th></tr></thead>
+            <tbody>@for (p of people(); track p.ref) {<tr><td>{{ p.name }}</td><td>{{ p.email || '-' }}</td><td>{{ p.friends }}</td><td>{{ p.ok }}</td></tr>} @empty {<tr><td colspan="4">ยังไม่มีใครชวนเพื่อนมา</td></tr>}</tbody></table>
         } @else {
           <div class="ad-list">
             @for (p of shown(); track p.id) {
@@ -57,6 +57,7 @@ type Row = Pick & { at?: Date };
                   <b>{{ p.title }}</b>
                   @if (p.note) { <span>{{ p.note }}</span> }
                   <span class="fine">โดย {{ p.name }} · {{ p.at ? p.at.toLocaleDateString('th-TH') : '' }} · <span [class]="'st ' + p.status">{{ label[p.status] }}</span></span>
+                  @if (owners().get(p.owner); as o) { <span class="fine">บัญชี Google: {{ o.name || '-' }} · <a [href]="'mailto:' + o.email">{{ o.email }}</a></span> }
                   <a [href]="p.url" target="_blank" rel="noopener noreferrer">{{ p.url }}</a>
                   <div class="acts">
                     @if (p.status !== 'ok') { <button class="chip" (click)="set(p, 'ok')">ให้ขึ้น</button> }
@@ -83,15 +84,16 @@ export class AdminComponent {
   protected tab = signal<PickStatus | 'people'>('pending');
   protected rows = signal<Row[]>([]);
   protected invites = signal<Map<string, number>>(new Map());
+  protected owners = signal<Map<string, { name: string; email: string }>>(new Map());
   protected err = signal('');
   protected readonly label = { pending: 'รอตรวจ', ok: 'ขึ้นแล้ว', no: 'ไม่ผ่าน' };
   protected uid = computed(() => this.cloud.user()?.uid ?? '');
   protected shown = computed(() => this.rows().filter(r => r.status === this.tab()).sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0)));
   protected people = computed(() => {
-    const names = new Map<string, string>(), ok = new Map<string, number>();
-    for (const r of this.rows()) { names.set(r.ref, r.name); if (r.status === 'ok') ok.set(r.ref, (ok.get(r.ref) || 0) + 1); }
+    const names = new Map<string, string>(), ok = new Map<string, number>(), mail = new Map<string, string>();
+    for (const r of this.rows()) { names.set(r.ref, r.name); mail.set(r.ref, this.owners().get(r.owner)?.email || ''); if (r.status === 'ok') ok.set(r.ref, (ok.get(r.ref) || 0) + 1); }
     const refs = new Set([...this.invites().keys(), ...names.keys()]);
-    return [...refs].map(ref => ({ ref, name: names.get(ref) || 'ผู้เล่น ' + ref, friends: this.invites().get(ref) || 0, ok: ok.get(ref) || 0 }))
+    return [...refs].map(ref => ({ ref, name: names.get(ref) || 'ผู้เล่น ' + ref, email: mail.get(ref) || '', friends: this.invites().get(ref) || 0, ok: ok.get(ref) || 0 }))
       .sort((a, b) => b.friends - a.friends || b.ok - a.ok);
   });
 
@@ -104,8 +106,8 @@ export class AdminComponent {
     if (!this.ref.google) { this.state.set('login'); return; }
     if (!(await this.ref.isAdmin())) { this.state.set('denied'); return; }
     try {
-      const [rows, inv] = await Promise.all([this.ref.allPicks(), this.ref.inviteCounts()]);
-      this.rows.set(rows); this.invites.set(inv); this.state.set('ok');
+      const [rows, inv, own] = await Promise.all([this.ref.allPicks(), this.ref.inviteCounts(), this.ref.owners().catch(() => new Map())]);
+      this.rows.set(rows); this.invites.set(inv); this.owners.set(own); this.state.set('ok');
     } catch (e) { console.warn('admin', e); this.err.set('โหลดข้อมูลไม่ได้ ลองใหม่อีกครั้ง'); this.state.set('ok'); }
   }
   async login() { try { await this.cloud.signInGoogle(); } catch { /* closed */ } await this.load(); }
