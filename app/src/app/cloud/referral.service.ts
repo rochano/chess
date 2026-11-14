@@ -17,6 +17,10 @@ export const IMG_RE = /^https:\/\/[a-z0-9.-]+\.susercontent\.com\/\S*$/;
 export const MAX_PICKS = 6;
 /** Platform fee, paid in showings instead of money: this share of the product tips an invited friend sees are the game's own products. */
 export const HOUSE_SHARE = 0.3;
+/** Raise when the inviter terms change: everyone is asked to accept again before adding or editing products. */
+export const TERMS_VERSION = 1;
+export function acceptedTerms() { try { return Number(localStorage.getItem('chess-terms') || 0); } catch { return 0; } }
+export function setAcceptedTerms(v: number) { try { localStorage.setItem('chess-terms', String(v)); } catch { /* private mode */ } }
 
 /** Invites (who brought whom) and the products each inviter recommends. */
 @Injectable({ providedIn: 'root' })
@@ -78,17 +82,17 @@ export class ReferralService {
     };
     const col = F.collection(this.cloud.firestore, 'picks');
     await F.setDoc(p.id ? F.doc(col, p.id) : F.doc(col), data);
-    await this.saveOwner();
+    await this.saveOwner(true);
     track('pick_saved', {});
     await this.loadMine();
   }
 
   /** The owner sees who is behind the products (Google name and email); nobody else can read this. */
-  private async saveOwner() {
+  private async saveOwner(accepted = false) {
     const F = await this.F(), u = this.cloud.user(); if (!u || u.isAnonymous) return;
     // A guest account turned into a Google one keeps an empty name on the account itself; the Google profile has it.
     const g = u.providerData.find(p => p.providerId === 'google.com');
-    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || g?.displayName || '').slice(0, 100), email: u.email || g?.email || '', at: F.serverTimestamp() })
+    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || g?.displayName || '').slice(0, 100), email: u.email || g?.email || '', ...(accepted ? { terms: TERMS_VERSION } : {}), at: F.serverTimestamp() }, { merge: true })
       .catch(e => console.warn('pick owner', e));
   }
 
