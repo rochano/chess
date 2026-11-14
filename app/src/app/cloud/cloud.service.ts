@@ -26,7 +26,7 @@ export class CloudService {
   readonly save = signal<SaveState>('');
   readonly lastDelta = signal<{ elo: number; pts: number } | null>(null);
   readonly error = signal('');
-  private app?: FirebaseApp; private auth?: Auth; private db?: Firestore;
+  private app_?: FirebaseApp; private auth?: Auth; private db?: Firestore;
   private ready?: Promise<void>;
 
   init() {
@@ -38,10 +38,10 @@ export class CloudService {
   start() {
     return this.ready ??= (async () => {
       const [{ initializeApp }, A, { initializeFirestore }] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/firestore')]);
-      this.app = initializeApp(FIREBASE_CONFIG);
-      this.auth = A.getAuth(this.app);
+      this.app_ = initializeApp(FIREBASE_CONFIG);
+      this.auth = A.getAuth(this.app_);
       // ?lp=1 forces long polling (some proxies and firewalls break the streaming channel).
-      this.db = initializeFirestore(this.app, new URLSearchParams(location.search).has('lp') ? { experimentalForceLongPolling: true } : {});
+      this.db = initializeFirestore(this.app_, new URLSearchParams(location.search).has('lp') ? { experimentalForceLongPolling: true } : {});
       await new Promise<void>(res => A.onAuthStateChanged(this.auth!, u => { this.user.set(u); if (u) void this.loadMe(); res(); }));
       if (!this.auth.currentUser) await A.signInAnonymously(this.auth);
     })().catch(err => { console.warn('firebase', err); this.error.set(String(err?.code || err)); this.ready = undefined; });
@@ -141,5 +141,6 @@ export class CloudService {
   get uid() { return this.user()?.uid ?? ''; }
   /** Firestore, once start() has finished. */
   get firestore() { return this.db!; }
+  get app() { return this.app_!; }
   t(th: string, en: string) { return this.i18n.t(th, en); }
 }

@@ -7,3 +7,6 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: '299486648219',
   appId: '1:299486648219:web:3c8d234f6bbc783d36733e',
 };
+
+/** Realtime Database (online play). */
+export const RTDB_URL = 'https://rochano-chess-default-rtdb.asia-southeast1.firebasedatabase.app';

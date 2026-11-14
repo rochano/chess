@@ -9,6 +9,7 @@ import { I18nService } from '../core/i18n.service';
 import { PrefsService } from '../core/prefs.service';
 import { UiService } from '../core/ui.service';
 import { create } from './legacy-net';
+import { RTDB_URL } from '../cloud/firebase-config';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Handlers { open(): void; data(d: any): void; close(): void; error(e: any): void; }
@@ -86,54 +87,53 @@ export class NetService {
     };
   }
 
-  /** The Firestore link. Resolves like PeerJS did: host once the room exists, join once it is claimed. */
+  /**
+   * The link, over Realtime Database (a socket kept open, so a move arrives in a fraction of a second):
+   * rooms/{CODE}/host and /guest are the two players' ids, rooms/{CODE}/to_host and /to_join are each side's inbox.
+   * Resolves like PeerJS did: host once the room exists, join once the guest seat is claimed.
+   */
   private async open(role: 'host' | 'join', code: string, h: Handlers) {
     await this.cloud.start();
     const uid = this.cloud.uid; if (!uid) throw { type: 'network' };
-    const F = await import('firebase/firestore');
-    const db = this.cloud.firestore, room = F.doc(db, 'rooms', code), msgs = F.collection(room, 'msgs');
-    const me = role, them = role === 'host' ? 'join' : 'host';
+    const D = await import('firebase/database');
+    const db = D.getDatabase(this.cloud.app, RTDB_URL);
+    if (location.hostname === 'localhost' && new URLSearchParams(location.search).has('emu')) try { D.connectDatabaseEmulator(db, '127.0.0.1', 9000); } catch { /* already */ }
+    const room = D.ref(db, `rooms/${code}`), inbox = D.child(room, role === 'host' ? 'to_host' : 'to_join'), outbox = D.child(room, role === 'host' ? 'to_join' : 'to_host');
     const subs: (() => void)[] = [];
-    let n = 0, lastSent = 0, closed = false;
+    let n = 0, closed = false;
 
     if (role === 'host') {
-      try { await F.setDoc(room, { host: uid, guest: null, at: F.serverTimestamp() }); }
-      catch { throw { type: 'unavailable-id' }; } // the code is taken (the rules refuse to overwrite a room)
+      try { await D.update(room, { host: uid, at: D.serverTimestamp() }); }
+      catch { throw { type: 'unavailable-id' }; } // the code is taken: the rules refuse to overwrite a room
     } else {
-      const s = await F.getDoc(room).catch(() => null);
-      if (!s?.exists()) throw { type: 'peer-unavailable' };
-      const r = s.data();
-      if (r['host'] === uid) throw { type: 'own-room' };
-      if (r['guest'] && r['guest'] !== uid) throw { type: 'room-full' };
-      // Claim the guest seat first: only the two players may read the room's messages.
-      if (r['guest'] !== uid) { try { await F.updateDoc(room, { guest: uid }); } catch { throw { type: 'room-full' }; } }
+      const [host, guest] = await Promise.all([D.get(D.child(room, 'host')), D.get(D.child(room, 'guest'))]).catch(() => [null, null]);
+      if (!host?.exists()) throw { type: 'peer-unavailable' };
+      if (host.val() === uid) throw { type: 'own-room' };
+      if (guest?.exists() && guest.val() !== uid) throw { type: 'room-full' };
+      // Claim the guest seat first: only the two players may read the inboxes.
+      if (!guest?.exists()) { try { await D.set(D.child(room, 'guest'), uid); } catch { throw { type: 'room-full' }; } }
     }
 
-    // Messages addressed to this side. The first snapshot is history from an earlier visit: skip it.
-    await new Promise<void>((res, rej) => {
-      let first = true;
-      subs.push(F.onSnapshot(F.query(msgs, F.where('to', '==', me)), snap => {
-        if (first) { first = false; res(); return; }
-        const added = snap.docChanges().filter(c => c.type === 'added' && !c.doc.metadata.hasPendingWrites).map(c => c.doc.data());
-        if ((window as any).__net) console.warn('net recv', me, JSON.stringify(added.map(m => m['d'])));
-        added.sort((a, b) => a['n'] - b['n']).forEach(m => { if (!closed) try { h.data(m['d']); } catch (e) { console.warn('net handler', e); } });
-      }, e => { console.warn('net listen', e.code, e.message); if (first) rej({ type: e.code || 'network' }); else h.error({ type: e.code }); }));
-    });
+    // Only messages newer than what is already in the inbox (older ones are from an earlier visit).
+    const lastOld = await D.get(D.query(inbox, D.orderByKey(), D.limitToLast(1))).catch(() => null);
+    let after = '';
+    lastOld?.forEach(c => { after = c.key || ''; });
+    const q = after ? D.query(inbox, D.orderByKey(), D.startAfter(after)) : D.query(inbox, D.orderByKey());
+    subs.push(D.onChildAdded(q, snap => {
+      const m = snap.val();
+      if ((window as any).__net) console.warn('net recv', role, JSON.stringify(m?.d));
+      if (!closed && m) try { h.data(m.d); } catch (e) { console.warn('net handler', e); }
+    }, e => h.error({ type: (e as any)?.code || 'network' })));
 
     if (role === 'host') {
       let opened = false;
-      subs.push(F.onSnapshot(room, s => { if (!opened && s.data()?.['guest']) { opened = true; h.open(); } }));
-    } else {
-      setTimeout(() => h.open(), 0);
-    }
+      subs.push(D.onValue(D.child(room, 'guest'), s => { if (!opened && s.exists()) { opened = true; h.open(); } }));
+    } else setTimeout(() => h.open(), 0);
 
     return {
       send: (d: any) => {
         if (closed) return;
-        // A ping only matters when nothing else was sent lately.
-        if (d?.t === 'ping' && Date.now() - lastSent < 12000) return;
-        lastSent = Date.now();
-        F.addDoc(msgs, { to: them, n: n++, d, from: uid, at: F.serverTimestamp() }).catch(e => console.warn('net send', e));
+        D.push(outbox, { n: n++, d: JSON.parse(JSON.stringify(d)), at: D.serverTimestamp() }).catch(e => console.warn('net send', e));
       },
       close: () => { closed = true; subs.forEach(u => u()); },
     };

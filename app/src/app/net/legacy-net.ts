@@ -193,7 +193,7 @@ function netMove(d) {
 setInterval(() => {
   if (!Net.link) return;
   if (!document.hidden) Net.send({ t: "ping" });
-  if (Net.live && Net.connected && Date.now() - Net.lastSeen > 40000) netGone(false);
+  if (Net.live && Net.connected && Date.now() - Net.lastSeen > 10000) netGone(false);
 }, 3000);
 setInterval(goneTick, 1000);
 // Tell the other device when this one leaves or is put in the background.
@@ -201,7 +201,7 @@ addEventListener("pagehide", () => { if (Net.link) Net.send({ t: "bye" }); });
 document.addEventListener("visibilitychange", () => {
   if (!Net.link) return;
   if (document.hidden) Net.send({ t: "away" });
-  else { Net.send({ t: "ping" }); if (Net.live && Net.connected) Net.lastSeen = Math.max(Net.lastSeen, Date.now() - 30000); }
+  else { Net.send({ t: "ping" }); if (Net.live && Net.connected) Net.lastSeen = Math.max(Net.lastSeen, Date.now() - 6000); }
 });
   // Copy / Share buttons live in the room box the menu draws from netMsg.
   document.addEventListener("click", e => {
