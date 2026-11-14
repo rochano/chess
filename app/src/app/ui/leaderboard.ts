@@ -113,11 +113,11 @@ export class LeaderService {
       } @else if (!lb.list()!.length) {
         <p class="empty">{{ (lb.tab() === 'local' ? 'ยังไม่มีเกมที่เล่นจบบนเครื่องนี้ เล่นให้จบสักเกม (ชนะ แพ้ หรือเสมอ) แล้วคะแนนจะขึ้นที่นี่' : 'ยังไม่มีใครขึ้นกระดาน ใส่ชื่อในเมนูแล้วเล่นให้จบสักเกม') | tr }}</p>
       } @else {
-        <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th>@if (lb.tab() === 'all') {<th>Elo</th>}</tr></thead>
+        <table><thead><tr><th>#</th><th>{{ t('ชื่อ', 'Name') }}</th><th>{{ t('เกม', 'Games') }}</th><th>{{ t('ชนะ', 'W') }}</th><th>{{ t('เสมอ', 'D') }}</th><th>{{ t('แพ้', 'L') }}</th><th>{{ t('แต้ม', 'Pts') }}</th>@if (lb.tab() === 'all') {<th>{{ t('ฝีมือ', 'Rating') }}</th>}</tr></thead>
           <tbody>@for (e of lb.list(); track e.name; let k = $index) {<tr [class.top1]="k === 0" [class.me]="e.me"><td>{{ k + 1 }}</td><td>{{ e.name }}</td><td>{{ e.p }}</td><td>{{ e.w }}</td><td>{{ e.d }}</td><td>{{ e.l }}</td><td>{{ e.pts }}</td>@if (lb.tab() === 'all') {<td>{{ e.elo }}</td>}</tr>}</tbody></table>
       }
     </div>
-    <p class="fine">{{ lb.tab() === 'all' ? t('นับเกมที่เล่นกับคอมพิวเตอร์: ชนะ Easy 1, Normal 2, Hard 3 แต้ม เสมอ 1 แต้ม · Elo เริ่มที่ 1000 · ล็อกอิน Google ในตั้งค่าเพื่อเก็บคะแนนข้ามเครื่อง', 'Games against the computer count: win Easy 1, Normal 2, Hard 3 points, draw 1 · Elo starts at 1000 · Sign in with Google in Settings to keep your score on every device') : ('ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน' | tr) }}</p>
+    <p class="fine">{{ lb.tab() === 'all' ? t('นับเกมที่เล่นกับคอมพิวเตอร์: ชนะ Easy 1, Normal 2, Hard 3 แต้ม เสมอ 1 แต้ม · ระดับฝีมือเริ่มที่ 1000 ขึ้นลงตามผลแพ้ชนะ · ล็อกอิน Google ในตั้งค่าเพื่อเก็บคะแนนข้ามเครื่อง', 'Games against the computer count: win Easy 1, Normal 2, Hard 3 points, draw 1 · Rating starts at 1000 and moves with each result · Sign in with Google in Settings to keep your score on every device') : ('ชนะคน 3 แต้ม เสมอ 1 แต้ม ชนะคอมพิวเตอร์ Easy 1, Normal 2, Hard 3 แต้ม ใส่ชื่อในเมนูก่อนเล่นเพื่อขึ้นกระดาน' | tr) }}</p>
     <div class="btns"><button class="btn" id="closeLeader" (click)="close()">{{ 'Back to menu' | tr }}</button></div>
   </div>
 </div>`,

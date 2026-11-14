@@ -25,12 +25,12 @@ import { CloudService } from '../cloud/cloud.service';
       @let u = cloud.user();
       @if (u && !u.isAnonymous) {
         <div class="field"><span class="lbl">{{ t('ล็อกอินด้วย Google แล้ว', 'Signed in with Google') }}</span>
-          <p class="fine" style="margin:0">{{ u.displayName || u.email }}@if (cloud.me(); as m) { · Elo {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
+          <p class="fine" style="margin:0">{{ u.displayName || u.email }}@if (cloud.me(); as m) { · {{ t('ระดับฝีมือ', 'Rating') }} {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
           <button class="btn" (click)="cloud.signOut()">{{ t('ออกจากระบบ', 'Sign out') }}</button></div>
       } @else {
         <div class="field">
           <button class="btn go" id="googleIn" (click)="signIn()">{{ t('ล็อกอินด้วย Google', 'Sign in with Google') }}</button>
-          <p class="fine" style="margin:6px 0 0">{{ t('ไม่ล็อกอินก็เล่นและขึ้นกระดานคะแนนได้ ล็อกอินเพื่อเก็บคะแนนกับ Elo ไว้ใช้ได้ทุกเครื่อง', 'You can play and get on the leaderboard without it. Sign in to keep your score and Elo on every device.') }}@if (cloud.me(); as m) { · Elo {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
+          <p class="fine" style="margin:6px 0 0">{{ t('ไม่ล็อกอินก็เล่นและขึ้นกระดานคะแนนได้ ล็อกอินเพื่อเก็บคะแนนกับระดับฝีมือไว้ใช้ได้ทุกเครื่อง', 'You can play and get on the leaderboard without it. Sign in to keep your score and rating on every device.') }}@if (cloud.me(); as m) { · {{ t('ระดับฝีมือ', 'Rating') }} {{ m.elo }} · {{ m.pts }} {{ t('แต้ม', 'pts') }}}</p>
           @if (cloud.error()) {<p class="fine" style="margin:4px 0 0;color:#B23A2E">{{ cloud.error() }}</p>}
         </div>
       }

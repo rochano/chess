@@ -93,7 +93,7 @@ export class PromoComponent {
     } @else {<div class="result-badge" id="resBadge"></div>}
     <h2 id="resTitle">{{ g.over() ? title() : '' }}</h2>
     <p id="resText">{{ g.over() ? text() : '' }}</p>
-    @if (cloud.save()) {<p class="fine" id="resSaved">{{ saved() }}</p>}
+    @if (saved(); as s) {<p class="fine" id="resSaved">{{ s }}</p>}
     <div class="row2">
       <button class="btn" id="resView" (click)="view()">{{ 'View board' | tr }}</button>
       <button class="btn go" id="resAgain" (click)="again()">{{ 'Play again' | tr }}</button>
@@ -124,9 +124,15 @@ export class ResultComponent {
   saved = computed(() => {
     const t = (th: string, en: string) => this.i18n.t(th, en), d = this.cloud.lastDelta(), me = this.cloud.me();
     switch (this.cloud.save()) {
-      case 'saving': return t('กำลังบันทึกคะแนน…', 'Saving your score…');
+      case 'saving': return '';
       case 'failed': return t('บันทึกคะแนนไม่ได้ เน็ตอาจมีปัญหา', "Couldn't save your score. Check your connection.");
-      case 'saved': return d && me ? t(`บันทึกแล้ว · +${d.pts} แต้ม · Elo ${me.elo} (${d.elo >= 0 ? '+' : ''}${d.elo})`, `Saved · +${d.pts} pts · Elo ${me.elo} (${d.elo >= 0 ? '+' : ''}${d.elo})`) : t('บันทึกแล้ว', 'Saved');
+      case 'saved': {
+        if (!d || !me) return '';
+        const up = d.elo > 0 ? ` ▲${d.elo}` : d.elo < 0 ? ` ▼${-d.elo}` : '';
+        return d.pts > 0
+          ? t(`ได้ ${d.pts} แต้ม · ระดับฝีมือ ${me.elo}${up}`, `+${d.pts} ${d.pts === 1 ? 'point' : 'points'} · Rating ${me.elo}${up}`)
+          : t(`ระดับฝีมือ ${me.elo}${up}`, `Rating ${me.elo}${up}`);
+      }
       default: return '';
     }
   });
