@@ -16,7 +16,7 @@ export function create(deps) {
     link(method) { return HOME_URL + "?utm_source=" + method + "&utm_medium=share&utm_campaign=result" + refTag(); },
     text() {
       const o = G.over, me = myColor(), moves = Math.ceil(G.history.length / 2), lv = ["", "Easy", "Normal", "Hard"][G.level];
-      const foe = G.mode === "cpu" ? T("คอมระดับ " + lv, "the computer (" + lv + ")") : G.mode === "online" ? T("เพื่อนออนไลน์", "an online friend") : T("เพื่อน", "a friend");
+      const foe = G.ghost ? T("บอทของ " + G.ghost, G.ghost + "'s bot") : G.mode === "cpu" ? T("คอมระดับ " + lv, "the computer (" + lv + ")") : G.mode === "online" ? T("เพื่อนออนไลน์", "an online friend") : T("เพื่อน", "a friend");
       if (!o) return T("มาเล่นหมากรุก 3 มิติกัน ฟรี ไม่ต้องสมัคร", "Come play 3D chess. Free, no sign-up");
       if (o.type === "draw") return T("เสมอกับ" + foe + " ใน " + moves + " ตา มาลองเล่นหมากรุก 3 มิติกัน", "Drew with " + foe + " in " + moves + " moves! Come try 3D chess");
       if (me && o.winner === me) return T("ชนะ" + foe + (o.type === "mate" ? " แบบรุกฆาต" : "") + " ใน " + moves + " ตา! มาท้าดวลหมากรุก 3 มิติกัน", "Beat " + foe + (o.type === "mate" ? " by checkmate" : "") + " in " + moves + " moves! Come challenge me at 3D chess");
@@ -479,11 +479,11 @@ export function create(deps) {
           if (!s) continue;
           if (s === "select") sfx.select();
           else if (s === "end") {
-            if (!ended) sfx.end(G.over, G.mode === "cpu" && G.over.winner === "b");
+            if (!ended) sfx.end(G.over, G.mode === "cpu" && G.over.winner === G.cpuColor);
             const o = G.over, me = myColor(); musicSting(o.type === "draw" ? "draw" : me && o.winner !== me ? "lose" : "win");
           } else {
             const { after, m, over } = s;
-            if (over) { sfx.end(G.over, G.mode === "cpu" && G.over.winner === "b"); ended = true; } else if (inCheck(after.board, after.turn)) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (after.captured) sfx.capture(); else sfx.move();
+            if (over) { sfx.end(G.over, G.mode === "cpu" && G.over.winner === G.cpuColor); ended = true; } else if (inCheck(after.board, after.turn)) sfx.check(); else if (m.promo) sfx.promote(); else if (m.castle) sfx.castle(); else if (after.captured) sfx.capture(); else sfx.move();
           }
         }
       });

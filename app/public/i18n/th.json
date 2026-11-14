@@ -155,5 +155,7 @@
  "Asked your opponent for a new game…": "ขอคู่แข่งเล่นเกมใหม่แล้ว…",
  "White resigns and Black is awarded the win.": "ขาวยอมแพ้ ดำได้ชัยชนะ",
  "Black resigns and White is awarded the win.": "ดำยอมแพ้ ขาวได้ชัยชนะ",
- "No captures yet": "ยังไม่ได้กินหมาก"
+ "No captures yet": "ยังไม่ได้กินหมาก",
+ "You play Black. Tap a piece to see its moves.": "คุณเล่นฝ่ายดำ แตะหมากเพื่อดูช่องที่เดินได้",
+ "Bot": "บอท"
 }

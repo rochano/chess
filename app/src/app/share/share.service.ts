@@ -55,7 +55,7 @@ export class ShareService {
     const G = {
       get st() { return g.st(); }, get last() { return g.last(); }, get over() { return g.over(); },
       set over(v) { g.over.set(v); },
-      get mode() { return g.mode(); }, get level() { return g.level(); }, get names() { return g.names(); },
+      get mode() { return g.mode(); }, get cpuColor() { return g.cpuColor(); }, get ghost() { return g.ghost()?.name; }, get level() { return g.level(); }, get names() { return g.names(); },
       get history() { return g.history(); }, get captured() { return g.captured(); }, get clocks() { return g.clocks(); },
       get tc() { return g.tc(); }, get stress() { return sergeant.stress; }, get keys() { return g.keys(); },
       reported: false,
