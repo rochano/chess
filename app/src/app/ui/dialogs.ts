@@ -93,7 +93,15 @@ export class PromoComponent {
     } @else {<div class="result-badge" id="resBadge"></div>}
     <h2 id="resTitle">{{ g.over() ? title() : '' }}</h2>
     <p id="resText">{{ g.over() ? text() : '' }}</p>
-    @if (saved(); as s) {<p class="fine" id="resSaved">{{ s }}</p>}
+    @if (saved(); as s) {
+      @if (s.err) {<p class="fine" id="resSaved">{{ s.err }}</p>}
+      @else {
+        <div class="score-tiles" id="resSaved">
+          @if (s.pts) {<div class="stile pts"><b>+{{ s.pts }}</b><span>{{ t('แต้ม', s.pts === 1 ? 'point' : 'points') }}</span></div>}
+          <div class="stile rate"><b>{{ s.elo }}@if (s.delta) {<i [class.down]="s.delta! < 0">{{ s.delta! > 0 ? '▲' : '▼' }}{{ abs(s.delta!) }}</i>}</b><span>{{ t('ระดับฝีมือ', 'Rating') }}</span></div>
+        </div>
+      }
+    }
     <div class="row2">
       <button class="btn" id="resView" (click)="view()">{{ 'View board' | tr }}</button>
       <button class="btn go" id="resAgain" (click)="again()">{{ 'Play again' | tr }}</button>
@@ -121,21 +129,15 @@ export class ResultComponent {
   private i18n = inject(I18nService);
   protected cloud = inject(CloudService);
   protected readonly king = GLYPH.K;
+  /** Score line after a CPU game: points + rating tiles (or a plain error line). */
   saved = computed(() => {
-    const t = (th: string, en: string) => this.i18n.t(th, en), d = this.cloud.lastDelta(), me = this.cloud.me();
-    switch (this.cloud.save()) {
-      case 'saving': return '';
-      case 'failed': return t('บันทึกคะแนนไม่ได้ เน็ตอาจมีปัญหา', "Couldn't save your score. Check your connection.");
-      case 'saved': {
-        if (!d || !me) return '';
-        const up = d.elo > 0 ? ` ▲${d.elo}` : d.elo < 0 ? ` ▼${-d.elo}` : '';
-        return d.pts > 0
-          ? t(`ได้ ${d.pts} แต้ม · ระดับฝีมือ ${me.elo}${up}`, `+${d.pts} ${d.pts === 1 ? 'point' : 'points'} · Rating ${me.elo}${up}`)
-          : t(`ระดับฝีมือ ${me.elo}${up}`, `Rating ${me.elo}${up}`);
-      }
-      default: return '';
-    }
+    const d = this.cloud.lastDelta(), me = this.cloud.me(), st = this.cloud.save();
+    if (st === 'failed') return { err: this.i18n.t('บันทึกคะแนนไม่ได้ เน็ตอาจมีปัญหา', "Couldn't save your score. Check your connection.") };
+    if (st !== 'saved' || !d || !me) return null;
+    return { pts: d.pts, elo: me.elo, delta: d.elo };
   });
+  protected readonly abs = Math.abs;
+  protected t(th: string, en: string) { return this.i18n.t(th, en); }
 
   title = computed(() => {
     const o = this.g.over()!, me = this.g.myColor(), tr = (s: string) => this.i18n.tr(s);
