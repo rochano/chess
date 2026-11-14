@@ -1,0 +1,42 @@
+# Publishes https://rochano.github.io/chess/ : the Angular game (app/), the original game at /chess/classic/,
+# and the static files (about.html, sitemap.xml, llms.txt, img/, sounds/, puzzles.json, shop.json).
+# Takes effect once Settings > Pages > Source is set to "GitHub Actions"; until then Pages keeps serving the branch.
+name: Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+        working-directory: app
+      - run: npx ng test --watch=false
+        working-directory: app
+      - run: ./app/build-pages.sh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

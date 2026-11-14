@@ -51,6 +51,13 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "pages": {
+              "index": {
+                "input": "src/index.pages.html",
+                "output": "index.html"
+              },
+              "baseHref": "/chess/"
             }
           },
           "defaultConfiguration": "production"

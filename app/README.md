@@ -25,3 +25,10 @@ npm start                    # http://localhost:4200
 npx ng test --watch=false    # includes parity tests that run the old engine from ../index.html
 npx ng build                 # dist/app/browser
 ```
+
+## Live site (phase 4)
+
+`.github/workflows/pages.yml` builds `app/build-pages.sh` on every push to `main` and publishes `app/site` to
+https://rochano.github.io/chess/ (needs Settings > Pages > Source = GitHub Actions). The original single-file game
+stays in the repo root as `index.html` and is published at `/chess/classic/` as a fallback.
+Firestore rules (`firestore.rules`) and Realtime Database rules (`database.rules.json`) are pasted in the Firebase console.
