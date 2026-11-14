@@ -62,6 +62,7 @@ export class ReferralService {
     const F = await this.F(), u = this.cloud.user(); if (!u) return;
     const s = await F.getDocs(F.query(F.collection(this.cloud.firestore, 'picks'), F.where('owner', '==', u.uid)));
     this.mine.set(s.docs.map(d => ({ ...(d.data() as Pick), id: d.id })).sort((a, b) => a.title.localeCompare(b.title)));
+    if (!s.empty) void this.saveOwner();
   }
 
   private name() { return String(this.prefs.get().nameW || '').trim().slice(0, 30) || 'Player'; }
@@ -75,8 +76,16 @@ export class ReferralService {
     };
     const col = F.collection(this.cloud.firestore, 'picks');
     await F.setDoc(p.id ? F.doc(col, p.id) : F.doc(col), data);
+    await this.saveOwner();
     track('pick_saved', {});
     await this.loadMine();
+  }
+
+  /** The owner sees who is behind the products (Google name and email); nobody else can read this. */
+  private async saveOwner() {
+    const F = await this.F(), u = this.cloud.user(); if (!u || u.isAnonymous) return;
+    await F.setDoc(F.doc(this.cloud.firestore, 'pickOwners', u.uid), { name: (u.displayName || '').slice(0, 100), email: u.email || '', at: F.serverTimestamp() })
+      .catch(e => console.warn('pick owner', e));
   }
 
   async deletePick(id: string) {
@@ -124,6 +133,13 @@ export class ReferralService {
   async setStatus(id: string, status: PickStatus) {
     const F = await this.F();
     await F.updateDoc(F.doc(this.cloud.firestore, 'picks', id), { status });
+  }
+
+  /** Google name and email of everyone who has added products, by account id. */
+  async owners(): Promise<Map<string, { name: string; email: string }>> {
+    const F = await this.F();
+    const s = await F.getDocs(F.collection(this.cloud.firestore, 'pickOwners'));
+    return new Map(s.docs.map(d => [d.id, { name: String(d.data()['name'] || ''), email: String(d.data()['email'] || '') }]));
   }
 
   /** Friends brought in per inviter code. */

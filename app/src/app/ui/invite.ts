@@ -91,6 +91,7 @@ const EMPTY: Pick = { owner: '', ref: '', name: '', title: '', note: '', url: ''
                 <small>เปิดสินค้าใน Shopee บนคอม คลิกขวาที่รูป แล้วเลือก "คัดลอกที่อยู่รูปภาพ"</small></label>
               <div class="field"><span class="lbl">แสดงหลังเกมแบบไหน</span>
                 <div class="moods">@for (m of moods; track m) {<button class="chip" [attr.aria-pressed]="f.moods.includes(m)" (click)="toggle(m)">{{ moodText[m] }}</button>}</div></div>
+              <p class="fine">เจ้าของเกมจะเห็นชื่อและอีเมล Google ของคุณ เพื่อใช้ติดต่อเรื่องสินค้า คนอื่นไม่เห็น</p>
               @if (err()) { <p class="err">{{ err() }}</p> }
               <div class="row2"><button class="btn" (click)="form.set(null); err.set('')">ยกเลิก</button><button class="btn go" [disabled]="busy()" (click)="save()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึก' }}</button></div>
             </div>
