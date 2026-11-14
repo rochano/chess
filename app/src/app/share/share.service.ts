@@ -10,6 +10,8 @@ import { PrefsService } from '../core/prefs.service';
 import { Overlay, UiService } from '../core/ui.service';
 import { SergeantService } from '../sergeant/sergeant.service';
 import { create } from './legacy-share';
+import { ReferralService } from '../cloud/referral.service';
+import { invitedBy } from '../cloud/ref';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const HOME_URL = 'https://rochano.github.io/chess/';
@@ -28,6 +30,16 @@ export class ShareService {
   private prefs = inject(PrefsService);
   private sergeant = inject(SergeantService);
   private L: any;
+  private referral = inject(ReferralService);
+  private picks?: Promise<any[]>;
+  /** Approved products of the friend who invited this player, in the shape of a shop item (none if nobody invited them). */
+  private refPicks() {
+    const ref = invitedBy();
+    if (!ref) return Promise.resolve([]);
+    return this.picks ??= this.referral.approvedFor(ref).then(ps => ps.map(p => ({
+      id: 'pick-' + p.id, title: p.title, note: p.note, url: p.url, img: p.img, moods: p.moods, affiliate: true, by: p.name, ref: p.ref,
+    }))).catch(() => { this.picks = undefined; return []; });
+  }
 
   init() {
     this.L = create(this.deps());
@@ -60,7 +72,7 @@ export class ShareService {
       // The original code reads .hidden right after show/hide, so update the element now, not on the next render.
       show: (id: string) => { const el = document.getElementById(id); if (el) el.hidden = false; ui.show(overlay(id)); },
       hide: (id: string) => { const el = document.getElementById(id); if (el) el.hidden = true; ui.hide(overlay(id)); },
-      newGame: () => g.newGame(), showResult: () => this.showResult(), lsGet, lsSet, HOME_URL, SHEET_URL,
+      newGame: () => g.newGame(), showResult: () => this.showResult(), lsGet, lsSet, HOME_URL, SHEET_URL, refPicks: () => this.refPicks(),
       GLYPH, NAME, VAL, sqName, opp, inCheck, legalMoves, applyMove, initialState, kingSq, fmt: fmtClock,
       esc: (t: string) => String(t).replace(/[&<>"']/g, ch => '&#' + ch.charCodeAt(0) + ';'),
       ctx, sfx, musicSting, musicLevel, orchLoad, ORCH, INST, SFX_INST, offlineRender, musicDuck, AVATAR, ICON, THEMES,

@@ -2,16 +2,17 @@
 // recap popup, ported line for line from the original game. Wired to Angular through create(deps).
 /* eslint-disable */
 // The encoders are bundled (the original pulled them from a CDN) and load only when the first video is made.
+import { refTag } from "../cloud/ref";
 const load = (u) => (u.includes("gifenc") ? import("gifenc/dist/gifenc.esm.js") : import("mp4-muxer"));
 
 export function create(deps) {
   const { G, prefs, savePrefs, tr, trS, T, LANG, myColor, track, $, show, hide, newGame, showResult, lsGet, lsSet,
-    HOME_URL, SHEET_URL, GLYPH, NAME, VAL, sqName, opp, inCheck, legalMoves, applyMove, initialState, kingSq, fmt, esc,
+    HOME_URL, SHEET_URL, refPicks, GLYPH, NAME, VAL, sqName, opp, inCheck, legalMoves, applyMove, initialState, kingSq, fmt, esc,
     ctx, sfx, musicSting, musicLevel, orchLoad, ORCH, INST, SFX_INST, offlineRender, musicDuck, AVATAR, ICON, THEMES } = deps;
   /* ---------- Share a result ----------
      The link carries utm tags, so Google Analytics shows how many players each share brings in. */
   const Share = {
-    link(method) { return HOME_URL + "?utm_source=" + method + "&utm_medium=share&utm_campaign=result"; },
+    link(method) { return HOME_URL + "?utm_source=" + method + "&utm_medium=share&utm_campaign=result" + refTag(); },
     text() {
       const o = G.over, me = myColor(), moves = Math.ceil(G.history.length / 2), lv = ["", "Easy", "Normal", "Hard"][G.level];
       const foe = G.mode === "cpu" ? T("คอมระดับ " + lv, "the computer (" + lv + ")") : G.mode === "online" ? T("เพื่อนออนไลน์", "an online friend") : T("เพื่อน", "a friend");
@@ -679,7 +680,7 @@ export function create(deps) {
       $("shop").hidden = true; Atmo.clear();
       const me = myColor(), o = G.over;
       if (!o || G.mode === "train") return;
-      if (this.forceId) { const id = this.forceId; this.forceId = null; return this.showItem((await this.load()).find(i => i.id === id), "lost", true); }
+      if (this.forceId) { const id = this.forceId; this.forceId = null; return this.showItem([...(await refPicks()), ...(await this.load())].find(i => i.id === id), "lost", true); }
       const lost = !!me && o.type !== "draw" && o.winner !== me;
       if (me) lsSet("chess-losses", lost ? lsGet("chess-losses", 0) + 1 : 0);
       this.games++;
@@ -689,7 +690,9 @@ export function create(deps) {
       const gap = mood === "tense" || mood === "lost" ? 1 : 2;
       if (this.games - this.lastShown < gap) return;
       const want = mood === "stalemate" ? "learn" : mood;
-      let pool = (await this.load()).filter(i => i.moods.includes(want));
+      // A player who came through a friend's invite sees that friend's approved products first (for this mood, else any of them).
+      const mine = await refPicks();
+      let pool = mine.length ? (mine.some(i => i.moods.includes(want)) ? mine.filter(i => i.moods.includes(want)) : mine) : (await this.load()).filter(i => i.moods.includes(want));
       if (pool.length > 1) pool = pool.filter(i => i.id !== this.lastId); // not the same product twice in a row
       if (!pool.length) return;
       this.lastShown = this.games;
@@ -712,11 +715,12 @@ export function create(deps) {
       $("shopTitle").textContent = it.title;
       $("shopNote").textContent = (it.notes && it.notes[want]) || it.note || "";
       $("shopItem").href = it.url;
-      $("shopItem").onclick = () => track("shop_click", { item: it.id, mood });
-      $("shopAd").textContent = it.affiliate ? tr("ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ") : "";
+      $("shopItem").onclick = () => track("shop_click", { item: it.id, mood, ref: it.ref || "" });
+      $("shopAd").textContent = it.by ? "แนะนำโดย " + it.by + " เพื่อนที่ชวนคุณมาเล่น เขาอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ"
+        : it.affiliate ? tr("ลิงก์แนะนำสินค้า เราอาจได้ค่าคอมมิชชันเมื่อคุณซื้อ") : "";
       $("shop").hidden = false;
       Atmo.set(it, photo ? it.img : "");
-      if (!preview) track("shop_view", { item: it.id, mood });
+      if (!preview) track("shop_view", { item: it.id, mood, ref: it.ref || "" });
     },
     // ?preview=<item id> shows the result screen with that product, to check how it looks. Nothing is recorded.
     preview(id) {

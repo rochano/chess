@@ -1,4 +1,5 @@
 # Builds and tests the Angular version of the game (app/). The live game (index.html on GitHub Pages) is not touched.
+# Pushes to the develop branch deploy the preview site (Firebase Hosting channel "preview"), so the preview always shows develop.
 # Preview deploy to Firebase Hosting runs only once the FIREBASE_SERVICE_ACCOUNT and FIREBASE_PROJECT_ID secrets exist.
 name: Angular app
 on:
@@ -25,7 +26,7 @@ jobs:
       - run: npx ng test --watch=false
       - run: npx ng build
       - name: Deploy preview to Firebase Hosting
-        if: github.event_name == 'push' && env.HAS_FIREBASE == 'true'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && env.HAS_FIREBASE == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
@@ -37,7 +38,7 @@ jobs:
       # Firestore security rules (the anti-cheat for scores). Needs the "Firebase Rules Admin" role on the service account;
       # if it is missing this step fails without stopping the preview, and the rules can be pasted in the console instead.
       - name: Deploy Firestore rules
-        if: github.event_name == 'push' && env.HAS_FIREBASE == 'true'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && env.HAS_FIREBASE == 'true'
         continue-on-error: true
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

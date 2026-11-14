@@ -15,10 +15,13 @@ import { CloudService } from './cloud/cloud.service';
 import { NetService } from './net/net.service';
 import { MenuComponent } from './ui/menu';
 import { SettingsComponent } from './ui/settings';
+import { InviteComponent } from './ui/invite';
+import { AdminComponent } from './ui/admin';
+import { ReferralService } from './cloud/referral.service';
 
 @Component({
   selector: 'app-root',
-  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent, TrainCardsComponent, LeaderComponent],
+  imports: [GameScreenComponent, MenuComponent, SettingsComponent, CreditsComponent, ConfirmComponent, PromoComponent, ResultComponent, RecapComponent, TrainCardsComponent, LeaderComponent, InviteComponent, AdminComponent],
   host: { style: 'display: contents' },
   template: `
     <app-game-screen />
@@ -26,6 +29,8 @@ import { SettingsComponent } from './ui/settings';
     @if (ui.isOpen('settings')) { <app-settings /> }
     @if (ui.isOpen('credits')) { <app-credits /> }
     @if (ui.isOpen('leader')) { <app-leader /> }
+    @if (ui.isOpen('invite')) { @defer (on immediate) { <app-invite /> } }
+    @if (ui.isOpen('admin')) { @defer (on immediate) { <app-admin /> } }
     <app-result />
     <app-recap />
     <app-train-cards />
@@ -37,7 +42,9 @@ export class App {
   protected ui = inject(UiService);
   protected g = inject(GameService);
 
-  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); inject(LeaderService).init(); inject(CloudService).init();
+  constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); inject(LeaderService).init(); inject(CloudService).init(); inject(ReferralService);
+    // ?admin opens the owner's page for approving recommended products.
+    if (new URLSearchParams(location.search).has('admin')) { this.ui.hide('menu'); this.ui.show('admin'); }
     const net = inject(NetService); afterNextRender(() => net.init());
     const train = inject(TrainService); afterNextRender(() => train.init()); }
 
@@ -48,6 +55,8 @@ export class App {
     else if (ui.isOpen('credits')) { ui.hide('credits'); ui.show('menu'); }
     else if (ui.isOpen('leader')) { ui.hide('leader'); ui.show('menu'); }
     else if (ui.isOpen('confirm')) ui.hide('confirm');
+    else if (ui.isOpen('invite')) { ui.hide('invite'); ui.show('menu'); }
+    else if (ui.isOpen('admin')) { ui.hide('admin'); ui.show('menu'); }
     else if (ui.isOpen('recap')) ui.hide('recap');
     else if (ui.isOpen('result')) ui.hide('result');
     else if (ui.isOpen('menu') && this.g.history().length && !this.g.over()) ui.hide('menu');

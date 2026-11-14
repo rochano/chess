@@ -1,6 +1,7 @@
 // @ts-nocheck -- Road to master (course, drills, story, world map), daily puzzle, coach, teaching arrows and the
 // tutorial, ported line for line from the original game. Wired to Angular through create(deps).
 /* eslint-disable */
+import { refTag } from "../cloud/ref";
 export function create(deps) {
   const { G, prefs, savePrefs, tr, trS, T, LANG, myColor, track, $, show, hide, closeAll, openMenu, newGame, doMove, render,
     lsGet, lsSet, esc, HOME_URL, GLYPH, NAME, VAL, sqName, opp, inCheck, legalMoves, applyMove, posKey, fromFEN, insufficient,
@@ -467,7 +468,7 @@ export function create(deps) {
         box.querySelector("#stMap").onclick = () => { el.remove(); Train.openList(); };
         box.querySelector("#stShare").onclick = () => {
           const text = T("ฉันเล่นหมากรุกจนจบ ได้ตอนจบ “" + T(...E.name) + "” คุณจะได้ตอนจบไหน?", "I finished Chess Game and got the ending “" + T(...E.name) + "”. Which ending will you get?");
-          const url = HOME_URL + "?utm_source=story&utm_medium=share&utm_campaign=ending";
+          const url = HOME_URL + "?utm_source=story&utm_medium=share&utm_campaign=ending" + refTag();
           track("share", { method: "story", ending: key });
           if (navigator.share) navigator.share({ title: "Chess Game", text, url }).catch(() => {});
           else try { navigator.clipboard.writeText(text + " " + url); box.querySelector("#stShare").textContent = T("คัดลอกแล้ว", "Copied"); } catch (x) {}
@@ -913,7 +914,7 @@ export function create(deps) {
       return d + " " + [tr("ม.ค."), tr("ก.พ."), tr("มี.ค."), tr("เม.ย."), tr("พ.ค."), tr("มิ.ย."), tr("ก.ค."), tr("ส.ค."), tr("ก.ย."), tr("ต.ค."), tr("พ.ย."), tr("ธ.ค.")][m - 1] + " " + (y + 543 - 2500);
     },
     title(p) { return (p[0].split(" ")[1] === "w" ? tr("ขาว") : tr("ดำ")) + tr("เดิน รุกฆาต") + (p[1] === 1 ? tr("ในตาเดียว") : tr("ใน ") + p[1] + tr(" ตา")); },
-    link(key, method) { return HOME_URL + "?puzzle=" + key + "&utm_source=" + method + "&utm_medium=share&utm_campaign=puzzle"; },
+    link(key, method) { return HOME_URL + "?puzzle=" + key + "&utm_source=" + method + "&utm_medium=share&utm_campaign=puzzle" + refTag(); },
     async open(key) {
       key = /^\d{4}-\d\d-\d\d$/.test(key || "") && key <= this.today() ? key : this.today();
       try { await this.load(); } catch (e) { $("status").textContent = tr("โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้ง"); return; }

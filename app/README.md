@@ -32,3 +32,9 @@ npx ng build                 # dist/app/browser
 https://rochano.github.io/chess/ (needs Settings > Pages > Source = GitHub Actions). The original single-file game
 stays in the repo root as `index.html` and is published at `/chess/classic/` as a fallback.
 Firestore rules (`firestore.rules`) and Realtime Database rules (`database.rules.json`) are pasted in the Firebase console.
+
+## Invites and recommended products
+
+- Every player has an invite code (first 8 characters of their Firebase uid). Links carry `?ref=CODE`; `src/app/cloud/ref.ts` stores it on a device that has never played, and `ReferralService` writes `invites/{newUid}` once.
+- Players signed in with Google can add up to 6 products with their own Shopee affiliate link (`picks/`). Every add or edit is `pending` until the owner approves it on `?admin`. Friends they invited see their approved products on the result screen first.
+- The owner page needs a document `admins/{uid}` created by hand in the Firebase console.
