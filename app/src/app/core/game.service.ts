@@ -33,6 +33,14 @@ export interface TrainHooks {
   teaching(): boolean;
   hint(): void;
 }
+/** Online play (two devices): the link to the other device, set by NetService. */
+export interface NetHooks {
+  color(): Color | null;
+  connected(): boolean;
+  sent(m: Move, clockLeft: number): void;
+  resign(): void;
+  flag(): void;
+}
 export type GameEvent =
   | { kind: 'start' }
   | { kind: 'move'; move: Move; prev: GameState; next: GameState; mover: Color; check: boolean }
@@ -74,6 +82,7 @@ export class GameService {
   /** Bumped by code that changes state the signals can't see (the lesson runner's own fields). */
   readonly redraw = signal(0);
   train: TrainHooks | null = null;
+  net: NetHooks | null = null;
   /** Square whose piece just landed, for the small lift animation. */
   readonly animTo = signal(-1);
 
@@ -94,7 +103,7 @@ export class GameService {
   readonly myColor = computed<Color | null>(() => {
     this.redraw();
     const m = this.mode();
-    return m === 'cpu' ? 'w' : m === 'train' && this.train ? this.train.side() : null;
+    return m === 'cpu' ? 'w' : m === 'train' && this.train ? this.train.side() : m === 'online' && this.net ? this.net.color() : null;
   });
   readonly humanTurn = computed(() => !this.over() && !this.thinking() && this.humanSide(this.st().turn));
 
@@ -119,10 +128,10 @@ export class GameService {
     }
   }
 
-  newGame() {
+  newGame(online = false) {
     this.fillNames();
     const p = this.prefs.get();
-    const mode: Mode = p.mode === 'online' ? 'friend' : p.mode; // online play comes in phase 3
+    const mode: Mode = p.mode === 'online' && !online ? 'friend' : p.mode;
     this.mode.set(mode);
     this.level.set(+p.level as Level);
     const [base, inc] = p.clock === '0' ? [0, 0] : p.clock.split('+').map(Number);
@@ -219,6 +228,7 @@ export class GameService {
       return;
     }
     this.events.next({ kind: 'move', move: m, prev, next, mover, check });
+    if (this.mode() === 'online' && this.net && mover === this.net.color()) this.net.sent(m, this.clocks()[mover]);
     if (over) this.finish(over);
     else void this.maybeComputer();
   }
@@ -275,16 +285,20 @@ export class GameService {
   resign() {
     const who = this.myColor() || this.st().turn;
     const [me, them] = who === 'w' ? ['White', 'Black'] : ['Black', 'White'];
+    if (this.mode() === 'online') this.net?.resign();
     this.finish({ type: 'resign', winner: opp(who), text: `${me} resigned. ${them} wins.` });
   }
 
   private tick() {
     const now = performance.now(), dt = now - this.lastTick; this.lastTick = now;
-    if (!this.tc() || !this.started || this.over() || this.paused()) return;
+    if (!this.tc() || !this.started || this.over() || this.paused() || (this.mode() === 'online' && !this.net?.connected())) return;
     const c = this.st().turn;
     const left = this.clocks()[c] - dt;
     if (left <= 0) {
       this.clocks.update(x => ({ ...x, [c]: 0 }));
+      // Online, each device only calls time on its own clock; the other side reports theirs.
+      if (this.mode() === 'online' && c !== this.net?.color()) return;
+      if (this.mode() === 'online') this.net?.flag();
       const w = opp(c), name = (x: Color) => (x === 'w' ? 'White' : 'Black');
       this.finish({ type: 'flag', winner: w, text: `${name(c)} ran out of time. ${name(w)} wins.` });
       return;

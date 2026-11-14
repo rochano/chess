@@ -44,5 +44,28 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.updated == request.time;
       allow update, delete: if false;
     }
+    // Online rooms: the host creates rooms/{CODE}, one guest claims it, and only those two can send or read its messages.
+    match /rooms/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && code.matches('[A-Z0-9]{5}')
+        && request.resource.data.keys().hasOnly(['host', 'guest', 'at'])
+        && request.resource.data.host == request.auth.uid && request.resource.data.guest == null
+        && request.resource.data.at == request.time;
+      allow update: if signedIn() && resource.data.guest == null && resource.data.host != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guest'])
+        && request.resource.data.guest == request.auth.uid;
+      allow delete: if false;
+
+      match /msgs/{id} {
+        function room() { return get(/databases/$(database)/documents/rooms/$(code)).data; }
+        allow read: if signedIn() && request.auth.uid in [room().host, room().guest];
+        allow create: if signedIn() && request.auth.uid in [room().host, room().guest]
+          && request.resource.data.keys().hasOnly(['to', 'n', 'd', 'from', 'at'])
+          && request.resource.data.from == request.auth.uid && request.resource.data.to in ['host', 'join']
+          && request.resource.data.n is int && request.resource.data.d is map && request.resource.data.d.size() <= 8
+          && request.resource.data.at == request.time;
+        allow update, delete: if false;
+      }
+    }
   }
 }

@@ -1,3 +1,5 @@
+import { SafeHtmlPipe } from '../core/safe-html.pipe';
+import { NetService } from '../net/net.service';
 import { TrainService } from '../train/train.service';
 import { Component, computed, inject } from '@angular/core';
 import { track } from '../core/analytics';
@@ -11,7 +13,7 @@ import { BattleService } from '../battle/battle.service';
 /** Main menu: new game settings, then practice and more (same layout and ids as the original). */
 @Component({
   selector: 'app-menu',
-  imports: [TrPipe],
+  imports: [TrPipe, SafeHtmlPipe],
   host: { style: 'display: contents' },
   template: `
 <div class="scrim" id="menu">
@@ -26,8 +28,17 @@ import { BattleService } from '../battle/battle.service';
             <button [attr.aria-pressed]="p().mode === o.v" (click)="set('mode', o.v)">{{ o.label | tr }}</button>
           }
         </div>
-        @if (p().mode === 'online') {<p class="fine">{{ i18n.t('โหมดออนไลน์จะมาในเฟส 3 (ใช้เซิร์ฟเวอร์ใหม่)', 'Online play arrives in phase 3 (new server).') }}</p>}
+        @if (p().mode === 'friend') {<p class="friendqr" id="friendQR"><span>{{ i18n.t('อยู่คนละเครื่อง?', 'Each on your own phone?') }}</span><button class="chip" id="friendQRBtn" (click)="qrFromFriend()">{{ i18n.t('สร้าง QR ให้เพื่อนสแกน', 'Show a QR code') }}</button></p>}
       </div>
+      @if (p().mode === 'online') {
+        <div class="field" id="onlineField">
+          <span class="lbl">{{ 'Play on two devices' | tr }}</span>
+          <button class="btn go" id="netCreate" (click)="net.host()">{{ 'Create a room' | tr }}</button>
+          <div class="join"><input id="netCode" #code maxlength="8" [placeholder]="'Room code' | tr" [attr.aria-label]="'Room code' | tr" autocomplete="off" autocapitalize="characters" [value]="roomParam"
+            (keydown.enter)="net.join(code.value)"><button class="btn" id="netJoin" (click)="net.join(code.value)">{{ 'Join' | tr }}</button></div>
+          @if (net.msg(); as m) {<div class="netmsg" id="netMsg" aria-live="polite" [class.bad]="m.bad" [innerHTML]="m.html | safeHtml"></div>}
+        </div>
+      }
       @if (p().mode === 'cpu') {
         <div class="field">
           <span class="lbl">{{ 'Computer strength' | tr }}</span>
@@ -91,6 +102,8 @@ export class MenuComponent {
   private prefs = inject(PrefsService);
   private battle = inject(BattleService);
   protected train = inject(TrainService);
+  protected net = inject(NetService);
+  protected roomParam = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
   // The ported code draws these two buttons (streak, chapter pips) itself.
   ngAfterViewInit() { this.train.syncButtons(); }
   protected p = this.prefs.value;
@@ -112,5 +125,6 @@ export class MenuComponent {
     if (this.g.mode() !== 'online' && this.p().intro !== 'off') this.battle.intro();
     track('game_start', { opponent: this.g.mode(), level: this.g.mode() === 'cpu' ? this.g.level() : 0, clock: this.p().clock });
   }
+  qrFromFriend() { this.prefs.set('mode', 'online'); track('online_room', { action: 'qr_from_friend' }); this.net.host(); }
   settings() { this.ui.hide('menu'); this.ui.backToMenu = true; this.ui.show('settings'); }
 }

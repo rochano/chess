@@ -7,6 +7,7 @@ import { I18nService, PIECE_TH } from '../core/i18n.service';
 import { TrPipe } from '../core/tr.pipe';
 import { UiService } from '../core/ui.service';
 import { CloudService } from '../cloud/cloud.service';
+import { NetService } from '../net/net.service';
 
 @Component({
   selector: 'app-credits',
@@ -155,7 +156,8 @@ export class ResultComponent {
           (stuck === 'w' ? 'White' : 'Black') + " wasn't in check but had no legal move. That's called stalemate, so the game is a draw.");
   });
 
-  again() { this.ui.hide('result'); this.g.newGame(); this.ui.show('menu'); }
+  again() { this.ui.hide('result'); if (this.g.mode() === 'online') { this.net.again(); return; } this.g.newGame(); this.ui.show('menu'); }
+  private net = inject(NetService);
   view() {
     this.ui.hide('result');
     const o = this.g.over();

@@ -1,3 +1,4 @@
+import { NetService } from '../net/net.service';
 import { Component, computed, inject } from '@angular/core';
 import { Color, GLYPH, opp, PieceType, sqName, NAME, VAL } from '../core/engine';
 import { fmtClock } from '../core/format';
@@ -85,6 +86,10 @@ export class GameScreenComponent {
   tap(i: number) { this.g.onSquare(i); }
 
   reset() {
+    if (this.g.mode() === 'online') {
+      this.ui.confirm('Leave the online game?', "You'll leave the room and your opponent will be told.", 'Leave', () => { this.net.leave(); this.g.newGame(); this.ui.show('menu'); });
+      return;
+    }
     if (!this.g.history().length) { this.ui.show('menu'); return; }
     this.ui.confirm('Start over?', 'This game will be cleared and you can pick new settings.', 'Start over', () => { this.g.newGame(); this.ui.show('menu'); });
   }
@@ -93,7 +98,8 @@ export class GameScreenComponent {
     const [me, them] = who === 'w' ? ['White', 'Black'] : ['Black', 'White'];
     this.ui.confirm('Resign this game?', `${me} resigns and ${them} is awarded the win.`, 'Resign', () => this.g.resign());
   }
-  again() { this.g.newGame(); this.ui.show('menu'); }
+  again() { if (this.g.mode() === 'online') { this.net.again(); return; } this.g.newGame(); this.ui.show('menu'); }
+  private net = inject(NetService);
   toggleMusic() { this.prefs.set('music', !this.prefs.get().music); }
   openSettings() { this.ui.backToMenu = false; this.ui.show('settings'); }
 }

@@ -12,6 +12,7 @@ import { TrainCardsComponent } from './train/train-cards';
 import { TrainService } from './train/train.service';
 import { LeaderComponent, LeaderService } from './ui/leaderboard';
 import { CloudService } from './cloud/cloud.service';
+import { NetService } from './net/net.service';
 import { MenuComponent } from './ui/menu';
 import { SettingsComponent } from './ui/settings';
 
@@ -37,6 +38,7 @@ export class App {
   protected g = inject(GameService);
 
   constructor() { inject(AudioService).init(); inject(SergeantService).init(); inject(StreamerService).init(); void inject(BattleService).init(); inject(ShareService).init(); inject(LeaderService).init(); inject(CloudService).init();
+    const net = inject(NetService); afterNextRender(() => net.init());
     const train = inject(TrainService); afterNextRender(() => train.init()); }
 
   @HostListener('document:keydown.escape')
