@@ -60,6 +60,8 @@ html.booting .card { animation: none; }
 body { transition: opacity 260ms ease-out; }
 </style>
 <script>document.documentElement.classList.add("booting"); setTimeout(function () { document.documentElement.classList.remove("booting"); }, 2500);</script>
+<script src="https://gstats.pages.dev/sdk/analytics.js" defer></script>
+<script>window.addEventListener('DOMContentLoaded',function(){try{if(!window.gstats)return;gstats.init({key:'pk_PWISABtpdWHyyxXUWQldREB4',host:'https://gstats.pages.dev'});(window.__track||[]).forEach(function(e){gstats.capture(e[0],e[1])});gstats.__ready=true}catch(e){}});</script>
 </head>
 <body>
 <noscript><p>Chess Game: เล่นหมากรุกฟรีบนเบราว์เซอร์ ไม่ต้องสมัคร มีกระดาน 3 มิติ เล่นกับคอม 3 ระดับ เล่นกับเพื่อนเครื่องเดียวหรือออนไลน์ และบทเรียนเส้นทางสู่เทพหมากรุกตั้งแต่มือใหม่ Free 3D chess in your browser. เปิด JavaScript เพื่อเล่น <a href="about.html">วิธีเล่นและกติกาหมากรุก</a></p></noscript>
@@ -1339,7 +1341,7 @@ select {
 /* © 2026 Rochanapan. All rights reserved. This game runs only at https://rochano.github.io/chess/ */
 const HOME_URL = "https://rochano.github.io/chess/";
 // Send a Google Analytics event. Shared links carry utm tags, so GA also records where each visitor came from.
-function track(name, params) { try { if (window.gtag) gtag("event", name, params || {}); } catch (e) {} }
+function track(name, params) { try { const p = params || {}; if (window.gtag) gtag("event", name, p); if (window.gstats && window.gstats.__ready) window.gstats.capture(name, p); (window.__track = window.__track || []).push([name, p]); } catch (e) {} }
 function homeSite() { return location.hostname === "rochano.github.io" || !!window.__chessDev; }
 if (!homeSite()) {
   // A saved or copied page: point people to the real game instead of running here (and posting scores to its sheet).
