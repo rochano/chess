@@ -1,0 +1,1 @@
+import{a as ct,c as ot,i as bt,l as pt,n as Bt,o as gt,r as Mt,s as lt,t as At}from"./chunk-nUw1MMcM.js";export{ct as GIFEncoder,pt as applyPalette,Mt as default,At as nearestColor,lt as nearestColorIndex,ot as nearestColorIndexWithDistance,gt as prequantize,bt as quantize,Bt as snapColorsToPalette};

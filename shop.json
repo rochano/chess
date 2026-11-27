@@ -1,0 +1,124 @@
+{
+ "note": "แก้ url เป็นลิงก์ affiliate ของคุณ แล้วตั้ง affiliate เป็น true",
+ "items": [
+  {
+   "id": "stress-ball",
+   "moods": [
+    "tense",
+    "lost"
+   ],
+   "icon": "🧸",
+   "title": "ของเล่นบีบคลายเครียด",
+   "note": "บีบแทนการทุบโต๊ะ ราคาไม่ถึงร้อย",
+   "url": "https://s.shopee.co.th/7AeZxI8TxC",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134201-7rdx5-mdodkdc71lre29_tn"
+  },
+  {
+   "id": "chamomile",
+   "moods": [
+    "tense",
+    "lost"
+   ],
+   "icon": "🍵",
+   "title": "ชาคาโมมายล์ พรีเมียม",
+   "note": "จิบอุ่นๆ ใจเย็นลง ก่อนตาต่อไป",
+   "url": "https://s.shopee.co.th/4qGfIpah27",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134253-822xi-mibaw9vjj56qde_tn"
+  },
+  {
+   "id": "lavender",
+   "moods": [
+    "tense"
+   ],
+   "icon": "🌿",
+   "title": "น้ำมันหอมระเหยอโรม่า",
+   "note": "หยดใส่เครื่องพ่นไอน้ำ กลิ่นหอมช่วยให้ใจเย็น",
+   "url": "https://s.shopee.co.th/20wTo3YGiI",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134253-8261i-mlr93nguxbt1d7_tn"
+  },
+  {
+   "id": "neck-pillow",
+   "moods": [
+    "tense"
+   ],
+   "icon": "💆",
+   "title": "เครื่องนวดคอไฟฟ้า ไร้สาย",
+   "note": "นั่งก้มดูกระดานนานๆ คอเมื่อยแน่",
+   "url": "https://s.shopee.co.th/4fxF6WbKN4",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/th-11134207-7r98p-lr2oxosmbwxaba_tn"
+  },
+  {
+   "id": "dark-choc",
+   "moods": [
+    "lost"
+   ],
+   "icon": "🍫",
+   "title": "ดาร์กช็อกโกแลตแท้ ไม่มีน้ำตาล",
+   "note": "ของปลอบใจหลังแพ้ แบบไม่ต้องกลัวอ้วน",
+   "url": "https://s.shopee.co.th/2BFu0MXdNL",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134249-8259n-mt7c5irrvfnqc9_tn"
+  },
+  {
+   "id": "wood-chess",
+   "moods": [
+    "won",
+    "learn"
+   ],
+   "icon": "♟️",
+   "title": "กระดานหมากรุกไม้ พับได้",
+   "note": "ชนะในจอแล้ว ลองชนะบนโต๊ะจริง",
+   "url": "https://s.shopee.co.th/9V2UkAoR0i",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134253-825zy-mkb9qj2ltamcb5_tn",
+   "notes": {
+    "learn": "ฝึกบนกระดานจริง เห็นภาพทั้งกระดานชัดกว่าในจอ"
+   }
+  },
+  {
+   "id": "magnet-chess",
+   "moods": [
+    "won"
+   ],
+   "icon": "🧲",
+   "title": "หมากรุกสากลแม่เหล็ก",
+   "note": "พกไปท้าเพื่อนได้ทุกที่ ตัวหมากไม่หล่น",
+   "url": "https://s.shopee.co.th/9Kj4Xrp4Lh",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/0798c4a5d0254a3b506e72f360a0c560_tn"
+  },
+  {
+   "id": "chess-book",
+   "moods": [
+    "learn",
+    "lost"
+   ],
+   "icon": "📘",
+   "title": "หนังสือ ก้าวแรกสู่หมากรุกสากล",
+   "note": "เรียนต่อจากบทฝึกในเกม ภาษาไทย",
+   "url": "https://s.shopee.co.th/9pfL8mnAKo",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134201-7rdxc-lyu6p2tvn97e80_tn"
+  },
+  {
+   "id": "chess-clock",
+   "moods": [
+    "won",
+    "learn"
+   ],
+   "icon": "⏱️",
+   "title": "นาฬิกาหมากรุกดิจิทัล",
+   "note": "เล่นกับเพื่อนแบบจับเวลาเหมือนในเกม",
+   "url": "https://s.shopee.co.th/9fLuwTnnfn",
+   "affiliate": true,
+   "img": "https://down-th.img.susercontent.com/file/sg-11134201-82580-mt8wvz32xjplb1_tn",
+   "notes": {
+    "learn": "ฝึกจับเวลากับเพื่อน ให้คิดเร็วขึ้น"
+   }
+  }
+ ]
+}
